@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영남권 아파트 착공현황 조회</title>
+<style>
+  /* ── 토큰 ── */
+  :root {
+    --ink:        #0F1B2D;
+    --ink-muted:  #4A5568;
+    --ink-faint:  #8898AA;
+    --surface:    #F7F9FC;
+    --card:       #FFFFFF;
+    --border:     #DDE3EC;
+    --border-strong: #B8C4D6;
+    --navy:       #1E2761;
+    --navy-light: #2D3F87;
+    --teal:       #0B7285;
+    --teal-light: #E6F4F7;
+    --amber:      #B45309;
+    --amber-bg:   #FEF3C7;
+    --red:        #B91C1C;
+    --red-bg:     #FEE2E2;
+    --green:      #166534;
+    --green-bg:   #D1FAE5;
+    --blue:       #1D4ED8;
+    --blue-bg:    #DBEAFE;
+    --purple:     #6D28D9;
+    --purple-bg:  #EDE9FE;
+    --orange-bg:  #FFEDD5;
+    --pink-bg:    #FFF0F5;
+    --pink:       #E91E8C;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system, sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── 헤더 ── */
+  .site-header {
+    background: var(--navy);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--teal);
+  }
+  .site-title {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .site-sub {
+    color: #8BA4D4;
+    font-size: 12px;
+    margin-top: 1px;
+  }
+  .header-meta {
+    font-size: 11px;
+    color: #8BA4D4;
+    text-align: right;
+  }
+
+  /* ── 메인 ── */
+  .main { padding: 20px 24px 48px; max-width: 1600px; margin: 0 auto; }
+
+  /* ── KPI 바 ── */
+  .kpi-bar {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi.busan::after  { background: #1E2761; }
+  .kpi.ulsan::after  { background: #0B7285; }
+  .kpi.gynam::after  { background: #2D6A4F; }
+  .kpi.gymbuk::after { background: #7D6608; }
+  .kpi.daegu::after  { background: #6E2F1A; }
+  .kpi.total::after  { background: var(--pink); }
+  .kpi-label { font-size: 11px; color: var(--ink-muted); margin-bottom: 4px; }
+  .kpi-val   { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1; }
+  .kpi-sub   { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+
+  /* ── 필터 패널 ── */
+  .filter-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-label { font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+  .filter-group select,
+  .filter-group input {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--ink);
+    outline: none;
+    cursor: pointer;
+    min-width: 130px;
+  }
+  .filter-group select:focus,
+  .filter-group input:focus {
+    border-color: var(--navy-light);
+    background: #fff;
+  }
+  .filter-group input { min-width: 200px; }
+  .btn-group { display: flex; gap: 8px; align-items: flex-end; }
+  .btn {
+    height: 34px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-reset   { background: var(--border); color: var(--ink-muted); }
+  .btn-export  { background: var(--teal); color: #fff; }
+
+  /* ── 결과 요약 ── */
+  .result-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 2px;
+  }
+  .result-count {
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+  .result-count strong { color: var(--ink); font-weight: 700; }
+
+  /* ── 테이블 ── */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  thead th {
+    background: var(--navy);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 10px 10px;
+    text-align: center;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { background: var(--navy-light); }
+  thead th.sorted-asc::after  { content: ' ▲'; font-size: 9px; }
+  thead th.sorted-desc::after { content: ' ▼'; font-size: 9px; }
+
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #F0F4FF; }
+  tbody td { padding: 9px 10px; vertical-align: middle; }
+
+  .td-no    { text-align: center; color: var(--ink-faint); width: 36px; }
+  .td-name  { font-weight: 600; min-width: 180px; line-height: 1.4; }
+  .td-sub   { font-size: 11px; color: var(--ink-muted); font-weight: 400; }
+  .td-center { text-align: center; }
+  .td-num   { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ── 지역 배지 ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-busan  { background: #E8EBF8; color: #1E2761; }
+  .badge-yangsan{ background: #D6EAF8; color: #1A5276; }
+  .badge-ulsan  { background: #D4EFDF; color: #0B7285; }
+  .badge-gynam  { background: #D5F5E3; color: #2D6A4F; }
+  .badge-gymbuk { background: #FEF9E7; color: #7D6608; }
+  .badge-daegu  { background: #FDEDEC; color: #6E2F1A; }
+
+  /* ── 착공상태 배지 ── */
+  .status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .s-active   { background: var(--green-bg);  color: var(--green); }
+  .s-imminent { background: var(--amber-bg);  color: var(--amber); }
+  .s-planned  { background: var(--blue-bg);   color: var(--blue); }
+  .s-permit   { background: var(--orange-bg); color: #92400E; }
+  .s-nocon    { background: var(--red-bg);    color: var(--red); }
+  .s-mid      { background: var(--purple-bg); color: var(--purple); }
+  .s-new      { outline: 2px solid var(--pink); }
+
+  /* ── 신규 행 ── */
+  tr.row-new { background: var(--pink-bg) !important; }
+  tr.row-new:hover { background: #FFE4F1 !important; }
+
+  /* ── 빈 상태 ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ink-faint);
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── 상세 패널 (슬라이드오버) ── */
+  .detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    z-index: 200;
+    display: none;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-panel {
+    background: var(--card);
+    width: 420px;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: -4px 0 24px rgba(0,0,0,.18);
+  }
+  .detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .detail-title { font-size: 17px; font-weight: 700; line-height: 1.35; }
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--ink-muted);
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .detail-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-key {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    width: 100px;
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+  .detail-val { font-size: 13px; color: var(--ink); flex: 1; }
+  .detail-note {
+    margin-top: 16px;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+  .eais-btn {
+    display: block;
+    margin-top: 16px;
+    background: var(--teal);
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* ── 반응형 ── */
+  @media (max-width: 1100px) { .kpi-bar { grid-template-columns: repeat(3,1fr); } }
+  @media (max-width: 700px)  {
+    .kpi-bar { grid-template-columns: repeat(2,1fr); }
+    .site-header { padding: 0 16px; }
+    .main { padding: 14px 16px 40px; }
+    .detail-panel { width: 100vw; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+</head>
+<body>
+
+<!-- ══ 헤더 ══ -->
+<header class="site-header">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <a href="../menu.html" style="flex-shrink:0;color:#8BA4D4;font-size:12px;text-decoration:none;border:1px solid rgba(139,164,212,.4);border-radius:20px;padding:5px 12px;white-space:nowrap;">← 영남지사</a>
+    <div>
+      <div class="site-title">영남권 아파트 착공현황 조회</div>
+      <div class="site-sub">부산 · 양산 · 울산 · 경남 · 경북 · 대구 · 2026년 착공예정 + 공사중 현장</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    기준일 2026.09.03 (Claude 수동 갱신)<br>
+    호갱노노 · 네이버부동산 · 부동산114 · 세움터 교차검증
+  </div>
+</header>
+
+<!-- ══ 메인 ══ -->
+<main class="main">
+
+  <!-- KPI 바 -->
+  <div class="kpi-bar">
+    <div class="kpi busan">
+      <div class="kpi-label">부산</div>
+      <div class="kpi-val" id="kpi-busan">—</div>
+      <div class="kpi-sub">개 현장</div>
+    </div>
+    <div class="kpi ulsan">
+      <div class="kpi-label">울산</div>
+      <div class="kpi-val" id="kpi-ulsan">—</div>
+      <div class="kpi-sub">개 현장</div>
+    </div>
+    <div class="kpi gynam">
+      <div class="kpi-label">경남</div>
+      <div class="kpi-val" id="kpi-gynam">—</div>
+      <div class="kpi-sub">개 현장</div>
+    </div>
+    <div class="kpi gymbuk">
+      <div class="kpi-label">경북</div>
+      <div class="kpi-val" id="kpi-gymbuk">—</div>
+      <div class="kpi-sub">개 현장</div>
+    </div>
+    <div class="kpi daegu">
+      <div class="kpi-label">대구</div>
+      <div class="kpi-val" id="kpi-daegu">—</div>
+      <div class="kpi-sub">개 현장</div>
+    </div>
+    <div class="kpi total">
+      <div class="kpi-label">전체</div>
+      <div class="kpi-val" id="kpi-total">—</div>
+      <div class="kpi-sub">개 현장</div>
+    </div>
+  </div>
+
+  <!-- 필터 패널 -->
+  <div class="filter-panel">
+    <div class="filter-group">
+      <span class="filter-label">광역시도</span>
+      <select id="f-region">
+        <option value="">전체</option>
+        <option value="부산">부산</option>
+        <option value="양산">양산</option>
+        <option value="울산">울산</option>
+        <option value="경남">경남</option>
+        <option value="경북">경북</option>
+        <option value="대구">대구</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">착공 상태</span>
+      <select id="f-status">
+        <option value="">전체</option>
+        <option value="공사중">공사중</option>
+        <option value="착공임박">착공임박</option>
+        <option value="착공예정">착공예정</option>
+        <option value="인허가진행">인허가진행</option>
+        <option value="시공사미정">시공사미정</option>
+        <option value="중기예정">중기예정</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">건설사</span>
+      <select id="f-builder">
+        <option value="">전체</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">유형</span>
+      <select id="f-type">
+        <option value="">전체</option>
+        <option value="아파트">아파트</option>
+        <option value="주상복합">주상복합</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">최소 세대수</span>
+      <select id="f-units">
+        <option value="0">제한 없음</option>
+        <option value="300">300세대 이상</option>
+        <option value="500">500세대 이상</option>
+        <option value="1000">1,000세대 이상</option>
+        <option value="2000">2,000세대 이상</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">단지명 검색</span>
+      <input type="text" id="f-search" placeholder="단지명 · 건설사 · 구군 검색...">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="applyFilter()">조회</button>
+      <button class="btn btn-reset" onclick="resetFilter()">초기화</button>
+      <button class="btn btn-export" onclick="exportExcel()">EXCEL 다운로드</button>
+    </div>
+  </div>
+
+  <!-- 결과 바 -->
+  <div class="result-bar">
+    <div class="result-count">조회 결과 <strong id="result-num">0</strong>건
+      <span id="new-note" style="margin-left:8px;font-size:11px;color:var(--pink);display:none;">
+        🆕 분홍 행 = 신규 추가 현장
+      </span>
+    </div>
+    <div style="font-size:11px;color:var(--ink-faint);" title="조회 버튼은 아래 저장된 최신 현장 목록을 지역·상태·건설사 등 조건으로 다시 걸러 보여줍니다. 호갱노노·네이버부동산·부동산114·세움터를 실시간으로 재조회하는 기능은 아니며, 데이터는 Claude가 주기적으로 교차검증하여 갱신합니다.">
+      행 클릭 → 상세 보기 &nbsp;|&nbsp; 열 헤더 클릭 → 정렬 &nbsp;|&nbsp; ⓘ 조회 안내
+    </div>
+  </div>
+
+  <!-- 테이블 -->
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table id="main-table">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)"  class="sorted-asc" data-col="0" data-dir="asc">No</th>
+            <th onclick="sortTable(1)"  data-col="1">단지명</th>
+            <th onclick="sortTable(2)"  data-col="2">광역</th>
+            <th onclick="sortTable(3)"  data-col="3">시·군·구</th>
+            <th onclick="sortTable(4)"  data-col="4">건설사</th>
+            <th onclick="sortTable(5)"  data-col="5">착공(예정)</th>
+            <th onclick="sortTable(6)"  data-col="6">준공(예정)</th>
+            <th onclick="sortTable(7)"  data-col="7">세대수</th>
+            <th onclick="sortTable(8)"  data-col="8">착공면적(㎡)</th>
+            <th onclick="sortTable(9)"  data-col="9">유형</th>
+            <th onclick="sortTable(10)" data-col="10">착공 상태</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- 상세 슬라이드오버 -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <div class="detail-title" id="d-name">—</div>
+      <button class="btn-close" onclick="closeDetailPanel()">×</button>
+    </div>
+    <div id="d-body"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// 데이터
+// ══════════════════════════════════════════
+const RAW = [
+  // No, 단지명, 광역, 시군구, 건설사, 착공, 준공, 세대수(숫자), 착공면적(㎡), 유형, 상태, 비고, isNew
+  [1,"블랑 써밋 74 (범일동 주상복합)","부산","동구","대우건설","2023.12","2028.11",998,null,"주상복합","공사중","2023.12 기착공. 최고 69층(263m). 하이엔드 '써밋'. 공사비 약 4,500억",false],
+  [2,"힐스테이트 아이코닉 (범천1-1구역)","부산","부산진구","현대건설","2025.03","2028 하반기",1323,122000,"아파트","공사중","후분양. 골조 공사 진행 중. 오피스텔 188실. 공사비 약 5,200억",false],
+  [3,"한화포레나 부산당리 (당리2구역)","부산","사하구","한화 건설부문","2026.01","2029.04",543,49000,"아파트","공사중","2026.1.15 착공. 기초·골조 공사 진행 중",false],
+  [4,"서면 어반센트 데시앙 (부암동)","부산","부산진구","태영건설","2026 초","2027.09",762,66000,"주상복합","공사중","오피스텔 69실. 2025.9 분양완료. 부암역 초역세권",false],
+  [5,"엄궁역 트라비스 하늘채 (엄궁1구역)","부산","사상구","코오롱글로벌","2026 상반기","2030.02",1670,155000,"아파트","공사중","2026.4 분양완료. 최고 36층. 공사비 약 6,000억",false],
+  [6,"에코델타시티 푸르지오 트레파크 (11BL)","부산","강서구","대우건설","2026 상반기","2028.09",1370,118000,"아파트","공사중","분양가상한제(1,605만원/3.3㎡). 2026.4 분양완료",false],
+  [7,"아크로 해운대 (중동5구역)","부산","해운대구","DL이앤씨","2026.06","2029.10",1149,106000,"아파트","공사중","공사비 5,401억. DL이앤씨 하이엔드 '아크로'. 6개동",false],
+  [8,"대연3구역 디아이엘","부산","남구","롯데건설+HDC현산","2024.08","2027.04",4488,420000,"아파트","공사중","부산 최대규모. 공정률 17%(2024.12). HDC컨소시엄",false],
+  [9,"르엘 리버파크 센텀 (한진CY부지)","부산","해운대구","롯데건설","2024.11","미확인",2070,null,"주상복합","공사중","롯데 하이엔드 '르엘'. 총 2,070세대. 수영강변. 골조 공사 중",false],
+  [10,"롯데캐슬 시그니처 중앙 (부전동)","부산","부산진구","롯데건설","2024.01","2027.11",null,null,"주상복합","공사중","서면 인근. 기초·골조 공사 중 (⚠단지명 재검증 필요: 동일명 타지역 단지와 혼동 가능성, 세움터 직접 확인 권장)",false],
+  [11,"구서 다움포레 (금정구 구서동)","부산","금정구","우방건설","2026.03","2028.08",120,9500,"아파트","공사중","신규추가. 120세대. 전세대 84㎡ 단일평형. 2026.3 분양완료·착공",true],
+  [12,"온천장 하늘채 엘리시움 (온천동)","부산","동래구","코오롱글로벌","2026 하반기","2029 하반기",384,34000,"주상복합","착공임박","오피스텔 52실(총436). 온천장역 도보3분. 2026.3 분양완료",false],
+  [13,"아크로 라로체 (시민공원 촉진3구역)","부산","부산진구","DL이앤씨","2026.12","2032.05",3545,null,"아파트","착공임박","철거율 60%(2026.4). 66개월 공사. 커튼월·미디어파사드",false],
+  [14,"금정산 하늘채 루미엘 (장전동)","부산","금정구","코오롱글로벌","2026 하반기","2029.01",669,56000,"주상복합","착공임박","오피스텔 74실. 온천장역 역세권. 최고 48층. 2026.2 분양완료",false],
+  [15,"동래 푸르지오 에듀포레 (안락1구역)","부산","동래구","대우건설","2026 하반기","2030.03",1481,134000,"아파트","착공임박","일반분양 474세대. 2026.1 계약완료. 학세권 대단지",false],
+  [16,"두산위브더제니스 대연 (동성하이타운)","부산","남구","두산건설","2026 4분기","2029 하반기",258,22000,"주상복합","착공임박","2026.8 청약. 최고 42층 2개동. 더블역세권",false],
+  [17,"반여4구역 재건축","부산","해운대구","DL이앤씨","2026 하반기~2027초","2029~2030",536,null,"아파트","착공임박","2026.5 분양완료. 6~12개월 후 착공",false],
+  [18,"더파크 비스타 동원 (감전동)","부산","사상구","동원개발","2026 하반기","2029",852,75000,"아파트","착공임박","사상구 감전동 숲세권",false],
+  [19,"에코델타시티 아테라 (24BL)","부산","강서구","금호건설 외","2026 하반기","2029",1025,103000,"아파트","착공임박","에코델타 스마트 대단지(1,025세대). 분양완료 후 착공 임박",false],
+  [20,"대신해모로센트럴 2차 (서대신동)","부산","서구","해모로건설","2026 하반기","미확인",null,null,"아파트","착공임박","2025.12~2026.1 분양 완료(당초 2026.7 예정에서 앞당겨짐). 분양 후 착공 목표",false],
+  [21,"알티에로 광안 (수영구 광안동)","부산","수영구","금강주택","2026 하반기~2027","2029~2030",null,null,"주상복합","착공임박","2026.6 분양. 광안리 수변 하이엔드",false],
+  [22,"에코델타시티 엘가로제비앙","부산","강서구","로제비앙건설","2026 상반기","2029",998,86000,"아파트","착공임박","2026.3 분양완료. 에코델타 998세대",false],
+  [23,"구포7구역 지역주택조합","부산","북구","미확인","2026 하반기~2027","2029~2030",null,null,"아파트","착공임박","2026.4 분양완료. 구포역 역세권",false],
+  [24,"초량3구역 재개발","부산","동구","미확인","2026 하반기","2029~2030",null,null,"아파트","착공임박","2026년 3분기 분양 예정 → 분양 후 착공",false],
+  [25,"남부민동 주상복합 (서구 남부민동)","부산","서구","미확인","2026 하반기~2027","2029~2030",null,null,"주상복합","착공임박","신규추가. 2026.5 분양예정. 시공사 미확인",true],
+  [26,"에코델타시티 2BL","부산","강서구","부산도시공사","2026 하반기","2029",501,43000,"아파트","착공임박","신규추가. 2026.5 분양완료. 전용 59㎡ 501세대. 공공분양",true],
+  [27,"에코델타시티 12BL","부산","강서구","미확인","2026 하반기~2027","2029~2030",null,null,"아파트","착공임박","신규추가. 2026.7 분양예정. 에코델타 추가 블록",true],
+  [28,"문현마루 지역주택조합 (남구 문현동)","부산","남구","미확인","2026 하반기~2027","2029~2030",null,null,"아파트","착공임박","신규추가. 2026.6 분양예정. BIFC 인근",true],
+  [29,"부산 명지2단계 A5 (강서구 명지동)","부산","강서구","미확인","2026 하반기~2027","2029~2030",null,null,"아파트","착공임박","신규추가. 2026.8 분양예정. 명지국제신도시 2단계",true],
+  [30,"삼보아파트 가로주택정비 (부산진구)","부산","부산진구","미확인","2026 하반기~2027","2029~2030",null,null,"아파트","착공임박","신규추가. 2026.9 분양예정. 소규모 가로주택정비",true],
+  [31,"한일시멘트 부지 (덕포동)","부산","사상구","시공사 미선정","2026.10(목표)","2029",499,42000,"아파트","시공사미정","온동네개발 시행. 공장 철거 중. 최고 39층 3개동",false],
+  // 경남
+  [32,"창원 한신더휴 메가센텀 (회원2구역)","경남","창원 마산회원구","한신공영","2026.05.19","2029",2016,185000,"아파트","공사중","5.19 착공식. 일반분양 1,139세대. 20년만 2,000세대 대단지",false],
+  [33,"김해 신문 센트럴 아이파크","경남","김해시","HDC현대산업개발","2024(기착공)","2026~2027",1379,74000,"아파트","공사중","장유신문지구 공공지원 민간임대. 총 1,379세대(잔여 공급분 865세대로 표기되는 자료 있음)",false],
+  [34,"김해 삼계동 아파트","경남","김해시","대우건설","2024(기착공)","2027.04",630,54000,"아파트","공사중","2024.3 계약. 2027.4 준공 예정",false],
+  [35,"센트레빌 아스테리움 거제 (상동동)","경남","거제시","동부건설","2026 하반기","2029",1307,117000,"아파트","착공임박","2026.8.3~5 청약. 최고 29층 10개동. 조선소 인접",false],
+  [36,"거제 장평동 아파트","경남","거제시","대우건설","2026 하반기","2029",423,36000,"아파트","착공임박","거제시 장평동. 디큐브백화점 인근",false],
+  // 울산
+  [37,"태화강 센트럴 아이파크 (반구동)","울산","중구","HDC현대산업개발","2026 상반기","2028.08",704,62000,"아파트","공사중","태화강·동천강 더블리버뷰. 트램1호선 수혜",false],
+  [38,"번영로 롯데캐슬 센트럴스카이 (학산동)","울산","중구","롯데건설","2025(기착공)","2028.08",634,56000,"주상복합","공사중","울산 중구 학산동 3개동(최고49층). 아파트634+오피스텔42실",false],
+  [39,"더샵 시에르네 (울산 중구)","울산","중구","포스코이앤씨","2024(기착공)","2027.05",788,null,"아파트","공사중","13개동. 2027년 5월 입주 예정",false],
+  [40,"울산 우정 에피트 (중구 우정동)","울산","중구","HL디앤아이한라","2024(기착공)","2027.01",533,47000,"아파트","공사중","5개동. 2027.1 입주 예정",false],
+  [41,"더폴 우정 (중구 우정동)","울산","중구","미확인","2026 상반기","2029.08",336,null,"주상복합","공사중","2개동(최고45층). 아파트316+오피스텔20실. 태화강변 랜드마크",false],
+  [42,"힐스테이트 문수로센트럴 1단지 (남구 신정동)","울산","남구","현대엔지니어링","2024(기착공)","2027.02",301,27000,"아파트","공사중","지하5층~지상42층 2개동",false],
+  [43,"힐스테이트 문수로센트럴 2단지 (남구 신정동)","울산","남구","현대엔지니어링","2024(기착공)","2027.02",301,27000,"아파트","공사중","1·2단지 합산 602세대",false],
+  [44,"울산 다운2지구 우미린 어반파크","울산","중구","우미건설","2024(기착공)","2027.07",731,null,"아파트","공사중","11개동. 다운2지구 택지개발. 2027.7 입주 예정",false],
+  [45,"울산 북구 신천동 주거복합","울산","북구","미확인","2026 하반기","2029",659,57000,"주상복합","착공임박","2026.6 건축위 조건부 가결. 매곡천 인근 9개동",false],
+  [46,"울산 동구 화정2지구 주거복합","울산","동구","미확인","2026 하반기","2029",616,53000,"주상복합","착공임박","2026.6 건축위 조건부 가결. 현대중공업 배후",false],
+  [47,"울산 남구 야음동 주거복합","울산","남구","미확인","2026 하반기","2029",348,30000,"주상복합","착공임박","2026.6 건축위 조건부 가결",false],
+  // 경북
+  [48,"리첼에듀포레경산역","경북","경산시","미확인","2026 하반기","2029~2030",null,null,"아파트","착공임박","2026.8 분양예정. 경산역 역세권 교육환경",false],
+  [49,"포항장성동재개발","경북","포항 북구","태영건설+포스코이앤씨","2026 하반기","2029~2030",2517,null,"아파트","착공임박","2026.11 분양예정. 총 2,517세대(임대215세대 포함). 포항 북구 장성동 재개발",false],
+  [50,"김천부곡 공동주택","경북","김천시","미확인","2026 하반기","2029",null,null,"아파트","착공임박","2026 하반기 분양예정",false],
+  [51,"경산대임지구 제일풍경채 S-1BL","경북","경산시","제일건설","2026~2027","2029",557,null,"아파트","인허가진행","경산 대임지구 S1블록 택지개발. 2026.1 사전청약(507세대) 진행",false],
+  // 대구
+  [52,"달서자이 제니크 (달서구 본리동)","대구","달서구","GS건설(자이에스앤디)","2025(기착공)","2027.02",360,30000,"주상복합","공사중","지하5층~지상49층 3개동. 후분양(2026.8 분양). 공사비 약 2,080억",false],
+  [53,"감삼동 공동주택 (죽전역 자이S&D)","대구","달서구","자이에스앤디","2026.09","2029.12",694,61000,"아파트","착공임박","2026.9 착공 확정. 지하3층~지상35층 8개동. 공사비 2,080억",false],
+  [54,"대구 동인동 주상복합 (NPL 재개발)","대구","동구","서한건설","2026 상반기","2030",304,26000,"주상복합","공사중","2026.4 철거착수 후 착공. 공사비 1,338억. 아파트256+오피스텔48",false],
+  [55,"대구금호워터폴리스 대방엘리움 F2BL","대구","북구","대방건설","2026 하반기","2029",null,null,"아파트","착공임박","2026.7 분양예정. 금호워터폴리스 F2블록",false],
+  [56,"대구연호 B-2BL","대구","동구","미확인","2026 하반기","2029",null,null,"아파트","착공임박","2026.9 분양예정. 대구 동구 연호지구",false],
+  [57,"더샵 엘리체 (대구 수성구)","대구","수성구","포스코이앤씨","2026 하반기","2029",null,null,"아파트","착공임박","2026.11 분양예정. 수성구 하이엔드 더샵",false],
+  [58,"대구감삼동죽전역주상복합","대구","달서구","미확인","2026 하반기","2029~2030",null,null,"주상복합","착공임박","2026.12 분양예정. 죽전역 역세권",false],
+  [59,"대구금호워터폴리스 대방디에트르 F1","대구","북구","대방건설","2026 하반기","2029",641,56000,"아파트","착공임박","2026.12 분양예정. 전용 84~127㎡. 2027.7 입주 목표",false],
+  [60,"동대구역 하늘채","대구","동구","코오롱글로벌","2026 하반기","2029",null,null,"주상복합","착공임박","2026 분양예정. 동대구역 초역세권",false],
+  [61,"해링턴플레이스 트라이빗 (달서구)","대구","달서구","한화 건설부문","2026 하반기","2029",null,null,"아파트","착공임박","2026 분양예정. 한화건설부문 해링턴플레이스",false],
+  [62,"두산위브더제니스 센트럴시티 (북구 학정동)","대구","북구","두산건설","2024(기착공)","2027.06",1098,96000,"아파트","공사중","최고 29층 14개동. 전용 106~240㎡ 대형 특화. 2027.6 입주",false],
+];
+
+// 상태 → CSS 클래스
+const statusClass = {
+  "공사중":"s-active","착공임박":"s-imminent","착공예정":"s-planned",
+  "인허가진행":"s-permit","시공사미정":"s-nocon","중기예정":"s-mid"
+};
+// 광역 → 배지 CSS
+const regionClass = {
+  "부산":"badge-busan","양산":"badge-yangsan","울산":"badge-ulsan",
+  "경남":"badge-gynam","경북":"badge-gymbuk","대구":"badge-daegu"
+};
+
+let currentData = [...RAW];
+let sortCol = 0, sortDir = 'asc';
+
+// ── KPI 계산 ──
+function updateKPI(data) {
+  const counts = {부산:0,울산:0,경남:0,경북:0,대구:0};
+  data.forEach(r => {
+    const g = r[2];
+    if (g==='양산') counts['부산']++;  // 양산은 부산 KPI에 합산
+    else if (counts[g]!==undefined) counts[g]++;
+  });
+  document.getElementById('kpi-busan').textContent  = counts['부산'];
+  document.getElementById('kpi-ulsan').textContent  = counts['울산'];
+  document.getElementById('kpi-gynam').textContent  = counts['경남'];
+  document.getElementById('kpi-gymbuk').textContent = counts['경북'];
+  document.getElementById('kpi-daegu').textContent  = counts['대구'];
+  document.getElementById('kpi-total').textContent  = data.length;
+}
+
+// ── 건설사 필터 채우기 ──
+function populateBuilderFilter() {
+  const sel = document.getElementById('f-builder');
+  const builders = [...new Set(RAW.map(r=>r[4]))].sort();
+  builders.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b; opt.textContent = b;
+    sel.appendChild(opt);
+  });
+}
+
+// ── 렌더 ──
+function render(data) {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  document.getElementById('result-num').textContent = data.length;
+  const hasNew = data.some(r=>r[12]);
+  document.getElementById('new-note').style.display = hasNew ? '' : 'none';
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="12">
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <p>조건에 맞는 현장이 없습니다.</p>
+      </div>
+    </td></tr>`;
+    updateKPI([]);
+    return;
+  }
+
+  data.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    if (r[12]) tr.className = 'row-new';
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => openDetail(r);
+
+    const units = r[7] != null ? r[7].toLocaleString() : '미확인';
+    const area  = r[8] != null ? r[8].toLocaleString() + ' ㎡' : '미확인';
+    const sc    = statusClass[r[10]] || '';
+    const rc    = regionClass[r[2]] || '';
+    const newMark = r[12] ? ' <span style="color:var(--pink);font-size:10px;">🆕</span>' : '';
+
+    tr.innerHTML = `
+      <td class="td-no">${idx+1}</td>
+      <td class="td-name">${r[1]}${newMark}</td>
+      <td class="td-center"><span class="badge ${rc}">${r[2]}</span></td>
+      <td>${r[3]}</td>
+      <td>${r[4]}</td>
+      <td class="td-center">${r[5]}</td>
+      <td class="td-center">${r[6]}</td>
+      <td class="td-num" style="font-weight:${r[7]>=1000?'700':'400'}">${units}</td>
+      <td class="td-num">${area}</td>
+      <td class="td-center">${r[9]}</td>
+      <td class="td-center"><span class="status ${sc}">${r[10]}</span></td>
+      <td style="font-size:11.5px;color:var(--ink-muted)">${r[11]}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  updateKPI(data);
+}
+
+// ── 필터 적용 ──
+function applyFilter() {
+  const region  = document.getElementById('f-region').value;
+  const status  = document.getElementById('f-status').value;
+  const builder = document.getElementById('f-builder').value;
+  const type    = document.getElementById('f-type').value;
+  const minU    = parseInt(document.getElementById('f-units').value)||0;
+  const kw      = document.getElementById('f-search').value.trim().toLowerCase();
+
+  currentData = RAW.filter(r => {
+    if (region  && r[2] !== region)  return false;
+    if (status  && r[10]!== status)  return false;
+    if (builder && r[4] !== builder) return false;
+    if (type    && r[9] !== type)    return false;
+    if (minU && (r[7]==null || r[7]<minU)) return false;
+    if (kw && !`${r[1]} ${r[4]} ${r[3]}`.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  sortData();
+  render(currentData);
+}
+
+// ── 초기화 ──
+function resetFilter() {
+  ['f-region','f-status','f-builder','f-type','f-units'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('f-search').value='';
+  currentData = [...RAW];
+  sortCol=0; sortDir='asc';
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.remove('sorted-asc','sorted-desc');
+  });
+  document.querySelector('thead th[data-col="0"]').classList.add('sorted-asc');
+  render(currentData);
+}
+
+// ── 정렬 ──
+function sortTable(col) {
+  if (sortCol===col) sortDir = sortDir==='asc'?'desc':'asc';
+  else { sortCol=col; sortDir='asc'; }
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.remove('sorted-asc','sorted-desc');
+  });
+  const th = document.querySelector(`thead th[data-col="${col}"]`);
+  if (th) th.classList.add(sortDir==='asc'?'sorted-asc':'sorted-desc');
+  sortData();
+  render(currentData);
+}
+
+function sortData() {
+  currentData.sort((a,b)=>{
+    let va=a[sortCol], vb=b[sortCol];
+    if (va==null) va = sortDir==='asc'?Infinity:-Infinity;
+    if (vb==null) vb = sortDir==='asc'?Infinity:-Infinity;
+    if (typeof va==='string') return sortDir==='asc'?va.localeCompare(vb,'ko'):vb.localeCompare(va,'ko');
+    return sortDir==='asc'?va-vb:vb-va;
+  });
+}
+
+// ── 상세 패널 ──
+function openDetail(r) {
+  document.getElementById('d-name').textContent = r[1];
+  const rows = [
+    ['광역시도',    r[2]],
+    ['시·군·구',   r[3]],
+    ['건설사',      r[4]],
+    ['착공(예정)',  r[5]],
+    ['준공(예정)',  r[6]],
+    ['세대수',      r[7]!=null?r[7].toLocaleString()+'세대':'미확인'],
+    ['착공면적',    r[8]!=null?r[8].toLocaleString()+' ㎡':'미확인 (세움터 교차검증 필요)'],
+    ['유형',        r[9]],
+    ['착공 상태',   r[10]],
+    ['신규 추가',   r[12]?'🆕 신규 추가 현장':'기존 현장'],
+  ];
+  document.getElementById('d-body').innerHTML = `
+    ${rows.map(([k,v])=>`
+      <div class="detail-row">
+        <div class="detail-key">${k}</div>
+        <div class="detail-val">${v}</div>
+      </div>`).join('')}
+    <div class="detail-note">${r[11]}</div>
+    <a class="eais-btn" href="https://www.eais.go.kr/modistatsdscview.do" target="_blank" rel="noopener">
+      🔍 세움터에서 착공면적 직접 조회 →
+    </a>
+  `;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closeDetail(e) {
+  if (e.target===document.getElementById('detail-overlay')) closeDetailPanel();
+}
+function closeDetailPanel() {
+  document.getElementById('detail-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDetailPanel(); });
+
+// ── EXCEL 다운로드 (화면에 보이는 표 그대로, xlsx 서식) ──
+async function exportExcel() {
+  if (typeof ExcelJS === 'undefined') {
+    alert('엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.');
+    return;
+  }
+
+  const hdr = ['No','단지명','광역','시·군·구','건설사','착공(예정)','준공(예정)','세대수','착공면적(㎡)','유형','착공 상태','비고'];
+  const colWidths = [5, 34, 8, 14, 20, 14, 14, 10, 14, 10, 12, 46];
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = '한라시멘트 영남지사';
+  wb.created = new Date();
+  const ws = wb.addWorksheet('착공현황', { views: [{ state: 'frozen', ySplit: 1 }] });
+
+  ws.columns = colWidths.map((w, i) => ({ width: w, key: 'c' + i }));
+
+  ws.addRow(hdr);
+  currentData.forEach((r, idx) => {
+    ws.addRow([
+      idx + 1,
+      r[1], r[2], r[3], r[4], r[5], r[6],
+      r[7] != null ? r[7] : '미확인',
+      r[8] != null ? r[8] : '미확인',
+      r[9], r[10], r[11]
+    ]);
+  });
+
+  const headerRow = ws.getRow(1);
+  headerRow.height = 22;
+  headerRow.eachCell(cell => {
+    cell.font = { name: '맑은 고딕', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E2761' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF1E2761' } },
+      bottom: { style: 'thin', color: { argb: 'FF1E2761' } },
+      left: { style: 'thin', color: { argb: 'FF1E2761' } },
+      right: { style: 'thin', color: { argb: 'FF1E2761' } }
+    };
+  });
+
+  const statusFill = {
+    '공사중':   'FFD1FAE5',
+    '착공임박': 'FFFEF3C7',
+    '착공예정': 'FFDBEAFE',
+    '인허가진행':'FFFFEDD5',
+    '시공사미정':'FFFEE2E2',
+    '중기예정': 'FFEDE9FE'
+  };
+  const statusFont = {
+    '공사중':   'FF166534',
+    '착공임박': 'FFB45309',
+    '착공예정': 'FF1D4ED8',
+    '인허가진행':'FF92400E',
+    '시공사미정':'FFB91C1C',
+    '중기예정': 'FF6D28D9'
+  };
+
+  for (let r = 2; r <= ws.rowCount; r++) {
+    const row = ws.getRow(r);
+    row.height = 20;
+    const dataIdx = r - 2;
+    const rec = currentData[dataIdx];
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      cell.font = { name: '맑은 고딕', size: 10 };
+      cell.alignment = { vertical: 'middle', wrapText: colNumber === 12 };
+      cell.border = {
+        top: { style: 'hair', color: { argb: 'FFDDE3EC' } },
+        bottom: { style: 'hair', color: { argb: 'FFDDE3EC' } },
+        left: { style: 'hair', color: { argb: 'FFDDE3EC' } },
+        right: { style: 'hair', color: { argb: 'FFDDE3EC' } }
+      };
+      if (colNumber === 1 || colNumber === 3 || colNumber === 6 || colNumber === 7 || colNumber === 10) {
+        cell.alignment.horizontal = 'center';
+      }
+      if (colNumber === 8 || colNumber === 9) {
+        cell.alignment.horizontal = 'right';
+        if (typeof cell.value === 'number') cell.numFmt = '#,##0';
+      }
+      if (colNumber === 11 && rec) {
+        const fill = statusFill[rec[10]];
+        const font = statusFont[rec[10]];
+        if (fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
+        if (font) cell.font = { name: '맑은 고딕', size: 10, bold: true, color: { argb: font } };
+        cell.alignment.horizontal = 'center';
+      }
+      if (rec && rec[12] && colNumber !== 11) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F5' } };
+      }
+    });
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `영남권착공현황_${new Date().toISOString().slice(0,10)}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ── 실시간 검색 ──
+document.getElementById('f-search').addEventListener('input', ()=>{ applyFilter(); });
+['f-region','f-status','f-builder','f-type','f-units'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', applyFilter);
+});
+
+// ── 초기화 ──
+populateBuilderFilter();
+currentData = [...RAW];
+render(currentData);
+</script>
+</body>
+</html>

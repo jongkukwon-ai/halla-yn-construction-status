@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="영남지사">
+  <meta name="theme-color" content="#06100c">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+  <link rel="icon" href="./assets/icon-192.png">
+  <title>영남지사</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      height:100vh;width:100vw;overflow:hidden;
+      background:
+        radial-gradient(circle at 82% 12%, rgba(0,135,90,0.14), transparent 45%),
+        radial-gradient(circle at 12% 88%, rgba(158,216,74,0.08), transparent 42%),
+        #06100c;
+    }
+
+    /* ── 로고 워터마크 ── */
+    #bg-logo{
+      position:fixed;top:8%;right:5%;width:min(34vw,420px);height:auto;
+      opacity:.08;z-index:1;pointer-events:none;user-select:none;
+    }
+
+    /* ── 좌상단 클러스터 ── */
+    #top-cluster{
+      position:fixed;top:max(16px,env(safe-area-inset-top));left:16px;
+      display:flex;gap:8px;z-index:10
+    }
+    #back-btn{
+      background:transparent;border:.5px solid rgba(255,255,255,0.12);
+      color:rgba(255,255,255,0.35);padding:6px 12px;border-radius:50px;
+      font-size:12px;cursor:pointer;font-family:system-ui,sans-serif;
+      text-decoration:none;transition:all .2s;white-space:nowrap;
+    }
+    #back-btn:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.25)}
+
+    /* ── 히어로 (큰 영남지사 타이틀 + 바로가기 칸) ── */
+    #hero{
+      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+      display:flex;flex-direction:column;align-items:center;gap:26px;
+      z-index:10;text-align:center;width:fit-content;max-width:92vw;
+    }
+    #pw-name{
+      font-size:clamp(48px,13vw,120px);font-weight:800;letter-spacing:-.02em;
+      color:rgba(255,255,255,0.92);line-height:1;font-family:system-ui,sans-serif;
+    }
+    #pw-name span{display:block;font-size:clamp(11px,1.6vw,15px);letter-spacing:.3em;text-transform:uppercase;color:rgba(158,216,74,0.6);margin-top:12px;font-weight:500}
+
+    /* ── 설치 버튼 ── */
+    #install-btn{
+      position:fixed;top:max(16px,env(safe-area-inset-top));right:16px;
+      background:rgba(78,214,144,0.13);border:.5px solid rgba(78,214,144,0.4);
+      color:rgba(150,230,180,0.85);padding:6px 14px;border-radius:50px;
+      font-size:12px;cursor:pointer;font-family:system-ui,sans-serif;
+      z-index:10;display:none;transition:background .2s
+    }
+    #install-btn:hover{background:rgba(78,214,144,0.25)}
+
+    /* ── 메뉴 버튼 ── */
+    #menu-btn{
+      position:fixed;bottom:max(28px,env(safe-area-inset-bottom));right:16px;
+      background:rgba(78,214,144,0.1);border:.5px solid rgba(78,214,144,0.28);
+      color:rgba(150,230,180,0.85);padding:9px 16px;border-radius:50px;
+      font-size:13px;cursor:pointer;font-family:system-ui,sans-serif;
+      z-index:10;text-decoration:none;transition:all .2s;
+    }
+    #menu-btn:hover{background:rgba(78,214,144,0.2)}
+
+    /* ── 바로가기 칸 (클릭 이동) ── */
+    #quick-nav{
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:92vw;
+    }
+    .nav-box{
+      width:clamp(160px,42vw,220px);
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+      padding:14px 10px;border-radius:16px;
+      background:rgba(255,255,255,0.05);border:.5px solid rgba(255,255,255,0.14);
+      text-decoration:none;color:rgba(255,255,255,0.85);
+      font-family:system-ui,sans-serif;text-align:center;
+      transition:all .2s;cursor:pointer;
+    }
+    .nav-box:hover{background:rgba(78,214,144,0.12);border-color:rgba(78,214,144,0.45);transform:translateY(-2px)}
+    .nav-box-icon{font-size:22px}
+    .nav-box-title{font-size:13px;font-weight:600;margin-top:2px;white-space:nowrap}
+    .nav-box-desc{font-size:10px;color:rgba(255,255,255,0.4)}
+  </style>
+</head>
+<body>
+
+<img id="bg-logo" src="./assets/halla_logo.png" alt="HALLA CEMENT">
+
+<div id="top-cluster">
+  <a href="../secretary/index.html" id="back-btn">← Jkwon</a>
+</div>
+
+<button id="install-btn">⬇ 앱 설치</button>
+<a href="./menu.html" id="menu-btn">☰ 메뉴</a>
+
+<div id="hero">
+  <div id="pw-name">영남지사<span>HALLA CEMENT</span></div>
+
+  <div id="quick-nav">
+    <a href="./mi/menu.html" class="nav-box">
+      <span class="nav-box-icon">📦</span>
+      <span class="nav-box-title">실적 분석 및 판매 예상</span>
+    </a>
+    <a href="./weekly/index.html" class="nav-box">
+      <span class="nav-box-icon">📈</span>
+      <span class="nav-box-title">주간리뷰</span>
+    </a>
+    <a href="./monthly/index.html" class="nav-box">
+      <span class="nav-box-icon">🗓️</span>
+      <span class="nav-box-title">월간대면리뷰</span>
+      <span class="nav-box-desc">지사회의</span>
+    </a>
+    <a href="./construction/index.html" class="nav-box">
+      <span class="nav-box-icon">🏗️</span>
+      <span class="nav-box-title">영남지역 아파트 착공현황</span>
+    </a>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   서비스워커 등록
+═══════════════════════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PWA 설치 프롬프트
+═══════════════════════════════════════════════════════════════ */
+let deferredPrompt = null;
+const installBtn = document.getElementById('install-btn');
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.style.display = 'block';
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') installBtn.style.display = 'none';
+  deferredPrompt = null;
+});
+
+window.addEventListener('appinstalled', () => {
+  installBtn.style.display = 'none';
+  deferredPrompt = null;
+});
+</script>
+</body>
+</html>

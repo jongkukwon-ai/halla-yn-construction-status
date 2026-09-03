@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#06100c">
+<link rel="icon" href="../assets/icon-192.png">
+<title>MI · 판매물량 예상 — 영남지사</title>
+<link rel="stylesheet" href="../assets/brand.css">
+<style>
+  .upload-drop{
+    border:1.5px dashed var(--border);border-radius:var(--radius-sm);
+    padding:26px 16px;text-align:center;cursor:pointer;transition:all .2s;
+    background:var(--bg3);
+  }
+  .upload-drop:hover{border-color:var(--border2);background:rgba(78,214,144,0.05)}
+  .upload-drop.has-file{padding:16px}
+  #up-empty{color:var(--text3);font-size:13px}
+  #up-name{font-size:14px;font-weight:600;color:var(--text)}
+  #up-meta{font-size:11px;color:var(--text3);margin-top:3px}
+  #up-status{text-align:center;font-size:12px;color:var(--text2);margin-top:8px;min-height:1.4em}
+
+  .period-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+  @media(max-width:640px){.period-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:400px){.period-row{grid-template-columns:1fr}}
+  #actual-drop{
+    border:1.5px dashed var(--border);border-radius:var(--radius-sm);
+    padding:9px 10px;text-align:center;cursor:pointer;transition:all .2s;
+    background:var(--bg3);font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  #actual-drop:hover{border-color:var(--border2);background:rgba(78,214,144,0.05)}
+  #sel-year option,#sel-month option,#sel-week option,#nd-office option,#nd-week option,#nd-mode option,
+  #nd-pumjong option,#nd-product option,#nd-terminal option,#nd-channel option,#nd-pay option{color:#111;background:#fff}
+  .hist-select-row{display:flex;gap:8px;align-items:center}
+  #hist-select{
+    flex:1;font-size:14px;padding:10px 12px;
+    border:.5px solid var(--border);border-radius:var(--radius-sm);
+    background:var(--bg3);color:var(--text);font-family:var(--font);
+    transition:border-color .2s;outline:none;
+  }
+  #hist-select:focus{border-color:var(--border2)}
+  #hist-select option{color:#111;background:#fff}
+  .msedit-suggestions{
+    position:absolute;top:100%;left:0;right:0;z-index:30;
+    background:var(--bg2);border:.5px solid var(--border);border-radius:var(--radius-sm);
+    max-height:220px;overflow-y:auto;margin-top:4px;
+  }
+  .msedit-suggestions .sug-item{padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text)}
+  .msedit-suggestions .sug-item:hover{background:var(--bg3)}
+  .search-input-wrap{position:relative}
+  .search-input-wrap input{padding-right:28px !important}
+  .search-clear-btn{
+    position:absolute;right:4px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--text3);font-size:16px;line-height:1;
+    cursor:pointer;padding:6px 8px;
+  }
+  .search-clear-btn:hover{color:var(--text)}
+  input[type=number]{-moz-appearance:textfield}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+  .week-tbl-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:.5px solid var(--border)}
+  table.week-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+  table.week-tbl th{
+    background:var(--bg3);color:var(--text3);font-weight:500;font-size:11px;
+    letter-spacing:.04em;text-transform:uppercase;padding:10px 12px;text-align:right;white-space:nowrap;
+    border-bottom:.5px solid var(--border);
+  }
+  table.week-tbl th small{display:block;font-size:9px;color:var(--text3);text-transform:none;letter-spacing:0;margin-top:2px}
+  table.week-tbl th:first-child{text-align:left;position:sticky;left:0;background:var(--bg);z-index:2}
+  table.week-tbl td{padding:9px 12px;text-align:right;border-bottom:.5px solid var(--border);white-space:nowrap}
+  table.week-tbl tr:last-child td{border-bottom:none}
+  table.week-tbl tr.sum-row td{background:var(--bg3);font-weight:600;color:var(--accent)}
+  table.week-tbl tr.sum-row td:first-child{text-align:left;position:sticky;left:0;z-index:2}
+  table.week-tbl td.office-name{text-align:left;font-weight:500;color:var(--text);position:sticky;left:0;background:var(--bg);z-index:1;vertical-align:middle}
+  table.week-tbl tr.office-sum-row td.office-name{background:rgba(255,255,255,0.045)}
+  table.week-tbl td.pum-name{text-align:left;color:var(--text2)}
+  table.week-tbl td.no-data{color:var(--text3)}
+  table.week-tbl td.budget-col{color:var(--text2)}
+  table.week-tbl td.total-col{font-weight:600;color:var(--lime)}
+  table.week-tbl tr.pum-row td{color:var(--text2);font-size:12px}
+  table.week-tbl tr.pum-row td.pum-name{padding-left:14px;font-weight:400;color:var(--text3)}
+  table.week-tbl tr.office-sum-row td{background:rgba(255,255,255,0.045);font-weight:600;border-top:.5px solid var(--border)}
+  table.week-tbl td.rate-good{color:var(--accent)}
+  table.week-tbl td.rate-warn{color:var(--amber)}
+  table.week-tbl td.rate-bad{color:var(--danger)}
+  table.week-tbl th.week-col-hl{background:rgba(78,214,144,0.22) !important;color:var(--accent) !important}
+  table.week-tbl td.week-col-hl{background:rgba(78,214,144,0.16) !important}
+
+  .trend-wrap{padding:6px 4px}
+  .trend-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:.5px solid var(--border)}
+  .trend-row:last-child{border-bottom:none}
+  .trend-office{width:80px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--text)}
+  .trend-svg{flex:1;min-width:0}
+
+  /* 1행: 영업소·출하시점·품종명·제품명·출하공장·CHANNEL·계열명·납품처코드
+     2행: 납품처명·LHCC Volume·M/S·운송모드·지급수단·거리·T2·T2sub
+     같은 열의 1/2행 필드 내용 길이에 맞춰 열 폭을 다르게 배분해 잘림을 최소화합니다 */
+  .nd-grid{grid-template-columns:1.5fr 1fr 0.6fr 1.1fr 1fr 0.8fr 1.1fr 0.7fr}
+  .nd-grid .field input,.nd-grid .field select{padding:8px 8px;font-size:12px}
+  @media(max-width:900px){.nd-grid{grid-template-columns:repeat(4,1fr)}}
+  @media(max-width:520px){.nd-grid{grid-template-columns:repeat(2,1fr)}}
+
+  .ms-input-wrap{position:relative;display:inline-block;width:100%}
+  .ms-input-wrap input{padding-right:22px !important}
+  .ms-input-suffix{
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    color:var(--text2);font-size:13px;pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bg"><img class="brand-logo" src="../assets/halla_logo.png" alt="HALLA CEMENT"></div>
+
+<div class="top-bar">
+  <div class="top-bar-left">
+    <a href="./menu.html" class="back-btn">← 실적 분석 및 판매 예상</a>
+    <span class="top-title">MI · 판매물량 예상</span>
+  </div>
+  <span class="top-badge" id="period-badge">-</span>
+</div>
+
+<div class="page-wrap">
+
+  <!-- 조회 기간 선택 -->
+  <div class="card">
+    <div class="card-title">작성</div>
+    <div class="period-row">
+      <div class="field">
+        <label>년도</label>
+        <select id="sel-year" onchange="onPeriodChange()"></select>
+      </div>
+      <div class="field">
+        <label>월</label>
+        <select id="sel-month" onchange="onPeriodChange()"></select>
+      </div>
+      <div class="field">
+        <label>주차</label>
+        <select id="sel-week" onchange="onWeekSelectChange()"></select>
+      </div>
+      <div class="field">
+        <label>실적</label>
+        <div id="actual-drop" onclick="document.getElementById('actual-input').click()">📎 실적 파일 업로드</div>
+        <input type="file" id="actual-input" accept=".xlsx" style="display:none" onchange="onActualFileSelected(event)">
+      </div>
+    </div>
+    <div id="actual-status" style="font-size:12px;color:var(--text2);margin-top:8px;min-height:1.4em"></div>
+  </div>
+
+  <!-- 판매실적 업로드 -->
+  <div class="card">
+    <div class="card-title">판매실적 업로드 <span>회사 다운로드 파일(raw data) 그대로 업로드</span></div>
+    <div id="up-drop" class="upload-drop" onclick="document.getElementById('up-input').click()">
+      <div id="up-empty">📎 클릭하여 판매실적 엑셀 파일 선택 (.xlsx)</div>
+      <div id="up-info" style="display:none">
+        <div id="up-name"></div>
+        <div id="up-meta"></div>
+        <div class="btn-row" style="margin-top:10px;justify-content:center">
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();clearUpload()">삭제</button>
+        </div>
+      </div>
+    </div>
+    <div id="up-status"></div>
+    <input type="file" id="up-input" accept=".xlsx" style="display:none" onchange="onFileSelected(event)">
+  </div>
+
+  <!-- 영업소별 가중치 조정 -->
+  <div class="card" id="weight-card" style="display:none">
+    <div class="card-title">영업소별 가중치 조정 <span id="weight-hint">날씨·파업·물량 증감 등 반영 · 완료된 주차는 실적 그대로 적용</span></div>
+    <div id="weight-trend-note" style="display:none;font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6"></div>
+    <div class="tbl-wrap">
+      <table class="data-tbl" id="weight-table">
+        <thead><tr id="weight-thead-row"></tr></thead>
+        <tbody id="weight-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 신규 납품처 추가 -->
+  <div class="card">
+    <div class="card-title">
+      <div>신규 납품처 추가 <span>판매실적에 아직 반영되지 않은 납품처를 직접 추가합니다</span></div>
+      <button class="btn btn-secondary btn-sm" id="nd-toggle-btn" onclick="toggleNdForm()">+ 추가하기</button>
+    </div>
+    <div id="nd-body" style="display:none">
+    <div class="form-grid nd-grid">
+      <div class="field">
+        <label>영업소</label>
+        <select id="nd-office">
+          <option value="부산">부산</option>
+          <option value="울산">울산</option>
+          <option value="경남동부">경남동부</option>
+          <option value="경남서부">경남서부</option>
+          <option value="경북동부">경북동부</option>
+          <option value="경북서부">경북서부</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>출하시점</label>
+        <input id="nd-date" type="date">
+      </div>
+      <div class="field">
+        <label>품종명</label>
+        <select id="nd-pumjong" onchange="onNdPumjongChange()">
+          <option value="PC">PC</option>
+          <option value="SC">SC</option>
+          <option value="SP">SP</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>제품명</label>
+        <select id="nd-product"></select>
+      </div>
+      <div class="field">
+        <label>출하공장</label>
+        <select id="nd-terminal">
+          <option value="항만공장">항만공장</option>
+          <option value="포항공장">포항공장</option>
+          <option value="온산공장">온산공장</option>
+          <option value="창원공장">창원공장</option>
+          <option value="광양공장">광양공장</option>
+          <option value="삼호공장">삼호공장</option>
+          <option value="장항공장">장항공장</option>
+          <option value="인천공장">인천공장</option>
+          <option value="매포공장">매포공장</option>
+          <option value="음성공장">음성공장</option>
+          <option value="음성공장(제천)">음성공장(제천)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>CHANNEL</label>
+        <select id="nd-channel">
+          <option value="레미콘">레미콘</option>
+          <option value="2차제품">2차제품</option>
+          <option value="대리점">대리점</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>계열명</label>
+        <input id="nd-affiliate" type="text">
+      </div>
+      <div class="field">
+        <label>납품처코드</label>
+        <input id="nd-code" type="text">
+      </div>
+      <div class="field">
+        <label>납품처명</label>
+        <input id="nd-name" type="text">
+      </div>
+      <div class="field">
+        <label>LHCC Volume</label>
+        <input id="nd-volume" type="number" step="any" min="0" placeholder="0">
+      </div>
+      <div class="field">
+        <label>M/S</label>
+        <div class="ms-input-wrap">
+          <input id="nd-ms" type="number" step="1" min="0" max="100" placeholder="0">
+          <span class="ms-input-suffix">%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>운송모드</label>
+        <select id="nd-mode" onchange="onNdModeChange()">
+          <option value="상차도">상차도</option>
+          <option value="도착도">도착도</option>
+          <option value="직송">직송</option>
+          <option value="분공장도">분공장도</option>
+          <option value="하치장도">하치장도</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>지급수단</label>
+        <select id="nd-pay">
+          <option value="현금">현금</option>
+          <option value="어음">어음</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>거리</label>
+        <input id="nd-distance" type="number" step="any" min="0">
+      </div>
+      <div class="field">
+        <label>T2</label>
+        <input id="nd-t2" type="number" step="any">
+      </div>
+      <div class="field">
+        <label>T2sub</label>
+        <input id="nd-t2sub" type="number" step="any">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-lime" onclick="addManualDestination()">+ 납품처 추가</button>
+    </div>
+    </div>
+  </div>
+
+  <!-- 신규 납품처 MS 입력 -->
+  <div class="card" id="ms-gap-card" style="display:none">
+    <div class="card-title">
+      <div>신규 납품처 MS 입력 <span id="ms-gap-hint"></span></div>
+      <button class="btn btn-secondary btn-sm" id="ms-gap-toggle-btn" onclick="toggleMsGapForm()">입력하기</button>
+    </div>
+    <div id="ms-gap-body" style="display:none">
+    <div class="tbl-wrap">
+      <table class="data-tbl" id="ms-gap-table">
+        <thead><tr><th>영업소</th><th>납품처명</th><th>품종</th><th>제품</th><th>MS(%)</th></tr></thead>
+        <tbody id="ms-gap-tbody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-lime" onclick="saveMsGaps()">MS 저장</button>
+    </div>
+    </div>
+  </div>
+
+  <!-- MS 수정 -->
+  <div class="card">
+    <div class="card-title">
+      <div>MS 수정 <span>영업소·납품처·품종을 선택해 기존 MS 값을 찾아 수정합니다</span></div>
+      <button class="btn btn-secondary btn-sm" id="msedit-toggle-btn" onclick="toggleMsEditForm()">수정하기</button>
+    </div>
+    <div id="msedit-body" style="display:none">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="field" style="position:relative">
+          <label>영업소</label>
+          <div class="search-input-wrap">
+            <input id="msedit-office-search" type="text" placeholder="영업소 검색" autocomplete="off"
+              oninput="onMsEditOfficeSearch()" onfocus="onMsEditOfficeSearch()" onblur="setTimeout(()=>hideSuggestions('msedit-office-suggestions'),150)">
+            <button type="button" class="search-clear-btn" onclick="clearMsEditOffice()" title="지우기">×</button>
+          </div>
+          <div id="msedit-office-suggestions" class="msedit-suggestions" style="display:none"></div>
+        </div>
+        <div class="field" style="position:relative">
+          <label>납품처</label>
+          <div class="search-input-wrap">
+            <input id="msedit-search" type="text" placeholder="납품처명 검색" autocomplete="off"
+              oninput="onMsEditSearch()" onfocus="onMsEditSearch()" onblur="setTimeout(()=>hideSuggestions('msedit-suggestions'),150)">
+            <button type="button" class="search-clear-btn" onclick="clearMsEditName()" title="지우기">×</button>
+          </div>
+          <div id="msedit-suggestions" class="msedit-suggestions" style="display:none"></div>
+        </div>
+        <div class="field" style="position:relative">
+          <label>품종</label>
+          <div class="search-input-wrap">
+            <input id="msedit-pumjong-search" type="text" placeholder="품종 검색" autocomplete="off"
+              oninput="onMsEditPumjongSearch()" onfocus="onMsEditPumjongSearch()" onblur="setTimeout(()=>hideSuggestions('msedit-pumjong-suggestions'),150)">
+            <button type="button" class="search-clear-btn" onclick="clearMsEditPumjong()" title="지우기">×</button>
+          </div>
+          <div id="msedit-pumjong-suggestions" class="msedit-suggestions" style="display:none"></div>
+        </div>
+        <div class="field">
+          <label>M/S</label>
+          <div class="ms-input-wrap">
+            <input id="msedit-ms" type="number" step="1" min="0" max="100" placeholder="0">
+            <span class="ms-input-suffix">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-lime" onclick="saveMsEdit()">MS 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 영업소별 주간 예상판매량 -->
+  <div class="card" id="dash-card" style="display:none">
+    <div class="card-title">영업소별 예상판매량 (톤) <span id="week-def-hint">목요일 ~ 수요일 기준</span></div>
+    <div class="week-tbl-wrap">
+      <table class="week-tbl" id="week-table">
+        <thead><tr id="week-thead-row"></tr></thead>
+        <tbody id="week-tbody"></tbody>
+        <tfoot><tr class="sum-row" id="week-sum-row"></tr></tfoot>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-lime" onclick="downloadMiRawData()">⬇ MI 작성용 raw data 다운로드</button>
+    </div>
+  </div>
+
+  <!-- 영업소별 주간 트렌드 -->
+  <div class="card" id="trend-card" style="display:none">
+    <div class="card-title">영업소별 주간 트렌드 <span>톤/주</span></div>
+    <div class="trend-wrap" id="trend-wrap"></div>
+  </div>
+
+  <!-- 저장 이력 -->
+  <div class="card">
+    <div class="card-title">분석 이력 <span id="hist-count" class="badge">0건</span></div>
+    <div id="hist-empty" class="empty"><div class="empty-icon">📭</div>업로드된 판매실적이 없어요.</div>
+    <div id="hist-select-row" class="hist-select-row" style="display:none">
+      <select id="hist-select" onchange="loadMonth(this.value)"></select>
+      <button class="btn btn-danger btn-sm" onclick="delMonth(document.getElementById('hist-select').value)">삭제</button>
+    </div>
+  </div>
+
+  <!-- 과거 실적 일괄 반영 -->
+  <div class="card">
+    <div class="card-title">과거 실적 일괄 반영 <span>여러 달 데이터가 담긴 파일 한 번에 업로드 · 납품처별 출하 트렌드 학습용</span></div>
+    <div id="hist-drop" class="upload-drop" onclick="document.getElementById('hist-input').click()">
+      <div id="hist-empty">📎 클릭하여 여러 달 판매실적 엑셀 파일 선택 (.xlsx)</div>
+    </div>
+    <div id="hist-bulk-status"></div>
+    <input type="file" id="hist-input" accept=".xlsx" style="display:none" onchange="onHistoricalFileSelected(event)">
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script>
+const ALL_OFFICES = ['부산','울산','경남동부','경남서부','경북동부','경북서부'];
+const DB_NAME = 'yn_mi_db', DB_STORE = 'months';
+const META_KEY = 'yn_mi_meta'; // localStorage: {months:[{ym, savedAt, name}]}
+
+let currentYm = '';          // '202608'
+let currentWeeks = [];       // [{n, start:Date, end:Date, label}]
+let currentGroups = [];      // 집계된 납품처 단위 그룹 배열
+let currentOfficeStats = {}; // {office: {budget, weeks:{1:v,...}, total}}
+let currentSatHolRatio = null; // 토요일·공휴일이 평일 대비 차지하는 비율 (화면 안내용)
+let currentIsEstimated = false; // 일자별 실적이 없어 주차 배분이 추정치인지 여부 (화면 안내용)
+let currentFileName = '';    // 저장 시 재사용 (신규 납품처 수동 추가 후 재저장용)
+let currentLastActualDate = 0;
+let currentOfficeWeightAdj = {}; // {office: {weekN: ratio}} — 날씨·파업·물량 증감 등 가중치 (완료된 주차는 미적용)
+let currentWeightSuggested = false; // 위 가중치가 사용자 입력이 아닌 과거 실적 추세 기반 자동 제안값인지 여부
+let currentTrendInfo = null; // {recentYm, prevYm, ratios} — 참고용 추세 분석 결과 (화면 안내용)
+
+/* ═══════════════════════════════════════════════════════════════
+   1. 목~수 주차 계산 (해당 월 기준, 가변 주 수)
+═══════════════════════════════════════════════════════════════ */
+function computeWeeks(year, month){ // month: 1-12
+  const first = new Date(year, month-1, 1);
+  const last = new Date(year, month, 0);
+  const dow = first.getDay(); // 0=일 ... 4=목 6=토
+  const daysToThu = (4 - dow + 7) % 7;
+  const firstThu = new Date(year, month-1, 1 + daysToThu);
+
+  const weeks = [];
+  if (daysToThu > 0) {
+    const wEnd = new Date(firstThu); wEnd.setDate(wEnd.getDate()-1);
+    weeks.push({ start: new Date(first), end: wEnd });
+  }
+  let cursor = new Date(firstThu);
+  while (cursor <= last) {
+    const wEnd = new Date(cursor); wEnd.setDate(wEnd.getDate()+6);
+    const clampedEnd = wEnd > last ? new Date(last) : wEnd;
+    weeks.push({ start: new Date(cursor), end: clampedEnd });
+    cursor = new Date(cursor); cursor.setDate(cursor.getDate()+7);
+  }
+  return weeks.map((w,i)=>({
+    n: i+1,
+    start: w.start, end: w.end,
+    label: `${w.start.getMonth()+1}월${w.start.getDate()}일 ~ ${w.end.getMonth()+1}월${w.end.getDate()}일`
+  }));
+}
+
+function ymd(d){ return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate(); }
+
+function weekOfDate(dateNum, weeks){ // dateNum: 20260801 형태 정수
+  const y = Math.floor(dateNum/10000), m = Math.floor((dateNum%10000)/100), d = dateNum%100;
+  const dt = new Date(y, m-1, d);
+  for (const w of weeks) {
+    if (ymd(dt) >= ymd(w.start) && ymd(dt) <= ymd(w.end)) return w.n;
+  }
+  return null;
+}
+
+function dateNumToDate(dateNum){
+  const y = Math.floor(dateNum/10000), m = Math.floor((dateNum%10000)/100), d = dateNum%100;
+  return new Date(y, m-1, d);
+}
+
+// 고정일 공휴일 (MM DD). 설날·추석·부처님오신날 등 음력 공휴일은 매년 날짜가 달라 별도 확인이 필요합니다.
+const KR_FIXED_HOLIDAYS_MMDD = new Set(['0101','0301','0505','0606','0815','1003','1009','1225']);
+
+function isHolidayDate(d){
+  const mmdd = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  return KR_FIXED_HOLIDAYS_MMDD.has(mmdd);
+}
+
+// 'sunday'(출하 없음, 항상 0) | 'satHol'(토요일·공휴일, 평일 대비 비율 적용) | 'weekday'(평일)
+function dayType(d){
+  const dow = d.getDay(); // 0=일 6=토
+  if (dow === 0) return 'sunday';
+  if (dow === 6) return 'satHol';
+  if (isHolidayDate(d)) return 'satHol';
+  return 'weekday';
+}
+
+// 해당 주차의 "일요일·공휴일 제외" 일수 (토요일은 출하일이므로 포함)
+function countBusinessDays(w){
+  let cnt = 0;
+  const cur = new Date(w.start);
+  while (cur <= w.end) {
+    const excluded = cur.getDay() === 0 || isHolidayDate(cur);
+    if (!excluded) cnt++;
+    cur.setDate(cur.getDate()+1);
+  }
+  return cnt;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. 파일 파싱 + 집계
+═══════════════════════════════════════════════════════════════ */
+function num(v){ const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+function fmt(n){ return Math.round(n).toLocaleString('ko-KR'); }
+
+async function onFileSelected(e){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    setStatus('⚠ 엑셀 분석 라이브러리를 불러오지 못했습니다 (인터넷 연결을 확인해주세요).');
+    return;
+  }
+
+  document.getElementById('up-empty').style.display = 'none';
+  document.getElementById('up-info').style.display = 'block';
+  document.getElementById('up-drop').classList.add('has-file');
+  document.getElementById('up-name').textContent = '📄 ' + file.name;
+  document.getElementById('up-meta').textContent = fmtSize(file.size) + ' · 분석 중...';
+  setStatus('📄 파일을 읽는 중...');
+
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type:'array', dense:true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
+    processRows(rows, file.name);
+  } catch (err) {
+    console.error(err);
+    setStatus('⚠ 파일을 읽지 못했습니다: ' + err.message);
+    document.getElementById('up-meta').textContent = fmtSize(file.size) + ' · 분석 실패';
+  }
+}
+
+// "작성" 칸의 실적 업로드 — 판매실적 업로드와 동일한 형식의 파일을 분석해,
+// 그 안에 담긴 실적 반영 기준일까지의 주차를 "완료"로 갱신합니다(월 전체가 끝나지 않아도 주차 단위로 가능).
+async function onActualFileSelected(e){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (typeof XLSX === 'undefined') { setActualStatus('⚠ 엑셀 분석 라이브러리를 불러오지 못했습니다.'); return; }
+
+  setActualStatus('📄 파일을 읽는 중...');
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type:'array', dense:true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
+    if (!rows.length) { setActualStatus('⚠ 데이터를 찾지 못했습니다.'); return; }
+
+    const header = rows[0];
+    const idx = {};
+    header.forEach((h,i)=>{ if(h!=null) idx[String(h).trim()] = i; });
+    if (idx['월'] !== undefined) {
+      const ymCounts = {};
+      for (let i=1;i<rows.length;i++){
+        const v = rows[i][idx['월']];
+        if (v==null) continue;
+        ymCounts[String(v)] = (ymCounts[String(v)]||0)+1;
+      }
+      const detectedYm = Object.keys(ymCounts).sort((a,b)=> ymCounts[b]-ymCounts[a])[0];
+      if (currentYm && detectedYm && detectedYm !== currentYm) {
+        const ok = confirm(
+          `이 파일은 ${detectedYm.slice(0,4)}년 ${+detectedYm.slice(4,6)}월 데이터입니다.\n` +
+          `현재 작성 중인 ${currentYm.slice(0,4)}년 ${+currentYm.slice(4,6)}월과 다릅니다.\n` +
+          `계속 진행하면 작성 중인 월이 이 파일 기준으로 바뀝니다. 계속할까요?`
+        );
+        if (!ok) { setActualStatus(''); return; }
+      }
+    }
+
+    setActualStatus('⚙ 실적 분석 중...');
+    await processRows(rows, file.name);
+    setActualStatus('✅ 실적이 반영되었습니다 — 완료된 주차가 갱신되었습니다.');
+    toast('실적 반영 완료');
+  } catch (err) {
+    console.error(err);
+    setActualStatus('⚠ 파일을 읽지 못했습니다: ' + err.message);
+  }
+}
+
+function setActualStatus(msg){ document.getElementById('actual-status').textContent = msg; }
+
+function fmtSize(bytes){
+  if (bytes > 1024*1024) return (bytes/1024/1024).toFixed(1)+'MB';
+  return Math.round(bytes/1024)+'KB';
+}
+
+function setStatus(msg){ document.getElementById('up-status').textContent = msg; }
+
+const DEFAULT_SAT_HOL_RATIO = 0.3; // 일자별 실적이 없어 비율을 측정할 수 없을 때 쓰는 잠정 가정치
+
+async function processRows(rows, fileName){
+  if (!rows.length) { setStatus('⚠ 데이터를 찾지 못했습니다.'); return; }
+  const header = rows[0];
+  const idx = {};
+  header.forEach((h,i)=>{ if(h!=null) idx[String(h).trim()] = i; });
+
+  const need = ['버전v_1(시나리오) 명','월','영업소 명','계열사 명','납품처 코드','납품처 명','터미널 명','품종 명','제품 명','운송모드 명','판매물량'];
+  const missing = need.filter(k => idx[k] === undefined);
+  if (missing.length) {
+    setStatus('⚠ 예상한 열을 찾지 못했습니다: ' + missing.join(', '));
+    return;
+  }
+  const hasDaily = idx['일'] !== undefined;
+  const hasPay = idx['지급수단 명'] !== undefined;
+  const hasBranch = idx['영업지사 명'] !== undefined;
+  const hasChannel = idx['채널 명'] !== undefined;
+  const hasDistance = idx['거리(터미널<->납품처)'] !== undefined;
+  const hasT2 = idx['도착도운반비'] !== undefined;
+  const hasT2Sub = idx['도착도운반보조비'] !== undefined;
+
+  setStatus(`⚙ ${(rows.length-1).toLocaleString('ko-KR')}행 분석 중...`);
+  await new Promise(r=>setTimeout(r, 30)); // 상태 메시지가 그려질 시간 확보
+
+  // 대상 월 감지 (가장 많이 등장하는 값)
+  const ymCounts = {};
+  for (let i=1;i<rows.length;i++){
+    const v = rows[i][idx['월']];
+    if (v==null) continue;
+    const s = String(v);
+    ymCounts[s] = (ymCounts[s]||0)+1;
+  }
+  const ym = Object.keys(ymCounts).sort((a,b)=> ymCounts[b]-ymCounts[a])[0];
+  if (!ym || ym.length !== 6) {
+    setStatus('⚠ 대상 월을 인식하지 못했습니다.');
+    return;
+  }
+  const year = +ym.slice(0,4), month = +ym.slice(4,6);
+  const weeks = computeWeeks(year, month);
+
+  if (!hasDaily) {
+    return processRowsMonthlyOnly(rows, header, idx, ym, year, month, weeks, hasBranch, hasPay, hasChannel, hasDistance, hasT2, hasT2Sub, fileName);
+  }
+
+  // 1차 패스: 그룹 메타 + 일자별 실적/사업계획 원자료 수집, 실적 마지막 일자 탐색
+  const groups = {};       // key -> 메타
+  const actualByDay = {};  // key -> {dateNum: vol}
+  const budgetByDay = {};  // key -> {dateNum: vol}
+  let actualRows = 0, budgetRows = 0, skipped = 0, filteredOut = 0, lastActualDate = 0;
+
+  for (let i=1;i<rows.length;i++){
+    const r = rows[i];
+    if (hasBranch && r[idx['영업지사 명']] !== '영남지사') { filteredOut++; continue; }
+    const scenario = r[idx['버전v_1(시나리오) 명']];
+    if (scenario !== 'Actual Adj.' && scenario !== 'Annual Budget') continue;
+
+    const office = r[idx['영업소 명']];
+    const code = r[idx['납품처 코드']];
+    const dateVal = r[idx['일']];
+    const dateNum = typeof dateVal === 'number' ? dateVal : parseInt(dateVal, 10);
+    if (office == null || code == null || !dateNum) { skipped++; continue; }
+
+    const key = [office, r[idx['계열사 명']], code, r[idx['납품처 명']], hasChannel ? r[idx['채널 명']] : '',
+                 r[idx['터미널 명']], r[idx['품종 명']], r[idx['제품 명']],
+                 r[idx['운송모드 명']], hasPay ? r[idx['지급수단 명']] : ''].join('|');
+
+    if (!groups[key]) {
+      groups[key] = {
+        office, affiliate: r[idx['계열사 명']], code, name: r[idx['납품처 명']],
+        channel: hasChannel ? r[idx['채널 명']] : '', terminal: r[idx['터미널 명']],
+        pumjong: r[idx['품종 명']], product: r[idx['제품 명']],
+        mode: r[idx['운송모드 명']], pay: hasPay ? r[idx['지급수단 명']] : '',
+        distance: hasDistance ? r[idx['거리(터미널<->납품처)']] : null,
+        t2: hasT2 ? r[idx['도착도운반비']] : null,
+        t2sub: hasT2Sub ? r[idx['도착도운반보조비']] : null,
+      };
+    }
+    const vol = num(r[idx['판매물량']]);
+
+    if (scenario === 'Annual Budget') {
+      (budgetByDay[key] || (budgetByDay[key]={}))[dateNum] = (budgetByDay[key]?.[dateNum]||0) + vol;
+      budgetRows++;
+    } else {
+      (actualByDay[key] || (actualByDay[key]={}))[dateNum] = (actualByDay[key]?.[dateNum]||0) + vol;
+      if (dateNum > lastActualDate) lastActualDate = dateNum;
+      actualRows++;
+    }
+  }
+
+  // 실적 반영 기간(월 1일 ~ 실적 반영 기준일) 동안의 요일 유형별 달력일 구성 확인
+  const monthStart = new Date(year, month-1, 1);
+  const lastActualDt = lastActualDate ? dateNumToDate(lastActualDate) : null;
+  const daysElapsed = lastActualDt ? Math.round((lastActualDt - monthStart)/86400000) + 1 : 0;
+
+  const elapsedDates = [];
+  if (lastActualDt) {
+    const cur = new Date(monthStart);
+    while (cur <= lastActualDt) { elapsedDates.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+  }
+  const elapsedWeekdayDates = elapsedDates.filter(d => dayType(d) === 'weekday');
+  const elapsedSatHolDates  = elapsedDates.filter(d => dayType(d) === 'satHol');
+
+  // 전 그룹 합산으로 "토요일·공휴일이 평일 대비 몇 %인지" 비율을 자동 산출 (개별 거래처는 표본이 적어 흔들릴 수 있어 전체 기준으로 계산)
+  let globalWeekdaySum = 0, globalSatHolSum = 0;
+  Object.values(actualByDay).forEach(aDay=>{
+    elapsedWeekdayDates.forEach(d=>{ globalWeekdaySum += aDay[ymd(d)] || 0; });
+    elapsedSatHolDates.forEach(d=>{ globalSatHolSum += aDay[ymd(d)] || 0; });
+  });
+  const globalWeekdayAvgPerDay = elapsedWeekdayDates.length ? globalWeekdaySum / elapsedWeekdayDates.length : 0;
+  const globalSatHolAvgPerDay  = elapsedSatHolDates.length ? globalSatHolSum / elapsedSatHolDates.length : 0;
+  // 토요일·공휴일 표본이 아직 없으면 잠정적으로 평일과 동일하게 취급(비율 1) — 다음 업로드부터 실제 비율로 갱신됩니다
+  const satHolRatio = globalWeekdayAvgPerDay > 0
+    ? (elapsedSatHolDates.length ? globalSatHolAvgPerDay / globalWeekdayAvgPerDay : 1)
+    : 0;
+  currentSatHolRatio = satHolRatio; // 화면 안내용
+
+  // 과거 실적(최근 3개월 추세 + 전년 동월 계절성)을 분석해, 아직 실적이 없는 미래 날짜를
+  // 이번 달 초반 실적만으로 단순 평균 내는 대신 영업소별 추세를 반영해 예측합니다.
+  const trendInfo = await computeTrendSuggestedWeights(ym);
+  currentTrendInfo = trendInfo;
+  // 이번 달 초반이라 표본(경과 평일 수)이 부족한 납품처를 위한 개별 과거 이력(영업일당 평균)
+  const groupHistRates = await computeGroupHistoricalRates(ym);
+  const MIN_SAMPLE_DAYS = 3; // 이만큼 평일이 지나기 전에는 이번 달 표본만으로 판단하지 않고 과거 이력을 함께 반영
+
+  // 2차 패스: 주차별 블렌딩
+  // - 실적이 있는 날짜는 실적값 그대로
+  // - 미래 날짜 중 일요일은 출하 없음(0)
+  // - 미래 날짜 중 토요일·공휴일은 "그룹별 평일 일평균 × 토요일·공휴일 비율 × 영업소 추세"
+  // - 미래 날짜 중 평일은 "그룹별 평일 일평균 × 영업소 추세"
+  Object.keys(groups).forEach(key=>{
+    const g = groups[key];
+    const aDay = actualByDay[key] || {};
+    const bDay = budgetByDay[key] || {};
+    g.budget = Object.values(bDay).reduce((s,v)=>s+v, 0); // 월 전체 사업계획 (비교 기준, 그대로 유지)
+
+    let weekdaySum = 0;
+    elapsedWeekdayDates.forEach(d=>{ weekdaySum += aDay[ymd(d)] || 0; });
+    let weekdayAvg = elapsedWeekdayDates.length ? weekdaySum / elapsedWeekdayDates.length : 0;
+    if (!elapsedWeekdayDates.length) {
+      // 평일 표본이 전혀 없는 극히 이례적인 경우(월초 일요일 등)의 대비책
+      const actualSoFar = Object.values(aDay).reduce((s,v)=>s+v, 0);
+      weekdayAvg = daysElapsed > 0 ? actualSoFar / daysElapsed : 0;
+    }
+
+    // 이번 달 경과일이 아직 적어 표본이 불안정하면(예: 1일치만 있음), 이 납품처의 과거 실적
+    // (최근 3개월·전년 동월) 영업일당 평균과 섞어서 더 안정적인 기준값을 만듭니다.
+    const histRate = groupHistRates[groupKey(g)];
+    let baseWeekdayAvg = weekdayAvg;
+    if (histRate != null && elapsedWeekdayDates.length < MIN_SAMPLE_DAYS) {
+      const w = elapsedWeekdayDates.length / MIN_SAMPLE_DAYS; // 표본이 쌓일수록 이번 달 실적 비중을 높임
+      baseWeekdayAvg = w * weekdayAvg + (1 - w) * histRate;
+    }
+
+    // 최근 3개월 추세·전년 동월 계절성 반영 (해당 영업소의 과거 실적 이력이 있을 때만; 없으면 1 = 미반영)
+    const trendMul = (trendInfo && trendInfo.ratios[g.office] != null) ? trendInfo.ratios[g.office] : 1;
+    const weekdayAvgProjected = baseWeekdayAvg * trendMul;
+
+    g.weeks = {};
+    weeks.forEach(w=>{
+      let sum = 0;
+      const cur = new Date(w.start);
+      while (cur <= w.end) {
+        const dn = ymd(cur);
+        if (dn <= lastActualDate) {
+          sum += aDay[dn] || 0;
+        } else {
+          const t = dayType(cur);
+          sum += (t === 'sunday') ? 0 : (t === 'satHol' ? weekdayAvgProjected * satHolRatio : weekdayAvgProjected);
+        }
+        cur.setDate(cur.getDate()+1);
+      }
+      g.weeks[w.n] = sum;
+    });
+  });
+
+  currentYm = ym;
+  currentWeeks = weeks;
+  currentGroups = Object.values(groups);
+  currentIsEstimated = false;
+  currentFileName = fileName;
+  currentLastActualDate = lastActualDate;
+  currentOfficeWeightAdj = await resolveOfficeWeightAdj(ym);
+  currentWeightSuggested = false;
+  computeOfficeStats();
+  await saveToDB(ym, { ym, weeks, groups: currentGroups, fileName, lastActualDate, satHolRatio, isEstimated:false, weights: currentOfficeWeightAdj, savedAt: new Date().toISOString() });
+  saveMeta(ym, fileName);
+
+  const lastDateLabel = lastActualDate
+    ? `${String(lastActualDate).slice(4,6)}/${String(lastActualDate).slice(6,8)}`
+    : '-';
+  const ratioLabel = (satHolRatio*100).toFixed(0);
+  document.getElementById('up-meta').textContent =
+    `${year}년 ${month}월 · ${weeks.length}개 주차 · 실적 반영 기준일 ${lastDateLabel} · 일요일 출하 없음 · 토요일·공휴일은 평일 대비 ${ratioLabel}%로 예상`;
+  setStatus(`✅ 영남지사 ${(actualRows+budgetRows).toLocaleString('ko-KR')}행 분석 완료 (실적 ${actualRows.toLocaleString('ko-KR')} · 사업계획 ${budgetRows.toLocaleString('ko-KR')}행${filteredOut?` · 다른 지사 제외 ${filteredOut.toLocaleString('ko-KR')}행`:''}${skipped?` · 제외 ${skipped}행`:''})`);
+  renderAll();
+  renderHistory();
+  toast('판매실적 분석이 완료되었습니다');
+}
+
+// 일자별 실적이 없는 "전체 지사 월 집계" 형태의 파일 처리
+// - 영남지사 행만 추려서 영업소별로 구분
+// - 월 실적(Actual Adj.) 합계를 요일 가중치(평일=1, 토요일·공휴일=비율, 일요일=0)로 주차에 배분
+async function processRowsMonthlyOnly(rows, header, idx, ym, year, month, weeks, hasBranch, hasPay, hasChannel, hasDistance, hasT2, hasT2Sub, fileName){
+  if (!hasBranch) {
+    setStatus('⚠ 이 파일에는 "영업지사 명" 열이 없어 영남지사만 골라낼 수 없습니다.');
+    return;
+  }
+
+  const groups = {};
+  let actualRows = 0, budgetRows = 0, skipped = 0, filteredOut = 0;
+
+  for (let i=1;i<rows.length;i++){
+    const r = rows[i];
+    if (r[idx['영업지사 명']] !== '영남지사') { filteredOut++; continue; }
+    const scenario = r[idx['버전v_1(시나리오) 명']];
+    if (scenario !== 'Actual Adj.' && scenario !== 'Annual Budget') continue;
+
+    const office = r[idx['영업소 명']];
+    const code = r[idx['납품처 코드']];
+    if (office == null || code == null) { skipped++; continue; }
+
+    const key = [office, r[idx['계열사 명']], code, r[idx['납품처 명']], hasChannel ? r[idx['채널 명']] : '',
+                 r[idx['터미널 명']], r[idx['품종 명']], r[idx['제품 명']],
+                 r[idx['운송모드 명']], hasPay ? r[idx['지급수단 명']] : ''].join('|');
+
+    if (!groups[key]) {
+      groups[key] = {
+        office, affiliate: r[idx['계열사 명']], code, name: r[idx['납품처 명']],
+        channel: hasChannel ? r[idx['채널 명']] : '', terminal: r[idx['터미널 명']],
+        pumjong: r[idx['품종 명']], product: r[idx['제품 명']],
+        mode: r[idx['운송모드 명']], pay: hasPay ? r[idx['지급수단 명']] : '',
+        distance: hasDistance ? r[idx['거리(터미널<->납품처)']] : null,
+        t2: hasT2 ? r[idx['도착도운반비']] : null,
+        t2sub: hasT2Sub ? r[idx['도착도운반보조비']] : null,
+        actual: 0, budget: 0,
+      };
+    }
+    const vol = num(r[idx['판매물량']]);
+    if (scenario === 'Annual Budget') { groups[key].budget += vol; budgetRows++; }
+    else { groups[key].actual += vol; actualRows++; }
+  }
+
+  if (!Object.keys(groups).length) {
+    setStatus('⚠ 이 파일에서 영남지사 데이터를 찾지 못했습니다.');
+    return;
+  }
+
+  // 일자별 실적이 없으므로, 이전에 같은 월을 일자별 파일로 분석해 얻은 비율이 있으면 그대로 재사용하고 없으면 가정치를 씁니다
+  const reused = await getSatHolRatioForMonth(ym);
+  const satHolRatio = reused != null ? reused : DEFAULT_SAT_HOL_RATIO;
+
+  const weekWeights = weeks.map(w=>{
+    let weight = 0;
+    const cur = new Date(w.start);
+    while (cur <= w.end) {
+      const t = dayType(cur);
+      weight += (t === 'sunday') ? 0 : (t === 'satHol' ? satHolRatio : 1);
+      cur.setDate(cur.getDate()+1);
+    }
+    return weight;
+  });
+  const totalWeight = weekWeights.reduce((s,v)=>s+v, 0) || 1;
+
+  Object.values(groups).forEach(g=>{
+    g.weeks = {};
+    weeks.forEach((w,i)=>{ g.weeks[w.n] = g.actual * (weekWeights[i] / totalWeight); });
+  });
+
+  currentYm = ym;
+  currentWeeks = weeks;
+  currentGroups = Object.values(groups);
+  currentSatHolRatio = satHolRatio;
+  currentIsEstimated = true;
+  currentFileName = fileName;
+  currentLastActualDate = 0;
+  currentOfficeWeightAdj = await resolveOfficeWeightAdj(ym);
+  currentWeightSuggested = false;
+  currentTrendInfo = null;
+  computeOfficeStats();
+  await saveToDB(ym, { ym, weeks, groups: currentGroups, fileName, lastActualDate: 0, satHolRatio, isEstimated:true, weights: currentOfficeWeightAdj, savedAt: new Date().toISOString() });
+  saveMeta(ym, fileName);
+
+  const ratioLabel = (satHolRatio*100).toFixed(0);
+  const ratioNote = reused != null ? '(이전 일자별 분석에서 재사용)' : '(측정 불가로 가정치 사용)';
+  document.getElementById('up-meta').textContent =
+    `${year}년 ${month}월 · ${weeks.length}개 주차 · 일자별 실적이 없어 월 실적을 요일 비중으로 주차 배분(추정) · 토요일·공휴일 비율 ${ratioLabel}% ${ratioNote}`;
+  setStatus(`✅ 영남지사 ${(actualRows+budgetRows).toLocaleString('ko-KR')}행 분석 완료 (실적 ${actualRows.toLocaleString('ko-KR')} · 사업계획 ${budgetRows.toLocaleString('ko-KR')}행 · 다른 지사 제외 ${filteredOut.toLocaleString('ko-KR')}행${skipped?` · 제외 ${skipped}행`:''}) — 주차별 수치는 추정값입니다`);
+  renderAll();
+  renderHistory();
+  toast('영남지사 데이터 분석이 완료되었습니다 (주차는 추정 배분)');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2-b. 과거 실적 일괄 반영 (여러 달이 담긴 파일 → 월별로 나눠 저장)
+   — 저장된 각 월의 실적은 "과거 실적 기반 가중치 자동 제안"의 학습 데이터로 쓰입니다
+═══════════════════════════════════════════════════════════════ */
+async function onHistoricalFileSelected(e){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (typeof XLSX === 'undefined') { setHistBulkStatus('⚠ 엑셀 분석 라이브러리를 불러오지 못했습니다.'); return; }
+
+  document.getElementById('hist-drop').classList.add('has-file');
+  setHistBulkStatus('📄 파일을 읽는 중...');
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type:'array', dense:true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
+    await processHistoricalFile(rows, file.name);
+  } catch (err) {
+    console.error(err);
+    setHistBulkStatus('⚠ 파일을 읽지 못했습니다: ' + err.message);
+  } finally {
+    document.getElementById('hist-drop').classList.remove('has-file');
+  }
+}
+
+function setHistBulkStatus(msg){ document.getElementById('hist-bulk-status').textContent = msg; }
+
+async function processHistoricalFile(rows, fileName){
+  if (!rows.length) { setHistBulkStatus('⚠ 데이터를 찾지 못했습니다.'); return; }
+  const header = rows[0];
+  const idx = {};
+  header.forEach((h,i)=>{ if(h!=null) idx[String(h).trim()] = i; });
+
+  const need = ['버전v_1(시나리오) 명','월','영업소 명','계열사 명','납품처 코드','납품처 명','터미널 명','품종 명','제품 명','운송모드 명','판매물량'];
+  const missing = need.filter(k => idx[k] === undefined);
+  if (missing.length) { setHistBulkStatus('⚠ 예상한 열을 찾지 못했습니다: ' + missing.join(', ')); return; }
+  if (idx['일'] === undefined) { setHistBulkStatus('⚠ 일자별 데이터가 없는 파일은 과거 실적 일괄 반영에 사용할 수 없습니다.'); return; }
+
+  const hasPay = idx['지급수단 명'] !== undefined;
+  const hasBranch = idx['영업지사 명'] !== undefined;
+  const hasChannel = idx['채널 명'] !== undefined;
+  const hasDistance = idx['거리(터미널<->납품처)'] !== undefined;
+  const hasT2 = idx['도착도운반비'] !== undefined;
+  const hasT2Sub = idx['도착도운반보조비'] !== undefined;
+
+  // 월별로 행 묶기 (영남지사만)
+  const byYm = {};
+  for (let i=1;i<rows.length;i++){
+    const r = rows[i];
+    if (hasBranch && r[idx['영업지사 명']] !== '영남지사') continue;
+    const v = r[idx['월']];
+    if (v==null) continue;
+    const ym = String(v);
+    if (ym.length !== 6) continue;
+    (byYm[ym] || (byYm[ym]=[])).push(r);
+  }
+  const yms = Object.keys(byYm).sort();
+  if (!yms.length) { setHistBulkStatus('⚠ 영남지사 데이터를 찾지 못했습니다.'); return; }
+
+  let n = 0;
+  const savedYms = [];
+  for (const ym of yms){
+    n++;
+    setHistBulkStatus(`⚙ 과거 실적 반영 중... (${n}/${yms.length} · ${ym.slice(0,4)}년 ${+ym.slice(4,6)}월)`);
+    await new Promise(r=>setTimeout(r, 10)); // 상태 메시지 렌더링 시간 확보
+    const ok = await saveHistoricalMonth(ym, byYm[ym], idx, hasPay, hasChannel, hasDistance, hasT2, hasT2Sub, fileName);
+    if (ok) savedYms.push(ym);
+  }
+
+  if (!savedYms.length) {
+    setHistBulkStatus('⚠ 실적(Actual Adj.)이 확인되는 달이 없어 반영된 내용이 없습니다.');
+    return;
+  }
+  const first = savedYms[0], last = savedYms[savedYms.length-1];
+  const skipped = yms.length - savedYms.length;
+  setHistBulkStatus(`✅ ${savedYms.length}개월 과거 실적을 반영했습니다 (${first.slice(0,4)}.${+first.slice(4,6)} ~ ${last.slice(0,4)}.${+last.slice(4,6)})${skipped?` · 실적 없는 ${skipped}개월 제외`:''}. 납품처별 출하 트렌드 학습에 활용됩니다.`);
+  toast(`${savedYms.length}개월 과거 실적 반영 완료`);
+  renderHistory();
+}
+
+// 한 달 분량의 행을 집계해 저장합니다. 이미 지난 달(마감 실적)이므로 블렌딩 없이
+// processRows와 동일한 방식으로 계산하되, 가중치는 계산하지 않습니다(완료된 월이라 어차피 적용되지 않음).
+async function saveHistoricalMonth(ym, rowsForYm, idx, hasPay, hasChannel, hasDistance, hasT2, hasT2Sub, fileName){
+  const year = +ym.slice(0,4), month = +ym.slice(4,6);
+  const weeks = computeWeeks(year, month);
+
+  const groups = {};
+  const actualByDay = {};
+  const budgetByDay = {};
+  let lastActualDate = 0;
+
+  rowsForYm.forEach(r=>{
+    const scenario = r[idx['버전v_1(시나리오) 명']];
+    if (scenario !== 'Actual Adj.' && scenario !== 'Annual Budget') return;
+    const office = r[idx['영업소 명']];
+    const code = r[idx['납품처 코드']];
+    const dateVal = r[idx['일']];
+    const dateNum = typeof dateVal === 'number' ? dateVal : parseInt(dateVal, 10);
+    if (office == null || code == null || !dateNum) return;
+
+    const key = [office, r[idx['계열사 명']], code, r[idx['납품처 명']], hasChannel ? r[idx['채널 명']] : '',
+                 r[idx['터미널 명']], r[idx['품종 명']], r[idx['제품 명']],
+                 r[idx['운송모드 명']], hasPay ? r[idx['지급수단 명']] : ''].join('|');
+
+    if (!groups[key]) {
+      groups[key] = {
+        office, affiliate: r[idx['계열사 명']], code, name: r[idx['납품처 명']],
+        channel: hasChannel ? r[idx['채널 명']] : '', terminal: r[idx['터미널 명']],
+        pumjong: r[idx['품종 명']], product: r[idx['제품 명']],
+        mode: r[idx['운송모드 명']], pay: hasPay ? r[idx['지급수단 명']] : '',
+        distance: hasDistance ? r[idx['거리(터미널<->납품처)']] : null,
+        t2: hasT2 ? r[idx['도착도운반비']] : null,
+        t2sub: hasT2Sub ? r[idx['도착도운반보조비']] : null,
+      };
+    }
+    const vol = num(r[idx['판매물량']]);
+    if (scenario === 'Annual Budget') {
+      (budgetByDay[key] || (budgetByDay[key]={}))[dateNum] = (budgetByDay[key]?.[dateNum]||0) + vol;
+    } else {
+      (actualByDay[key] || (actualByDay[key]={}))[dateNum] = (actualByDay[key]?.[dateNum]||0) + vol;
+      if (dateNum > lastActualDate) lastActualDate = dateNum;
+    }
+  });
+
+  if (!Object.keys(groups).length) return false; // 이 달은 유효 데이터 없음 — 건너뜀
+  if (!lastActualDate) return false; // 실적(Actual Adj.)이 전혀 없는 달(사업계획만 미리 들어있는 미래 달) — 건너뜀
+
+  const monthStart = new Date(year, month-1, 1);
+  const lastActualDt = lastActualDate ? dateNumToDate(lastActualDate) : null;
+  const daysElapsed = lastActualDt ? Math.round((lastActualDt - monthStart)/86400000) + 1 : 0;
+  const elapsedDates = [];
+  if (lastActualDt) {
+    const cur = new Date(monthStart);
+    while (cur <= lastActualDt) { elapsedDates.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+  }
+  const elapsedWeekdayDates = elapsedDates.filter(d => dayType(d) === 'weekday');
+  const elapsedSatHolDates  = elapsedDates.filter(d => dayType(d) === 'satHol');
+
+  let globalWeekdaySum = 0, globalSatHolSum = 0;
+  Object.values(actualByDay).forEach(aDay=>{
+    elapsedWeekdayDates.forEach(d=>{ globalWeekdaySum += aDay[ymd(d)] || 0; });
+    elapsedSatHolDates.forEach(d=>{ globalSatHolSum += aDay[ymd(d)] || 0; });
+  });
+  const globalWeekdayAvgPerDay = elapsedWeekdayDates.length ? globalWeekdaySum / elapsedWeekdayDates.length : 0;
+  const globalSatHolAvgPerDay  = elapsedSatHolDates.length ? globalSatHolSum / elapsedSatHolDates.length : 0;
+  const satHolRatio = globalWeekdayAvgPerDay > 0
+    ? (elapsedSatHolDates.length ? globalSatHolAvgPerDay / globalWeekdayAvgPerDay : 1)
+    : 0;
+
+  Object.keys(groups).forEach(key=>{
+    const g = groups[key];
+    const aDay = actualByDay[key] || {};
+    const bDay = budgetByDay[key] || {};
+    g.budget = Object.values(bDay).reduce((s,v)=>s+v, 0);
+
+    let weekdaySum = 0;
+    elapsedWeekdayDates.forEach(d=>{ weekdaySum += aDay[ymd(d)] || 0; });
+    let weekdayAvg = elapsedWeekdayDates.length ? weekdaySum / elapsedWeekdayDates.length : 0;
+    if (!elapsedWeekdayDates.length) {
+      const actualSoFar = Object.values(aDay).reduce((s,v)=>s+v, 0);
+      weekdayAvg = daysElapsed > 0 ? actualSoFar / daysElapsed : 0;
+    }
+
+    g.weeks = {};
+    weeks.forEach(w=>{
+      let sum = 0;
+      const cur = new Date(w.start);
+      while (cur <= w.end) {
+        const dn = ymd(cur);
+        if (dn <= lastActualDate) {
+          sum += aDay[dn] || 0;
+        } else {
+          const t = dayType(cur);
+          sum += (t === 'sunday') ? 0 : (t === 'satHol' ? weekdayAvg * satHolRatio : weekdayAvg);
+        }
+        cur.setDate(cur.getDate()+1);
+      }
+      g.weeks[w.n] = sum;
+    });
+  });
+
+  await saveToDB(ym, {
+    ym, weeks, groups: Object.values(groups), fileName, lastActualDate, satHolRatio,
+    isEstimated:false, weights: {}, savedAt: new Date().toISOString(),
+  });
+  saveMeta(ym, fileName);
+  return true;
+}
+
+async function getSatHolRatioForMonth(ym){
+  try {
+    const data = await loadFromDB(ym);
+    if (data && !data.isEstimated && typeof data.satHolRatio === 'number') return data.satHolRatio;
+  } catch(e){}
+  return null;
+}
+
+// 같은 월을 재업로드해도 기존에 입력해둔 가중치를 잃지 않도록 재사용합니다
+async function getWeightsForMonth(ym){
+  try {
+    const data = await loadFromDB(ym);
+    if (data && data.weights) return data.weights;
+  } catch(e){}
+  return null;
+}
+
+function lastDayOfYm(ym){
+  const y = +ym.slice(0,4), m = +ym.slice(4,6);
+  return y*10000 + m*100 + new Date(y, m, 0).getDate();
+}
+
+// 해당 연/월의 "영업일수"(일요일·공휴일 제외, 토요일은 포함) — 납품처별 과거 실적을
+// 일평균으로 환산할 때 분모로 씁니다
+function countMonthBusinessDays(year, month){
+  const last = new Date(year, month, 0).getDate();
+  let cnt = 0;
+  for (let d=1; d<=last; d++){
+    const dt = new Date(year, month-1, d);
+    if (dt.getDay() !== 0 && !isHolidayDate(dt)) cnt++;
+  }
+  return cnt;
+}
+
+// 이번 달 초반이라 표본이 부족한 납품처는, 같은 납품처(코드+품종+제품+운송모드 기준)의
+// 최근 마감 월(최대 3개) 및 전년 동월 실적에서 "영업일당 평균 물량"을 뽑아 대체·보완합니다.
+async function computeGroupHistoricalRates(targetYm){
+  const rates = {};
+  try {
+    const meta = loadMeta();
+    const priorYms = meta.months.map(m=>m.ym).filter(ym=>ym < targetYm).sort((a,b)=>b.localeCompare(a));
+    const targetYear = +targetYm.slice(0,4), targetMonthStr = targetYm.slice(4,6);
+
+    const wantYms = new Set();
+    priorYms.slice(0,3).forEach(ym=>wantYms.add(ym)); // 최근 마감 월 최대 3개
+    wantYms.add(`${targetYear-1}${targetMonthStr}`);   // 전년 동월
+
+    const rateSum = {}; // groupKey -> {sum, count}
+    for (const ym of wantYms) {
+      const data = await loadFromDB(ym);
+      if (!data || data.isEstimated) continue;
+      if (!data.lastActualDate || data.lastActualDate < lastDayOfYm(ym)) continue; // 마감된 달만 사용
+      const bizDays = countMonthBusinessDays(+ym.slice(0,4), +ym.slice(4,6));
+      if (!bizDays) continue;
+      (data.groups || []).forEach(g=>{
+        const total = Object.values(g.weeks || {}).reduce((s,v)=>s+v, 0);
+        const key = groupKey(g);
+        if (!rateSum[key]) rateSum[key] = { sum:0, count:0 };
+        rateSum[key].sum += total / bizDays;
+        rateSum[key].count += 1;
+      });
+    }
+    Object.keys(rateSum).forEach(k=>{ rates[k] = rateSum[k].sum / rateSum[k].count; });
+  } catch(e) {
+    console.warn('납품처 이력 조회 실패', e);
+  }
+  return rates;
+}
+
+// 저장된 월 데이터에서 영업소별 실적(월 합계, 톤) 집계
+function officeActualTotals(data){
+  const totals = {};
+  ALL_OFFICES.forEach(o => totals[o] = 0);
+  (data.groups || []).forEach(g=>{
+    const sum = Object.values(g.weeks || {}).reduce((s,v)=>s+v, 0);
+    totals[g.office] = (totals[g.office] || 0) + sum;
+  });
+  return totals;
+}
+
+// 과거 실적(마감 완료된 월)을 분석해 영업소별 최근 추세 비율을 계산합니다.
+// - 최근 최대 3개월의 연속 증감률을 평균해 단기 추세를 완만하게 산출하고,
+// - 전년 동월 데이터가 있으면 계절성(전년 대비 증감)도 함께 반영합니다.
+// 새 월을 업로드/과거 실적을 반영할 때마다 다시 계산하므로, 데이터가 쌓일수록 추세가 계속 갱신됩니다(지속 학습).
+async function computeTrendSuggestedWeights(targetYm){
+  try {
+    const meta = loadMeta();
+    const priorYms = meta.months.map(m=>m.ym).filter(ym=>ym < targetYm).sort((a,b)=>b.localeCompare(a));
+
+    const closedCache = {};
+    async function getClosed(ym){
+      if (ym in closedCache) return closedCache[ym];
+      const data = await loadFromDB(ym);
+      const ok = data && !data.isEstimated && data.lastActualDate && data.lastActualDate >= lastDayOfYm(ym);
+      return closedCache[ym] = ok ? { ym, totals: officeActualTotals(data) } : null;
+    }
+
+    // 최근 마감 월 최대 3개 (월간 추세용)
+    const recentClosed = [];
+    for (const ym of priorYms){
+      const c = await getClosed(ym);
+      if (c) recentClosed.push(c);
+      if (recentClosed.length >= 3) break;
+    }
+    if (recentClosed.length < 2) return null;
+
+    // 월간 추세: 연속된 달들 간 비율을 평균해 단기 노이즈를 완화
+    const momRatios = {}; // office -> [ratio, ...]
+    for (let i=0;i<recentClosed.length-1;i++){
+      const r = recentClosed[i].totals, p = recentClosed[i+1].totals;
+      ALL_OFFICES.forEach(o=>{
+        if (r[o] > 0 && p[o] > 0) (momRatios[o] || (momRatios[o]=[])).push(r[o]/p[o]);
+      });
+    }
+
+    // 계절성: 전년 동월 vs 전전년 동월 (둘 다 마감된 경우만) — "이 달이 원래 계절적으로 오르내리는 달인지" 반영
+    const targetYear = +targetYm.slice(0,4), targetMonth = targetYm.slice(4,6);
+    const lastYearSame = await getClosed(`${targetYear-1}${targetMonth}`);
+    const twoYearsAgoSame = await getClosed(`${targetYear-2}${targetMonth}`);
+    const yoyRatios = {};
+    if (lastYearSame && twoYearsAgoSame){
+      ALL_OFFICES.forEach(o=>{
+        const r = lastYearSame.totals[o], p = twoYearsAgoSame.totals[o];
+        if (r > 0 && p > 0) yoyRatios[o] = r / p;
+      });
+    }
+
+    const ratios = {};
+    ALL_OFFICES.forEach(o=>{
+      const momList = momRatios[o];
+      const mom = (momList && momList.length) ? momList.reduce((s,v)=>s+v,0)/momList.length : null;
+      const yoy = yoyRatios[o] != null ? yoyRatios[o] : null;
+      const combined = (mom != null && yoy != null) ? (mom+yoy)/2 : (mom != null ? mom : yoy);
+      if (combined != null) ratios[o] = Math.max(0.5, Math.min(1.5, combined)); // 극단값 방지
+    });
+    if (!Object.keys(ratios).length) return null;
+
+    return {
+      recentYm: recentClosed[0].ym,
+      prevYm: recentClosed[Math.min(1, recentClosed.length-1)].ym,
+      monthsUsed: recentClosed.length,
+      hasSeasonality: Object.keys(yoyRatios).length > 0,
+      ratios,
+    };
+  } catch(e) {
+    console.warn('추세 분석 실패', e);
+    return null;
+  }
+}
+
+// 이 월의 가중치를 결정합니다: 기존에 저장된 값이 있으면 재사용하고, 없으면(신규 월) 과거 실적 추세로 자동 제안합니다.
+// (완료된 주차는 제외 — 실적이 이미 확정된 주차에는 가중치를 적용하지 않습니다)
+// 가중치 조정 표는 이제 순수하게 "날씨·파업 등 예외 상황"을 수동으로 얹는 용도입니다.
+// (과거 실적 추세는 processRows에서 예상판매량 기본 계산에 이미 반영되므로, 여기서 중복 제안하지 않습니다)
+async function resolveOfficeWeightAdj(ym){
+  const saved = await getWeightsForMonth(ym);
+  return saved || {};
+}
+
+// 이미 실적으로 확정된(주 전체가 실적 반영 기준일 이전인) 주차인지 여부
+// — 이런 주차는 가중치를 적용하지 않고 실적 그대로 사용합니다
+function isWeekComplete(w){
+  return currentLastActualDate > 0 && ymd(w.end) <= currentLastActualDate;
+}
+
+// 날씨·파업·물량 증감 등을 반영한 영업소·주차별 가중치를 적용한 실제 사용 값
+// (완료된 주차는 가중치를 적용하지 않고 원래 값을 그대로 사용)
+function effectiveWeekValue(g, wn){
+  const base = g.weeks[wn] || 0;
+  const w = currentWeeks.find(x => x.n === wn);
+  if (!w || isWeekComplete(w)) return base;
+  const ratio = (currentOfficeWeightAdj[g.office] && currentOfficeWeightAdj[g.office][wn] != null)
+    ? currentOfficeWeightAdj[g.office][wn] : 1;
+  return base * ratio;
+}
+
+function computeOfficeStats(){
+  const stats = {};
+  ALL_OFFICES.forEach(o => stats[o] = { budget:0, weeks:{}, total:0, hasData:false, byPum:{} });
+  currentGroups.forEach(g=>{
+    if (!stats[g.office]) stats[g.office] = { budget:0, weeks:{}, total:0, hasData:false, byPum:{} };
+    const s = stats[g.office];
+    s.hasData = true;
+    s.budget += g.budget;
+
+    const pum = g.pumjong || '기타';
+    if (!s.byPum[pum]) s.byPum[pum] = { budget:0, weeks:{}, total:0 };
+    const p = s.byPum[pum];
+    p.budget += g.budget;
+
+    Object.keys(g.weeks).forEach(wnStr=>{
+      const wn = +wnStr;
+      const v = effectiveWeekValue(g, wn);
+      s.weeks[wn] = (s.weeks[wn]||0) + v;
+      s.total += v;
+      p.weeks[wn] = (p.weeks[wn]||0) + v;
+      p.total += v;
+    });
+  });
+  currentOfficeStats = stats;
+}
+
+function achieveRate(total, budget){
+  if (!budget) return null;
+  return total / budget * 100;
+}
+function rateCell(total, budget){
+  const r = achieveRate(total, budget);
+  if (r == null) return '<td class="no-data">-</td>';
+  const cls = r>=100 ? 'rate-good' : r>=85 ? 'rate-warn' : 'rate-bad';
+  return `<td class="${cls}">${r.toFixed(0)}%</td>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   3. 화면 렌더링
+═══════════════════════════════════════════════════════════════ */
+function renderAll(){
+  document.getElementById('dash-card').style.display = 'block';
+  document.getElementById('trend-card').style.display = 'block';
+  document.getElementById('period-badge').textContent =
+    currentYm ? `${currentYm.slice(0,4)}년 ${+currentYm.slice(4,6)}월` : '-';
+  document.getElementById('week-def-hint').textContent = currentIsEstimated
+    ? '목요일 ~ 수요일 기준 · ⚠ 일자별 실적이 없어 주차 수치는 추정 배분입니다'
+    : '목요일 ~ 수요일 기준';
+  renderWeightTable();
+  renderWeekTable();
+  renderTrend();
+  renderMsGaps();
+  syncPeriodUI();
+}
+
+/* ── 조회 기간(년도/월/주차) 선택 ── */
+function periodYearOptions(selectedYear){
+  const now = new Date().getFullYear();
+  const years = new Set([now-1, now, now+1, selectedYear].filter(y=>y!=null));
+  return Array.from(years).sort((a,b)=>a-b);
+}
+
+function syncPeriodUI(){
+  const now = new Date();
+  const y = currentYm ? +currentYm.slice(0,4) : now.getFullYear();
+  const m = currentYm ? +currentYm.slice(4,6) : now.getMonth()+1;
+
+  const selY = document.getElementById('sel-year');
+  const selM = document.getElementById('sel-month');
+  const selW = document.getElementById('sel-week');
+  const prevWeekVal = selW.value;
+
+  selY.innerHTML = periodYearOptions(y).map(yy=>`<option value="${yy}">${yy}년</option>`).join('');
+  selY.value = y;
+
+  if (!selM.options.length) {
+    selM.innerHTML = Array.from({length:12},(_,i)=>i+1).map(mm=>`<option value="${mm}">${mm}월</option>`).join('');
+  }
+  selM.value = m;
+
+  const weeks = currentWeeks.length ? currentWeeks : computeWeeks(y, m);
+  selW.innerHTML = weeks.map(w=>`<option value="${w.n}">${w.n}주차</option>`).join('');
+
+  const todayNum = ymd(now);
+  const todaysWeek = weeks.find(w => todayNum >= ymd(w.start) && todayNum <= ymd(w.end));
+  let target = weeks.find(w => String(w.n) === prevWeekVal);
+  if (!target) target = todaysWeek || weeks[0];
+  selW.value = target ? target.n : '';
+  highlightWeek(target ? target.n : null);
+
+  syncNdDateBounds(weeks, target ? target.n : null);
+}
+
+async function onPeriodChange(){
+  const year = +document.getElementById('sel-year').value;
+  const month = +document.getElementById('sel-month').value;
+  const ym = `${year}${String(month).padStart(2,'0')}`;
+  if (ym === currentYm) return;
+
+  const meta = loadMeta();
+  if (meta.months.some(m=>m.ym===ym)) { await loadMonth(ym); return; }
+
+  currentYm = ym;
+  currentWeeks = computeWeeks(year, month);
+  currentGroups = [];
+  currentIsEstimated = false;
+  currentSatHolRatio = null;
+  computeOfficeStats();
+  document.getElementById('up-empty').style.display = 'block';
+  document.getElementById('up-info').style.display = 'none';
+  document.getElementById('up-drop').classList.remove('has-file');
+  setStatus(`⚠ ${year}년 ${month}월로 저장된 판매실적이 없습니다. 판매실적을 업로드해주세요.`);
+  renderAll();
+  renderHistory();
+}
+
+function onWeekSelectChange(){
+  highlightWeek(+document.getElementById('sel-week').value);
+}
+
+function highlightWeek(n){
+  document.querySelectorAll('[data-week]').forEach(el=>{
+    el.classList.toggle('week-col-hl', n!=null && +el.dataset.week === n);
+  });
+}
+
+const PUM_ORDER = ['PC','SC','SP'];
+
+function renderWeekTable(){
+  const thead = document.getElementById('week-thead-row');
+  thead.innerHTML = '<th>영업소</th><th>품종</th><th>사업계획</th>' +
+    currentWeeks.map(w=>`<th data-week="${w.n}">${w.n}주차<small>${w.label}</small></th>`).join('') +
+    '<th>월 합계</th><th>달성률</th>';
+
+  const officesToShow = ALL_OFFICES.filter(o => currentOfficeStats[o] && currentOfficeStats[o].hasData)
+    .concat(ALL_OFFICES.filter(o => !(currentOfficeStats[o] && currentOfficeStats[o].hasData)));
+
+  let rowsHtml = '';
+  officesToShow.forEach(o=>{
+    const s = currentOfficeStats[o] || { budget:0, weeks:{}, total:0, hasData:false, byPum:{} };
+    if (!s.hasData) {
+      rowsHtml += `<tr>
+        <td class="office-name" colspan="2">${o}</td><td class="budget-col">-</td>
+        ${currentWeeks.map(w=>`<td class="no-data" data-week="${w.n}">-</td>`).join('')}
+        <td class="total-col">-</td><td class="no-data">-</td>
+      </tr>`;
+      return;
+    }
+
+    const pums = Object.keys(s.byPum).sort((a,b)=>{
+      const ia = PUM_ORDER.indexOf(a), ib = PUM_ORDER.indexOf(b);
+      return (ia<0?99:ia) - (ib<0?99:ib);
+    });
+    pums.forEach((pum, i)=>{
+      const p = s.byPum[pum];
+      const weekCells = currentWeeks.map(w=>`<td data-week="${w.n}">${fmt(p.weeks[w.n]||0)}</td>`).join('');
+      const officeCell = i===0 ? `<td class="office-name" rowspan="${pums.length+1}">${o}</td>` : '';
+      rowsHtml += `<tr class="pum-row">
+        ${officeCell}
+        <td class="pum-name">${pum}</td>
+        <td class="budget-col">${fmt(p.budget)}</td>
+        ${weekCells}
+        <td class="total-col">${fmt(p.total)}</td>
+        ${rateCell(p.total, p.budget)}
+      </tr>`;
+    });
+
+    const weekCellsOffice = currentWeeks.map(w=>`<td data-week="${w.n}">${fmt(s.weeks[w.n]||0)}</td>`).join('');
+    rowsHtml += `<tr class="office-sum-row">
+      <td class="pum-name">합계</td>
+      <td class="budget-col">${fmt(s.budget)}</td>
+      ${weekCellsOffice}
+      <td class="total-col">${fmt(s.total)}</td>
+      ${rateCell(s.total, s.budget)}
+    </tr>`;
+  });
+  document.getElementById('week-tbody').innerHTML = rowsHtml;
+
+  let sBudget=0, sTotal=0; const sWeeks={};
+  officesToShow.forEach(o=>{
+    const s = currentOfficeStats[o];
+    if (!s || !s.hasData) return;
+    sBudget += s.budget; sTotal += s.total;
+    Object.entries(s.weeks).forEach(([wn,v])=> sWeeks[wn]=(sWeeks[wn]||0)+v);
+  });
+  document.getElementById('week-sum-row').innerHTML =
+    `<td colspan="2">영남지사 합계</td><td class="budget-col">${fmt(sBudget)}</td>` +
+    currentWeeks.map(w=>`<td data-week="${w.n}">${fmt(sWeeks[w.n]||0)}</td>`).join('') +
+    `<td class="total-col">${fmt(sTotal)}</td>` +
+    rateCell(sTotal, sBudget);
+
+  const selW = document.getElementById('sel-week');
+  if (selW && selW.value) highlightWeek(+selW.value);
+}
+
+function renderTrend(){
+  const officesToShow = ALL_OFFICES.filter(o => currentOfficeStats[o] && currentOfficeStats[o].hasData);
+  const wrap = document.getElementById('trend-wrap');
+  if (!officesToShow.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>표시할 데이터가 없어요.</div>';
+    return;
+  }
+  const maxVal = Math.max(1, ...officesToShow.flatMap(o => currentWeeks.map(w => currentOfficeStats[o].weeks[w.n]||0)));
+
+  const weekInfo = currentWeeks.map(w=>({ n:w.n, businessDays: countBusinessDays(w) }));
+
+  wrap.innerHTML = officesToShow.map(o=>{
+    const vals = currentWeeks.map(w => currentOfficeStats[o].weeks[w.n]||0);
+    return `<div class="trend-row">
+      <div class="trend-office">${o}</div>
+      <div class="trend-svg">${sparkline(vals, maxVal, weekInfo)}</div>
+    </div>`;
+  }).join('');
+}
+
+function sparkline(vals, maxVal, weekInfo){
+  const n = vals.length;
+  if (n < 2) return '';
+  const W = 300, H = 82;
+  const padX = 22, chartTop = 30, chartH = 26;
+  const stepX = (W - padX*2) / (n-1);
+  const pts = vals.map((v,i)=>{
+    const x = padX + i*stepX;
+    const y = chartTop + chartH - (v/maxVal) * chartH;
+    return [x,y];
+  });
+  const line = pts.map(p=>p.join(',')).join(' ');
+  const dots = pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.2" fill="var(--accent)"/>`).join('');
+  const valueLabels = pts.map(([x,y],i)=>{
+    const mainY = Math.max(15, y-13);
+    const avgPerDay = weekInfo[i].businessDays ? vals[i]/weekInfo[i].businessDays : 0;
+    return `<text x="${x}" y="${mainY}" font-size="7" fill="var(--text2)" text-anchor="middle">${fmt(vals[i])}</text>` +
+           `<text x="${x}" y="${mainY+7}" font-size="6" fill="var(--text3)" text-anchor="middle">(${fmt(avgPerDay)}톤/일)</text>`;
+  }).join('');
+  const weekLabels = weekInfo.map((w,i)=>{
+    const x = pts[i][0];
+    return `<text x="${x}" y="${H-9}" font-size="7.5" fill="var(--text3)" text-anchor="middle">${w.n}주차</text>` +
+           `<text x="${x}" y="${H-1}" font-size="7" fill="var(--text3)" text-anchor="middle">(${w.businessDays}일)</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;aspect-ratio:${W}/${H};display:block;font-family:var(--font)">
+    <polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+    ${dots}${valueLabels}${weekLabels}
+  </svg>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   4. MI 작성용 raw data 다운로드 (mi rawdata 템플릿 형식)
+═══════════════════════════════════════════════════════════════ */
+// 실제 제출된 MI raw data 파일에서 그대로 추출한 서식
+const MI_FONT = { name:'맑은 고딕', size:8, bold:true };
+const MI_FILL_LIGHT = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF99FF99' } }; // 연두색 (영업팀명~지급수단)
+const MI_FILL_DARK  = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF92D050' } }; // 진한 녹색 (거리~T2sub)
+const MI_HEADERS = ['영업팀명','영업관할명','week','적용기간','품종명','제품명','Loading place명','Channel',
+  '계열명','납품처코드','납품처명','Market Volume','LHCC Volume','MS','운송모드','지급수단','거리','T2','T2sub'];
+// 열별 배경 그룹: 0=연두, 1=진한녹색
+const MI_COL_STYLE_GROUP = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1];
+const MI_COL_WIDTHS = [9,10,8,17,6,11,8,7,26,10,34,8,10,7,8,8,7,9,7];
+
+// MS 기준표 조인용 납품처 식별 키. 납품처명·계열사명 등은 시간이 지나며 바뀔 수 있어(거래처 개명 등)
+// 제외하고, 비교적 안정적인 납품처 코드·품종·제품·운송모드로만 조인합니다.
+function groupKey(o){
+  return [o.code, o.pumjong, o.product, o.mode].join('|');
+}
+
+// currentGroups 내 개별 납품처 그룹 식별용 전체 키 (processRows의 그룹핑 키와 동일한 구성)
+function groupKeyFull(o){
+  return [o.office, o.affiliate, o.code, o.name, o.channel, o.terminal, o.pumjong, o.product, o.mode, o.pay].join('|');
+}
+
+/* ── MS(시장점유율) 기준표: Market Volume = LHCC Volume ÷ MS 로 역산하기 위한 납품처별 MS 값
+   한 번 입력하면 localStorage에 저장되어 이후 모든 월의 raw data 다운로드에 자동 반영됩니다. ── */
+const MS_TABLE_KEY = 'yn_mi_ms_table';
+
+function loadMsTable(){
+  try { return JSON.parse(localStorage.getItem(MS_TABLE_KEY) || '{}'); } catch(e){ return {}; }
+}
+
+/* ── 영업소별 주차 가중치 (날씨·파업·물량 증감 등) ── */
+function renderWeightTable(){
+  const card = document.getElementById('weight-card');
+  if (!currentWeeks.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const noteEl = document.getElementById('weight-trend-note');
+  const hintEl = document.getElementById('weight-hint');
+  if (currentTrendInfo) {
+    const t = currentTrendInfo;
+    const parts = ALL_OFFICES.filter(o => t.ratios[o] != null)
+      .map(o => `${o} ${Math.round(t.ratios[o]*100)}%`).join(' · ');
+    const basis = t.hasSeasonality
+      ? `최근 ${t.monthsUsed}개월 실적 추세 + 전년 동월 계절성`
+      : `최근 ${t.monthsUsed}개월 실적 추세`;
+    noteEl.style.display = 'block';
+    noteEl.innerHTML = `📈 위 예상판매량의 미완료 주차 기본값에는 이미 <strong>${basis}</strong>가 반영되어 있습니다 (${parts}). 이 표는 날씨·파업 등 추가 예외 상황을 얹을 때만 사용하세요.`;
+  } else {
+    noteEl.style.display = 'none';
+  }
+  hintEl.textContent = '날씨·파업·물량 증감 등 반영 · 완료된 주차는 실적 그대로 적용';
+
+  const thead = document.getElementById('weight-thead-row');
+  thead.innerHTML = '<th>영업소</th>' + currentWeeks.map(w=>{
+    const done = isWeekComplete(w);
+    return `<th>${w.n}주차<small>${done ? '실적 확정' : '가중치'}</small></th>`;
+  }).join('');
+
+  document.getElementById('weight-tbody').innerHTML = ALL_OFFICES.map(o=>{
+    const cells = currentWeeks.map(w=>{
+      if (isWeekComplete(w)) return `<td class="no-data">실적 반영</td>`;
+      const cur = (currentOfficeWeightAdj[o] && currentOfficeWeightAdj[o][w.n] != null)
+        ? Math.round(currentOfficeWeightAdj[o][w.n]*100) : 100;
+      return `<td><input type="number" step="1" value="${cur}" style="width:64px;text-align:center"
+        onchange="onWeightChange('${o}',${w.n},this.value)"> %</td>`;
+    }).join('');
+    return `<tr><td class="office-name">${o}</td>${cells}</tr>`;
+  }).join('');
+}
+
+function onWeightChange(office, weekN, value){
+  const pct = parseFloat(value);
+  if (!currentOfficeWeightAdj[office]) currentOfficeWeightAdj[office] = {};
+  currentOfficeWeightAdj[office][weekN] = (!isNaN(pct) && pct >= 0) ? pct/100 : 1;
+  currentWeightSuggested = false; // 사용자가 직접 수정했으므로 이제 자동 제안값이 아님
+  computeOfficeStats();
+  renderWeightTable();
+  renderWeekTable();
+  renderTrend();
+  persistCurrentMonth();
+}
+
+function toggleNdForm(){
+  const body = document.getElementById('nd-body');
+  const btn = document.getElementById('nd-toggle-btn');
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? 'block' : 'none';
+  btn.textContent = opening ? '접기' : '+ 추가하기';
+}
+
+function toggleMsGapForm(){
+  const body = document.getElementById('ms-gap-body');
+  const btn = document.getElementById('ms-gap-toggle-btn');
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? 'block' : 'none';
+  btn.textContent = opening ? '접기' : '입력하기';
+}
+
+/* ── MS 수정: 영업소·납품처·품종 모두 검색+드롭박스 방식으로 통일해 기존 MS를 찾아 수정 ── */
+let msEditOffice = '';
+let msEditSelectedGroup = null;
+
+function toggleMsEditForm(){
+  const body = document.getElementById('msedit-body');
+  const btn = document.getElementById('msedit-toggle-btn');
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? 'block' : 'none';
+  btn.textContent = opening ? '접기' : '수정하기';
+}
+
+function hideSuggestions(boxId){
+  document.getElementById(boxId).style.display = 'none';
+}
+
+// 입력값과 후보 목록을 받아 "접두어 일치 우선, 그다음 포함 일치" 순으로 정렬해 돌려줍니다
+function filterSuggestions(query, candidates, limit){
+  const q = query.trim().toLowerCase();
+  let matches;
+  if (!q) {
+    matches = candidates;
+  } else {
+    const starts = candidates.filter(c => c.toLowerCase().startsWith(q));
+    const contains = candidates.filter(c => !c.toLowerCase().startsWith(q) && c.toLowerCase().includes(q));
+    matches = [...starts, ...contains];
+  }
+  return limit ? matches.slice(0, limit) : matches;
+}
+
+function renderSuggestionBox(boxId, items, onEmptyMsg, onSelectFnName){
+  const box = document.getElementById(boxId);
+  if (!items.length) {
+    box.innerHTML = `<div class="sug-item" style="color:var(--text3);cursor:default">${onEmptyMsg}</div>`;
+  } else {
+    box.innerHTML = items.map(v =>
+      `<div class="sug-item" onmousedown="${onSelectFnName}('${v.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">${v}</div>`
+    ).join('');
+  }
+  box.style.display = 'block';
+}
+
+function onMsEditOfficeSearch(){
+  const q = document.getElementById('msedit-office-search').value;
+  renderSuggestionBox('msedit-office-suggestions', filterSuggestions(q, ALL_OFFICES), '일치하는 영업소가 없습니다', 'selectMsEditOffice');
+}
+
+function selectMsEditOffice(office){
+  msEditOffice = office;
+  document.getElementById('msedit-office-search').value = office;
+  hideSuggestions('msedit-office-suggestions');
+  // 하위 선택(납품처·품종·MS) 초기화
+  document.getElementById('msedit-search').value = '';
+  document.getElementById('msedit-pumjong-search').value = '';
+  document.getElementById('msedit-ms').value = '';
+  msEditSelectedGroup = null;
+  hideSuggestions('msedit-suggestions');
+  hideSuggestions('msedit-pumjong-suggestions');
+}
+
+function clearMsEditOffice(){ selectMsEditOffice(''); }
+function clearMsEditName(){ selectMsEditName(''); }
+function clearMsEditPumjong(){ selectMsEditPumjong(''); }
+
+function getMsEditCandidateNames(office){
+  const seen = new Set();
+  const list = [];
+  currentGroups.forEach(g=>{
+    if (g.office !== office || seen.has(g.name)) return;
+    seen.add(g.name);
+    list.push(g.name);
+  });
+  return list;
+}
+
+function onMsEditSearch(){
+  if (!msEditOffice) {
+    renderSuggestionBox('msedit-suggestions', [], '영업소를 먼저 선택하세요', 'selectMsEditName');
+    return;
+  }
+  const q = document.getElementById('msedit-search').value;
+  const names = filterSuggestions(q, getMsEditCandidateNames(msEditOffice), 20);
+  renderSuggestionBox('msedit-suggestions', names, '일치하는 납품처가 없습니다', 'selectMsEditName');
+}
+
+function selectMsEditName(name){
+  document.getElementById('msedit-search').value = name;
+  hideSuggestions('msedit-suggestions');
+  document.getElementById('msedit-pumjong-search').value = '';
+  document.getElementById('msedit-ms').value = '';
+  msEditSelectedGroup = null;
+  hideSuggestions('msedit-pumjong-suggestions');
+}
+
+function getMsEditPumjongOptions(){
+  const name = document.getElementById('msedit-search').value;
+  const matching = currentGroups.filter(g => g.office === msEditOffice && g.name === name);
+  return [...new Set(matching.map(g=>g.pumjong))];
+}
+
+function onMsEditPumjongSearch(){
+  const name = document.getElementById('msedit-search').value;
+  if (!msEditOffice || !name) {
+    renderSuggestionBox('msedit-pumjong-suggestions', [], '납품처를 먼저 선택하세요', 'selectMsEditPumjong');
+    return;
+  }
+  const q = document.getElementById('msedit-pumjong-search').value;
+  const options = filterSuggestions(q, getMsEditPumjongOptions());
+  renderSuggestionBox('msedit-pumjong-suggestions', options, '일치하는 품종이 없습니다', 'selectMsEditPumjong');
+}
+
+function selectMsEditPumjong(pumjong){
+  document.getElementById('msedit-pumjong-search').value = pumjong;
+  hideSuggestions('msedit-pumjong-suggestions');
+  const name = document.getElementById('msedit-search').value;
+  const g = currentGroups.find(x => x.office===msEditOffice && x.name===name && x.pumjong===pumjong);
+  msEditSelectedGroup = g || null;
+  const msTable = loadMsTable();
+  const cur = g ? msTable[groupKey(g)] : null;
+  document.getElementById('msedit-ms').value = (cur != null) ? Math.round(cur*100) : '';
+}
+
+function saveMsEdit(){
+  if (!msEditSelectedGroup) { toast('영업소와 납품처·품종을 먼저 선택해주세요'); return; }
+  const pct = parseFloat(document.getElementById('msedit-ms').value);
+  if (isNaN(pct) || pct < 0) { toast('MS 값을 입력해주세요'); return; }
+  const msTable = loadMsTable();
+  msTable[groupKey(msEditSelectedGroup)] = pct / 100;
+  localStorage.setItem(MS_TABLE_KEY, JSON.stringify(msTable));
+  toast(`${msEditSelectedGroup.name} (${msEditSelectedGroup.pumjong}) MS 수정 완료`);
+  renderMsGaps();
+}
+
+// 판매실적 분석 후, 저장된 MS 기준이 없는 신규 납품처를 찾아 입력칸을 보여줍니다
+function renderMsGaps(){
+  const card = document.getElementById('ms-gap-card');
+  const msTable = loadMsTable();
+  const gaps = [];
+  const seen = new Set();
+  currentGroups.forEach(g=>{
+    const key = groupKey(g);
+    if (key in msTable || seen.has(key)) return;
+    seen.add(key);
+    gaps.push(g);
+  });
+
+  if (!gaps.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  document.getElementById('ms-gap-hint').textContent =
+    `저장된 MS 기준이 없는 납품처 ${gaps.length}건 — 입력하면 다음부터 자동 반영됩니다`;
+  document.getElementById('ms-gap-tbody').innerHTML = gaps.map(g => `
+    <tr data-key="${encodeURIComponent(groupKey(g))}">
+      <td class="office-name">${g.office}</td>
+      <td>${g.name}</td>
+      <td>${g.pumjong}</td>
+      <td>${g.product}</td>
+      <td>
+        <div class="ms-input-wrap">
+          <input type="number" step="1" min="0" max="100" placeholder="0">
+          <span class="ms-input-suffix">%</span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function saveMsGaps(){
+  const table = loadMsTable();
+  let count = 0;
+  document.querySelectorAll('#ms-gap-tbody tr').forEach(tr=>{
+    const input = tr.querySelector('input');
+    const v = parseFloat(input.value);
+    if (!isNaN(v) && v > 0) {
+      table[decodeURIComponent(tr.dataset.key)] = v / 100;
+      count++;
+    }
+  });
+  if (!count) { toast('입력된 MS 값이 없습니다'); return; }
+  localStorage.setItem(MS_TABLE_KEY, JSON.stringify(table));
+  toast(`MS ${count}건 저장 완료`);
+  renderMsGaps();
+}
+
+/* ── 신규 납품처 수동 추가 ── */
+function toDateInputValue(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// 출하시점 입력칸의 선택 가능 범위를 현재 작성 기간(주차)에 맞추고, 비어있으면 기본값을 채웁니다
+function syncNdDateBounds(weeks, defaultWeekN){
+  const dateEl = document.getElementById('nd-date');
+  if (!dateEl || !weeks.length) return;
+  const min = weeks[0].start, max = weeks[weeks.length-1].end;
+  dateEl.min = toDateInputValue(min);
+  dateEl.max = toDateInputValue(max);
+
+  const now = new Date();
+  const inRange = ymd(now) >= ymd(min) && ymd(now) <= ymd(max);
+  const curVal = dateEl.value ? new Date(dateEl.value) : null;
+  const curInRange = curVal && ymd(curVal) >= ymd(min) && ymd(curVal) <= ymd(max);
+  if (!curInRange) {
+    const def = inRange ? now : (weeks.find(w=>w.n===defaultWeekN)?.start || min);
+    dateEl.value = toDateInputValue(def);
+  }
+}
+
+const ND_PRODUCTS_BY_PUM = {
+  'PC': ['P/C BULK', 'P/C BAG(PLT)'],
+  'SC': ['S/C BULK'],
+  'SP': ['S/P bulk'],
+};
+
+function onNdPumjongChange(){
+  const pumjong = document.getElementById('nd-pumjong').value;
+  const sel = document.getElementById('nd-product');
+  const prev = sel.value;
+  const products = ND_PRODUCTS_BY_PUM[pumjong] || [];
+  sel.innerHTML = products.map(p=>`<option value="${p}">${p}</option>`).join('');
+  if (products.includes(prev)) sel.value = prev;
+}
+onNdPumjongChange();
+
+function onNdModeChange(){
+  const isArrival = document.getElementById('nd-mode').value === '도착도';
+  const t2 = document.getElementById('nd-t2'), t2sub = document.getElementById('nd-t2sub');
+  t2.disabled = isArrival; t2sub.disabled = isArrival;
+  if (isArrival) { t2.value = ''; t2sub.value = ''; }
+}
+
+function addManualDestination(){
+  if (!currentYm || !currentWeeks.length) {
+    toast('먼저 작성 연도/월을 선택하거나 판매실적을 업로드해주세요');
+    return;
+  }
+  const dateVal = document.getElementById('nd-date').value;
+  if (!dateVal) { toast('출하시점을 선택해주세요'); return; }
+  const [dy,dm,dd] = dateVal.split('-').map(Number);
+  const weekNum = weekOfDate(dy*10000+dm*100+dd, currentWeeks);
+  if (!weekNum) { toast('선택한 출하시점이 현재 작성 기간(주차)에 포함되지 않습니다'); return; }
+
+  const code = document.getElementById('nd-code').value.trim();
+  const name = document.getElementById('nd-name').value.trim();
+  const pumjong = document.getElementById('nd-pumjong').value.trim();
+  if (!code || !name || !pumjong) { toast('납품처코드·납품처명·품종명을 입력해주세요'); return; }
+
+  const office = document.getElementById('nd-office').value;
+  const terminal = document.getElementById('nd-terminal').value.trim();
+  const channel = document.getElementById('nd-channel').value.trim();
+  const affiliate = document.getElementById('nd-affiliate').value.trim();
+  const volume = parseFloat(document.getElementById('nd-volume').value) || 0;
+  const msPct = parseFloat(document.getElementById('nd-ms').value);
+  const mode = document.getElementById('nd-mode').value;
+  const pay = document.getElementById('nd-pay').value.trim();
+  const distEl = document.getElementById('nd-distance');
+  const distance = distEl.value === '' ? null : num(distEl.value);
+  const isArrival = mode === '도착도';
+  const t2El = document.getElementById('nd-t2'), t2subEl = document.getElementById('nd-t2sub');
+  const t2 = (!isArrival && t2El.value !== '') ? num(t2El.value) : null;
+  const t2sub = (!isArrival && t2subEl.value !== '') ? num(t2subEl.value) : null;
+  const product = document.getElementById('nd-product').value;
+
+  const key = groupKeyFull({ office, affiliate, code, name, channel, terminal, pumjong, product, mode, pay });
+  let g = currentGroups.find(x => groupKeyFull(x) === key);
+  if (!g) {
+    g = { office, affiliate, code, name, channel, terminal, pumjong, product, mode, pay, distance, t2, t2sub, budget:0, weeks:{}, manual:true };
+    currentGroups.push(g);
+  } else {
+    Object.assign(g, { office, affiliate, code, name, channel, terminal, pumjong, product, mode, pay, distance, t2, t2sub });
+  }
+  // 선택한 출하시점이 속한 주차부터 이후 모든 주차에 동일한 물량을 채웁니다
+  currentWeeks.forEach(w => { if (w.n >= weekNum) g.weeks[w.n] = volume; });
+
+  if (!isNaN(msPct) && msPct > 0) {
+    const msTable = loadMsTable();
+    msTable[groupKey(g)] = msPct / 100;
+    localStorage.setItem(MS_TABLE_KEY, JSON.stringify(msTable));
+  }
+
+  computeOfficeStats();
+  renderAll();
+  persistCurrentMonth();
+  toast(`${name} (${weekNum}주차 이후) 추가 완료`);
+
+  document.getElementById('nd-volume').value = '';
+  document.getElementById('nd-ms').value = '';
+}
+
+async function downloadMiRawData(){
+  if (!currentGroups.length) { toast('먼저 판매실적을 업로드해주세요'); return; }
+  if (typeof ExcelJS === 'undefined') { toast('⚠ 엑셀 서식 라이브러리를 불러오지 못했습니다 (인터넷 연결을 확인해주세요)'); return; }
+
+  const monthLabel = `${+currentYm.slice(4,6)}월1일 ~ ${+currentYm.slice(4,6)}월${new Date(+currentYm.slice(0,4), +currentYm.slice(4,6), 0).getDate()}일`;
+  const msTable = loadMsTable();
+
+  const rows = [];
+  currentGroups.forEach(g=>{
+    const isArrival = g.mode === '도착도';
+    const distance = (isArrival && g.distance != null && g.distance !== '') ? g.distance : '';
+    const t2 = (isArrival && g.t2 != null && g.t2 !== '') ? round2(g.t2) : '';
+    const t2sub = (isArrival && g.t2sub != null && g.t2sub !== '') ? round2(g.t2sub) : '';
+    const ms = msTable[groupKey(g)];
+    const msVal = (typeof ms === 'number') ? ms : '';
+    rows.push(['영남지사', g.office, '사업계획', monthLabel, g.pumjong, g.product, g.terminal, g.channel,
+      g.affiliate, g.code, g.name, '', round2(g.budget), msVal, g.mode, g.pay, distance, t2, t2sub]);
+    currentWeeks.forEach(w=>{
+      rows.push(['영남지사', g.office, w.n, w.label, g.pumjong, g.product, g.terminal, g.channel,
+        g.affiliate, g.code, g.name, '', round2(effectiveWeekValue(g, w.n)), msVal, g.mode, g.pay, distance, t2, t2sub]);
+    });
+  });
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('raw data');
+
+  ws.addRow(MI_HEADERS);
+  rows.forEach(r => ws.addRow(r));
+
+  // Market Volume = LHCC Volume(M) ÷ MS(N) — 같은 행을 참조하는 수식으로 기록 (MS 기준표가 있는 행만)
+  for (let r = 2; r <= ws.rowCount; r++) {
+    if (typeof ws.getCell(r, 14).value === 'number') {
+      ws.getCell(r, 12).value = { formula: `IFERROR(M${r}/N${r}, )` };
+    }
+  }
+
+  ws.columns.forEach((col, i) => { col.width = MI_COL_WIDTHS[i] || 10; });
+
+  const headerRow = ws.getRow(1);
+  headerRow.height = 21;
+  headerRow.eachCell((cell, colNumber) => {
+    const grp = MI_COL_STYLE_GROUP[colNumber-1];
+    cell.font = MI_FONT;
+    cell.fill = grp === 1 ? MI_FILL_DARK : MI_FILL_LIGHT;
+    cell.alignment = { horizontal:'center', vertical:'center', wrapText:true };
+  });
+
+  for (let r = 2; r <= ws.rowCount; r++) {
+    const row = ws.getRow(r);
+    row.height = 21;
+    row.eachCell({ includeEmpty:true }, (cell, colNumber) => {
+      const grp = MI_COL_STYLE_GROUP[colNumber-1];
+      cell.font = MI_FONT;
+      if (grp === 1) cell.fill = MI_FILL_DARK;
+      cell.alignment = { horizontal: colNumber <= 11 ? 'left' : 'center', vertical:'center' };
+      if (colNumber === 12) cell.numFmt = '#,##0_ ';
+      else if (colNumber === 13) cell.numFmt = '#,##0_);[Red](#,##0)';
+      else if (colNumber === 14) cell.numFmt = '0%';
+      else if (colNumber === 18 || colNumber === 19) cell.numFmt = '#,##0_ ;[Red]-#,##0_ ';
+    });
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `MI_영남지사_${currentYm}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 5000);
+  toast('다운로드를 시작합니다');
+}
+
+function round2(n){ return Math.round(n*100)/100; }
+
+/* ═══════════════════════════════════════════════════════════════
+   5. 저장 (IndexedDB: 그룹 데이터 / localStorage: 이력 메타)
+═══════════════════════════════════════════════════════════════ */
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = ()=> req.result.createObjectStore(DB_STORE);
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function saveToDB(ym, data){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(DB_STORE,'readwrite');
+    tx.objectStore(DB_STORE).put(data, ym);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+// 수동으로 신규 납품처를 추가/수정한 뒤 현재 월 데이터를 다시 저장합니다
+async function persistCurrentMonth(){
+  if (!currentYm) return;
+  await saveToDB(currentYm, {
+    ym: currentYm, weeks: currentWeeks, groups: currentGroups, fileName: currentFileName,
+    lastActualDate: currentLastActualDate, satHolRatio: currentSatHolRatio,
+    isEstimated: currentIsEstimated, weights: currentOfficeWeightAdj, savedAt: new Date().toISOString(),
+  });
+  saveMeta(currentYm, currentFileName);
+}
+
+async function loadFromDB(ym){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(DB_STORE,'readonly');
+    const req = tx.objectStore(DB_STORE).get(ym);
+    req.onsuccess = ()=>resolve(req.result || null);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function deleteFromDB(ym){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(DB_STORE,'readwrite');
+    tx.objectStore(DB_STORE).delete(ym);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+
+function loadMeta(){
+  try { return JSON.parse(localStorage.getItem(META_KEY) || '{"months":[]}'); }
+  catch(e){ return {months:[]}; }
+}
+function saveMeta(ym, fileName){
+  const meta = loadMeta();
+  const idx = meta.months.findIndex(m=>m.ym===ym);
+  const entry = { ym, fileName, savedAt: new Date().toISOString() };
+  if (idx>-1) meta.months[idx] = entry; else meta.months.unshift(entry);
+  localStorage.setItem(META_KEY, JSON.stringify(meta));
+}
+function removeMeta(ym){
+  const meta = loadMeta();
+  meta.months = meta.months.filter(m=>m.ym!==ym);
+  localStorage.setItem(META_KEY, JSON.stringify(meta));
+}
+
+function renderHistory(){
+  const meta = loadMeta();
+  const list = meta.months.slice().sort((a,b)=> b.ym.localeCompare(a.ym));
+  document.getElementById('hist-count').textContent = list.length + '건';
+  const emptyEl = document.getElementById('hist-empty');
+  const rowEl = document.getElementById('hist-select-row');
+  if (!list.length) {
+    emptyEl.style.display = 'block';
+    rowEl.style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  rowEl.style.display = 'flex';
+  const sel = document.getElementById('hist-select');
+  sel.innerHTML = list.map(m =>
+    `<option value="${m.ym}">${m.ym.slice(0,4)}년 ${+m.ym.slice(4,6)}월 · ${m.fileName}</option>`
+  ).join('');
+  if (list.some(m=>m.ym===currentYm)) sel.value = currentYm;
+}
+
+async function loadMonth(ym){
+  const data = await loadFromDB(ym);
+  if (!data) { toast('데이터를 찾을 수 없습니다'); return; }
+  currentYm = data.ym;
+  currentWeeks = data.weeks.map(w=>({ ...w, start:new Date(w.start), end:new Date(w.end) }));
+  currentGroups = data.groups;
+  currentSatHolRatio = data.satHolRatio != null ? data.satHolRatio : null;
+  currentIsEstimated = !!data.isEstimated;
+  currentFileName = data.fileName || '';
+  currentLastActualDate = data.lastActualDate || 0;
+  currentOfficeWeightAdj = data.weights || {};
+  currentWeightSuggested = false;
+  currentTrendInfo = null;
+  computeOfficeStats();
+
+  document.getElementById('up-empty').style.display = 'none';
+  document.getElementById('up-info').style.display = 'block';
+  document.getElementById('up-drop').classList.add('has-file');
+  document.getElementById('up-name').textContent = '📄 ' + data.fileName;
+  const ratioLabel = currentSatHolRatio != null ? ` · 토요일·공휴일 평일 대비 ${(currentSatHolRatio*100).toFixed(0)}%` : '';
+  if (currentIsEstimated) {
+    document.getElementById('up-meta').textContent =
+      `${currentYm.slice(0,4)}년 ${+currentYm.slice(4,6)}월 · ${currentWeeks.length}개 주차 · 일자별 실적 없음(주차 추정 배분)${ratioLabel}`;
+  } else {
+    const lastDateLabel = data.lastActualDate
+      ? `${String(data.lastActualDate).slice(4,6)}/${String(data.lastActualDate).slice(6,8)}`
+      : '-';
+    document.getElementById('up-meta').textContent =
+      `${currentYm.slice(0,4)}년 ${+currentYm.slice(4,6)}월 · ${currentWeeks.length}개 주차 · 실적 반영 기준일 ${lastDateLabel}${ratioLabel}`;
+  }
+  setStatus('');
+
+  renderAll();
+  renderHistory();
+}
+
+async function delMonth(ym){
+  if (!confirm('이 월의 분석 데이터를 삭제할까요?')) return;
+  await deleteFromDB(ym);
+  removeMeta(ym);
+  if (currentYm === ym) clearUpload();
+  renderHistory();
+}
+
+function clearUpload(){
+  currentYm = ''; currentWeeks = []; currentGroups = []; currentOfficeStats = {}; currentIsEstimated = false;
+  currentOfficeWeightAdj = {};
+  document.getElementById('up-empty').style.display = 'block';
+  document.getElementById('up-info').style.display = 'none';
+  document.getElementById('up-drop').classList.remove('has-file');
+  document.getElementById('dash-card').style.display = 'none';
+  document.getElementById('trend-card').style.display = 'none';
+  document.getElementById('ms-gap-card').style.display = 'none';
+  document.getElementById('weight-card').style.display = 'none';
+  document.getElementById('period-badge').textContent = '-';
+  setStatus('');
+  syncPeriodUI();
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2400);
+}
+
+/* ── 초기화: 가장 최근 이력이 있으면 자동 로드 ── */
+(async function init(){
+  renderHistory();
+  const meta = loadMeta();
+  if (meta.months.length) {
+    const latest = meta.months.slice().sort((a,b)=> b.ym.localeCompare(a.ym))[0];
+    await loadMonth(latest.ym);
+  } else {
+    syncPeriodUI();
+  }
+})();
+</script>
+
+</body>
+</html>
