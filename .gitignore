@@ -1,2 +1,8 @@
 .DS_Store
 Thumbs.db
+
+# 로컬 전용 모드 (보안 정책상 공개 저장소/웹에는 올리지 않음 — construction만 공개)
+/mi/
+/weekly/
+/monthly/
+/_server/
