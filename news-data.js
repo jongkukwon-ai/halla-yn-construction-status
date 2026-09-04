@@ -7,18 +7,21 @@
 const NEWS_UPDATED = "2026-09-04";
 
 const NEWS_YN = [
-  { title:"광주 챔피언스시티 3000가구…울산서는 야음 뉴타운 1150가구", source:"한국경제", date:"2026-08-27", url:"https://www.hankyung.com/article/2026082759451" },
-  { title:"울산 중구 아파트 신축현장서 구조물 무너져…인부 3명 경상", source:"네이트뉴스", date:"2026-08-25", url:"https://news.nate.com/view/20260825n20635" },
-  { title:"동부건설, 센트레빌 아스테리움 거제 본격 분양", source:"경남신문", date:"2026-08-24", url:"http://www.knnews.co.kr/news/articleView.php?idxno=1547515" },
-  { title:"울산 아파트 분양, 기대감은 100인데 공급은 '0'", source:"머니투데이", date:"2026-08-07", url:"https://v.daum.net/v/20260807001853548" },
-  { title:"대구 8월 분양전망지수 꺾여…분양 기대감↓", source:"대구일보", date:"2026-08-01", url:"https://www.idaegu.com/news/articleView.html?idxno=664862" },
+  { title:"대구시, 달서천 5구역 BTL사업 우선협상대상자 지정…2028년 착공", source:"매일신문", date:"2026-09-03", url:"https://www.imaeil.com/page/view/2026090317295320389" },
+  { title:"전세 매물 마른 진주…'판문지구 레이크써밋 웰가' 9월 분양", source:"서울경제TV", date:"2026-09-01", url:"https://www.sentv.co.kr/article/view/sentv202609010090" },
+  { title:"부산 동래구 시공사 선정 줄 잇는다", source:"대한경제", date:"2026-09-01", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202509011527098570873" },
+  { title:"'6개월 새 8000만원↑'…교통망 확충에 양산 물금 부동산 '꿈틀'", source:"머니투데이", date:"2026-08-31", url:"https://www.mt.co.kr/estate/2026/08/31/2026083110581385472" },
+  { title:"대구 7월 아파트 분양 '제로'…착공도 96% 급감", source:"매일신문", date:"2026-08-29", url:"https://www.imaeil.com/page/view/2026082919041533886" },
+  { title:"에스엔시스, 부산 제2공장 신설 추진", source:"뉴스핌", date:"2026-08-27", url:"https://www.newspim.com/news/view/20260827000180" },
+  { title:"울산 입주 물량 감소… '그랑라크 에일린의 뜰' 분양", source:"뉴스핌", date:"2026-08-19", url:"https://www.newspim.com/news/view/20260819000943" },
+  { title:"GS건설, 4082억 규모 부산 사직3구역 재개발 본계약", source:"아주경제", date:"2026-08-07", url:"https://www.ajunews.com/view/20260807173907679" },
 ];
 
 const NEWS_OTHER = [
-  { title:"9월 수도권 분양 2만가구…서울은 244가구 그쳐", source:"헤럴드경제", date:"2026-08-31", url:"https://biz.heraldcorp.com/article/10858462" },
-  { title:"국토부, 서울·대전서 정비사업 설명회 개최", source:"파이낸셜뉴스", date:"2026-08-29", url:"https://www.fnnews.com/news/202608291342318756" },
-  { title:"9월 아파트 입주 30% 급감...10채 중 7채는 수도권 쏠림", source:"헤럴드경제", date:"2026-08-28", url:"https://biz.heraldcorp.com/article/10849444" },
-  { title:"재건축·재개발 '속도전' 나선 정부…용적률 상향 빠져 사업성은 과제", source:"뉴스핌", date:"2026-08-14", url:"https://www.newspim.com/news/view/20260814000718" },
-  { title:"호남 반도체 훈풍?…장기 침체 광주 부동산 시장 달아오른다", source:"파이낸셜뉴스", date:"2026-08-12", url:"https://www.fnnews.com/news/202608120730149940" },
-  { title:"대전·충북 아파트값 상승… 세종 보합, 충남 하락", source:"중도일보", date:"2026-08-09", url:"https://m.joongdo.co.kr/view.php?key=20260809010002679" },
+  { title:"9월 가을분양 성수기...다음주 1021가구 분양 돌입", source:"파이낸셜뉴스", date:"2026-09-04", url:"https://www.fnnews.com/news/202609041519343392" },
+  { title:"전남광주 매머드급 '올 뉴 챔피언스시티 1차' 분양...3216가구 규모", source:"뉴스핌", date:"2026-09-02", url:"https://www.newspim.com/news/view/20260902001139" },
+  { title:"[주간 AI 부동산] 서울 그린벨트 풀리나…7.3만가구 신규택지에 쏠린 눈", source:"뉴스핌", date:"2026-08-21", url:"https://www.newspim.com/news/view/20260821000910" },
+  { title:"[르포] 메탄 연기 뿜던 공장터, 반도체 도시로…청주 부동산 '상전벽해'", source:"뉴스핌", date:"2026-08-18", url:"https://www.newspim.com/news/view/20260818001015" },
+  { title:"[AI 부동산 투데이] 치솟는 아파트 분양가…서울 '국평' 19억 넘겼다", source:"뉴스핌", date:"2026-08-10", url:"https://www.newspim.com/news/view/20260810001268" },
+  { title:"[분양캘린더] 김포 한강푸르지오리버프론트 등 3284가구 분양", source:"뉴스핌", date:"2026-08-07", url:"https://www.newspim.com/news/view/20260807001028" },
 ];
