@@ -1,10 +1,12 @@
-const CACHE = 'yn-ai-v6';
+const CACHE = 'yn-ai-v7';
 const ASSETS = [
   './index.html',
   './menu.html',
   './manifest.json',
   './assets/brand.css',
-  './construction/index.html'
+  './construction/index.html',
+  './news/index.html',
+  './news-data.js'
 ];
 
 self.addEventListener('install', e => {

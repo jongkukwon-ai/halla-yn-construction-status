@@ -80,44 +80,6 @@
     .nav-box-title{font-size:13px;font-weight:600;margin-top:2px;white-space:nowrap}
     .nav-box-desc{font-size:10px;color:rgba(255,255,255,0.4)}
 
-    /* ── 건설뉴스 ── */
-    #news-wrap{
-      position:relative;z-index:10;
-      max-width:1100px;margin:0 auto;padding:0 20px 56px;
-    }
-    .news-panel{
-      display:grid;grid-template-columns:2fr 1fr;gap:14px;
-    }
-    .news-main,.news-side{
-      background:rgba(255,255,255,0.045);
-      border:.5px solid rgba(255,255,255,0.13);
-      border-radius:16px;padding:18px 20px;
-    }
-    .news-panel-title{
-      display:flex;align-items:baseline;justify-content:space-between;
-      font-size:13.5px;font-weight:700;color:rgba(158,216,74,0.85);
-      margin-bottom:12px;letter-spacing:.02em;
-    }
-    .news-updated{font-size:10.5px;font-weight:400;color:rgba(255,255,255,0.32)}
-    .news-list{display:flex;flex-direction:column}
-    .news-item{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
-    .news-item:last-child{border-bottom:none;padding-bottom:0}
-    .news-item a{
-      color:rgba(255,255,255,0.88);font-weight:600;font-size:13.5px;
-      text-decoration:none;line-height:1.45;
-    }
-    .news-item a:hover{color:rgba(158,216,74,0.95);text-decoration:underline}
-    .news-meta{font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px}
-    .news-side-list{list-style:none}
-    .news-side-list li{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
-    .news-side-list li:last-child{border-bottom:none;padding-bottom:0}
-    .news-side-list a{
-      color:rgba(255,255,255,0.55);text-decoration:none;
-      font-size:12px;line-height:1.45;
-    }
-    .news-side-list a:hover{color:rgba(158,216,74,0.9);text-decoration:underline}
-
-    @media (max-width:900px){ .news-panel{ grid-template-columns:1fr; } }
     @media (max-width:700px){ #hero{ padding-top:40px; } }
   </style>
 </head>
@@ -136,46 +98,14 @@
       <span class="nav-box-icon">🏗️</span>
       <span class="nav-box-title">영남지역 아파트 착공현황</span>
     </a>
+    <a href="./news/index.html" class="nav-box">
+      <span class="nav-box-icon">🗞️</span>
+      <span class="nav-box-title">건설뉴스</span>
+    </a>
   </div>
 </div>
 
-<!-- 건설뉴스 -->
-<div id="news-wrap">
-  <div class="news-panel">
-    <div class="news-main">
-      <div class="news-panel-title">
-        🏗️ 영남지역 건설뉴스
-        <span class="news-updated" id="news-updated-label"></span>
-      </div>
-      <div class="news-list" id="news-main-list"></div>
-    </div>
-    <div class="news-side">
-      <div class="news-panel-title">그 외 지역 소식</div>
-      <ul class="news-side-list" id="news-side-list"></ul>
-    </div>
-  </div>
-</div>
-
-<script src="./news-data.js"></script>
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   건설뉴스 렌더링 (데이터는 news-data.js — 매일 자동 갱신됨)
-═══════════════════════════════════════════════════════════════ */
-function renderNews() {
-  if (typeof NEWS_YN === 'undefined') return;
-  document.getElementById('news-updated-label').textContent = `기준 ${NEWS_UPDATED}`;
-
-  document.getElementById('news-main-list').innerHTML = NEWS_YN.map(n => `
-    <div class="news-item">
-      <a href="${n.url}" target="_blank" rel="noopener noreferrer">${n.title}</a>
-      <div class="news-meta">${n.source}${n.date ? ' · ' + n.date : ''}</div>
-    </div>`).join('');
-
-  document.getElementById('news-side-list').innerHTML = NEWS_OTHER.map(n => `
-    <li><a href="${n.url}" target="_blank" rel="noopener noreferrer">${n.title}</a></li>`).join('');
-}
-renderNews();
-
 /* ═══════════════════════════════════════════════════════════════
    서비스워커 등록
 ═══════════════════════════════════════════════════════════════ */
