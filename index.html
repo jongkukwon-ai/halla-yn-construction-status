@@ -28,19 +28,6 @@
       opacity:.08;z-index:1;pointer-events:none;user-select:none;
     }
 
-    /* ── 좌상단 클러스터 ── */
-    #top-cluster{
-      position:fixed;top:max(16px,env(safe-area-inset-top));left:16px;
-      display:flex;gap:8px;z-index:10
-    }
-    #back-btn{
-      background:transparent;border:.5px solid rgba(255,255,255,0.12);
-      color:rgba(255,255,255,0.35);padding:6px 12px;border-radius:50px;
-      font-size:12px;cursor:pointer;font-family:system-ui,sans-serif;
-      text-decoration:none;transition:all .2s;white-space:nowrap;
-    }
-    #back-btn:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.25)}
-
     /* ── 히어로 (큰 영남지사 타이틀 + 바로가기 칸) ── */
     #hero{
       position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -96,10 +83,6 @@
 
 <img id="bg-logo" src="./assets/halla_logo.png" alt="HALLA CEMENT">
 
-<div id="top-cluster">
-  <a href="../secretary/index.html" id="back-btn">← Jkwon</a>
-</div>
-
 <button id="install-btn">⬇ 앱 설치</button>
 <a href="./menu.html" id="menu-btn">☰ 메뉴</a>
 
@@ -107,19 +90,6 @@
   <div id="pw-name">영남지사<span>HALLA CEMENT</span></div>
 
   <div id="quick-nav">
-    <a href="./mi/menu.html" class="nav-box">
-      <span class="nav-box-icon">📦</span>
-      <span class="nav-box-title">실적 분석 및 판매 예상</span>
-    </a>
-    <a href="./weekly/index.html" class="nav-box">
-      <span class="nav-box-icon">📈</span>
-      <span class="nav-box-title">주간리뷰</span>
-    </a>
-    <a href="./monthly/index.html" class="nav-box">
-      <span class="nav-box-icon">🗓️</span>
-      <span class="nav-box-title">월간대면리뷰</span>
-      <span class="nav-box-desc">지사회의</span>
-    </a>
     <a href="./construction/index.html" class="nav-box">
       <span class="nav-box-icon">🏗️</span>
       <span class="nav-box-title">영남지역 아파트 착공현황</span>

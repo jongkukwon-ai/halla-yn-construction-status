@@ -1,7 +1,7 @@
 {
   "name": "영남지사",
   "short_name": "영남지사",
-  "description": "한라시멘트 영남지사 AI 업무 비서 — MI · 주간리뷰 · 월간대면리뷰",
+  "description": "한라시멘트 영남지사 — 영남지역 아파트 착공현황 조회",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait-primary",

@@ -1,13 +1,9 @@
-const CACHE = 'yn-ai-v5';
+const CACHE = 'yn-ai-v6';
 const ASSETS = [
   './index.html',
   './menu.html',
   './manifest.json',
   './assets/brand.css',
-  './mi/menu.html',
-  './mi/index.html',
-  './weekly/index.html',
-  './monthly/index.html',
   './construction/index.html'
 ];
 
