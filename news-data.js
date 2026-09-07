@@ -23,15 +23,16 @@ const NEWS_CONSTRUCTION = [
 const NEWS_CEMENT = [
   { title:"시멘트 불황에 '무역' 키운 성신양회…매출 40% 뛰었다", source:"아시아투데이", date:"2026-09-04", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260904010001680" },
   { title:"한라시멘트, 폭염·강우 대응 콘크리트 기술인증 획득", source:"아시아투데이", date:"2026-08-25", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260825010008180" },
+  { title:"폭염이 바꾼 시멘트·건자재업계…안전관리 '뉴노멀'", source:"뉴스핌", date:"2026-08-10", url:"https://www.newspim.com/news/view/20260810000987" },
 ];
 
 // 패널 3 — 그 외 지역 소식 (수도권·인천·충청·호남 등)
 const NEWS_OTHER = [
-  { title:"9월 가을분양 성수기...다음주 1021가구 분양 돌입", source:"파이낸셜뉴스", date:"2026-09-04", url:"https://www.fnnews.com/news/202609041519343392" },
+  { title:"'은마 재건축, 이제 공사비 전쟁'…한미글로벌, 건설사업관리 맡는다", source:"머니투데이", date:"2026-09-07", url:"https://www.mt.co.kr/estate/2026/09/07/2026090709013625898" },
   { title:"재건축·재개발 4000세대 풀린다…서울시 통합심의 통과", source:"아주경제", date:"2026-09-04", url:"https://www.ajunews.com/view/20260904110316036" },
   { title:"가락삼익맨숀, 1485가구 대단지 재건축…공공임대 168가구", source:"머니투데이", date:"2026-09-04", url:"https://www.mt.co.kr/estate/2026/09/04/2026090409062331770" },
   { title:"압구정 재건축 '속도전'…2구역 앞서고 3·4구역 추격", source:"머니투데이", date:"2026-09-03", url:"https://www.mt.co.kr/estate/2026/09/03/2026090114500995899" },
   { title:"전남광주 매머드급 '올 뉴 챔피언스시티 1차' 분양...3216가구 규모", source:"뉴스핌", date:"2026-09-02", url:"https://www.newspim.com/news/view/20260902001139" },
   { title:"'분양 성수기' 9월 전국 3만3268가구 분양…서울은 244가구 그쳐", source:"머니투데이", date:"2026-09-01", url:"https://www.mt.co.kr/estate/2026/09/01/2026090110402580170" },
-  { title:"컬리넌 청주, 1497세대 대단지 공급 개시", source:"뉴스핌", date:"2026-08-14", url:"https://www.newspim.com/news/view/20260814001005" },
+  { title:"중견주택업체, 9월 9951가구 분양…전월比 115% 증가", source:"아주경제", date:"2026-08-31", url:"https://www.ajunews.com/view/20260831170046359" },
 ];
