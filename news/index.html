@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>건설뉴스 · 영남지사</title>
+<title>업종 관련 뉴스 · 영남지사</title>
 <style>
   :root {
     --ink:        #0F1B2D;
@@ -135,8 +135,8 @@
   <div style="display:flex;align-items:center;gap:14px;">
     <a href="../menu.html" style="flex-shrink:0;color:#8BA4D4;font-size:12px;text-decoration:none;border:1px solid rgba(139,164,212,.4);border-radius:20px;padding:5px 12px;white-space:nowrap;">← 영남지사</a>
     <div>
-      <div class="site-title">🏗️ 건설뉴스</div>
-      <div class="site-sub">영남지역(부산·양산·울산·경남·경북·대구) 중심 · 그 외 지역 소식</div>
+      <div class="site-title">🏭 업종 관련 뉴스</div>
+      <div class="site-sub">영남지역 건설 + 레미콘·시멘트 업계 중심 · 그 외 지역 소식</div>
     </div>
   </div>
   <div class="header-meta">
@@ -162,7 +162,7 @@
   <!-- 뉴스 패널 -->
   <div class="news-panel">
     <div class="news-main">
-      <div class="news-panel-title">🏗️ 영남지역 건설뉴스</div>
+      <div class="news-panel-title">🏭 영남 건설 · 레미콘·시멘트 뉴스</div>
       <div class="news-list" id="news-main-list"></div>
     </div>
     <div class="news-side">
@@ -207,7 +207,7 @@ function render() {
 
   document.getElementById('naver-search-link').href =
     'https://search.naver.com/search.naver?where=news&query=' +
-    encodeURIComponent(kw ? kw : '영남 건설');
+    encodeURIComponent(kw ? kw : '영남 건설 레미콘 시멘트');
 
   const yn = withinWindowSorted(typeof NEWS_YN !== 'undefined' ? NEWS_YN : []).filter(n => matchesKeyword(n, kw));
   const other = withinWindowSorted(typeof NEWS_OTHER !== 'undefined' ? NEWS_OTHER : []).filter(n => matchesKeyword(n, kw));
