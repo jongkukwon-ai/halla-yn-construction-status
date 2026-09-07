@@ -1,14 +1,13 @@
 // ══════════════════════════════════════════
-// 업종 관련 뉴스 데이터 (영남지역 건설 + 레미콘·시멘트 업계 중심 + 그 외 지역)
-// NEWS_YN: 영남지역 건설·부동산 뉴스와 레미콘·시멘트 업계(전국) 뉴스를 함께 담습니다.
+// 업종 관련 뉴스 데이터 (영남지역 건설 / 레미콘·시멘트 업계 / 그 외 지역 — 3개 패널)
 // date는 반드시 "YYYY-MM-DD" 형식(ISO) — 최신순 정렬 및
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
 const NEWS_UPDATED = "2026-09-07";
 
-const NEWS_YN = [
-  { title:"시멘트 불황에 '무역' 키운 성신양회…매출 40% 뛰었다", source:"아시아투데이", date:"2026-09-04", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260904010001680" },
+// 패널 1 — 영남지역 건설·부동산 뉴스
+const NEWS_CONSTRUCTION = [
   { title:"대구시, 달서천 5구역 BTL사업 우선협상대상자 지정…2028년 착공", source:"매일신문", date:"2026-09-03", url:"https://www.imaeil.com/page/view/2026090317295320389" },
   { title:"전세 매물 마른 진주…'판문지구 레이크써밋 웰가' 9월 분양", source:"서울경제TV", date:"2026-09-01", url:"https://www.sentv.co.kr/article/view/sentv202609010090" },
   { title:"'6개월 새 8000만원↑'…교통망 확충에 양산 물금 부동산 '꿈틀'", source:"머니투데이", date:"2026-08-31", url:"https://www.mt.co.kr/estate/2026/08/31/2026083110581385472" },
@@ -18,9 +17,15 @@ const NEWS_YN = [
   { title:"대구 건설수주 1년 새 90% 넘게 급감…고용률은 전국 최저", source:"매일신문", date:"2026-08-19", url:"https://www.imaeil.com/page/view/2026081914420694318" },
   { title:"지방 집값 불안에도 브랜드 대단지 신고가 속출…거제 '센트레빌 아스테리움' 공급", source:"아주경제", date:"2026-08-18", url:"https://www.ajunews.com/view/20260818080656277" },
   { title:"울산 집값·전셋값 동반 상승…시, 2030년까지 공공주택 6671가구 공급", source:"아주경제", date:"2026-08-13", url:"https://www.ajunews.com/view/20260813164001952" },
+];
+
+// 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
+const NEWS_CEMENT = [
+  { title:"시멘트 불황에 '무역' 키운 성신양회…매출 40% 뛰었다", source:"아시아투데이", date:"2026-09-04", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260904010001680" },
   { title:"한라시멘트, 폭염·강우 대응 콘크리트 기술인증 획득", source:"아시아투데이", date:"2026-08-25", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260825010008180" },
 ];
 
+// 패널 3 — 그 외 지역 소식 (수도권·인천·충청·호남 등)
 const NEWS_OTHER = [
   { title:"9월 가을분양 성수기...다음주 1021가구 분양 돌입", source:"파이낸셜뉴스", date:"2026-09-04", url:"https://www.fnnews.com/news/202609041519343392" },
   { title:"재건축·재개발 4000세대 풀린다…서울시 통합심의 통과", source:"아주경제", date:"2026-09-04", url:"https://www.ajunews.com/view/20260904110316036" },

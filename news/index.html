@@ -44,7 +44,7 @@
   .site-sub { color: #8BA4D4; font-size: 12px; margin-top: 1px; }
   .header-meta { font-size: 11px; color: #8BA4D4; text-align: right; }
 
-  .main { padding: 20px 24px 48px; max-width: 1100px; margin: 0 auto; }
+  .main { padding: 20px 24px 48px; max-width: 1320px; margin: 0 auto; }
 
   /* ── 검색 패널 ── */
   .search-panel {
@@ -95,9 +95,9 @@
   }
   .result-bar strong { color: var(--ink); }
 
-  /* ── 뉴스 패널 ── */
-  .news-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
-  .news-main, .news-side {
+  /* ── 뉴스 패널 (3분류: 건설 / 레미콘·시멘트 / 그 외 지역) ── */
+  .news-panel { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 14px; align-items: start; }
+  .news-col {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -113,17 +113,15 @@
   .news-item a { color: var(--ink); font-weight: 600; font-size: 13.5px; text-decoration: none; line-height: 1.45; }
   .news-item a:hover { color: var(--navy-light); text-decoration: underline; }
   .news-meta { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
-  .news-side-list { list-style: none; }
-  .news-side-list li { padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .news-side-list li:last-child { border-bottom: none; padding-bottom: 0; }
-  .news-side-list a { color: var(--ink-muted); text-decoration: none; font-size: 12px; line-height: 1.4; }
-  .news-side-list a:hover { color: var(--navy); text-decoration: underline; }
-  .news-date-badge { color: var(--ink-faint); }
+
+  .news-col.is-side .news-item a { font-size: 12.5px; font-weight: 500; color: var(--ink-muted); }
+  .news-col.is-side .news-item a:hover { color: var(--navy); }
 
   .empty-state { text-align: center; padding: 30px 10px; color: var(--ink-faint); font-size: 12.5px; }
 
-  @media (max-width: 900px) { .news-panel { grid-template-columns: 1fr; } }
-  @media (max-width: 700px) {
+  @media (max-width: 1050px) { .news-panel { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 680px) {
+    .news-panel { grid-template-columns: 1fr; }
     .site-header { padding: 0 16px; }
     .main { padding: 14px 16px 40px; }
   }
@@ -136,7 +134,7 @@
     <a href="../menu.html" style="flex-shrink:0;color:#8BA4D4;font-size:12px;text-decoration:none;border:1px solid rgba(139,164,212,.4);border-radius:20px;padding:5px 12px;white-space:nowrap;">← 영남지사</a>
     <div>
       <div class="site-title">🏭 업종 관련 뉴스</div>
-      <div class="site-sub">영남지역 건설 + 레미콘·시멘트 업계 중심 · 그 외 지역 소식</div>
+      <div class="site-sub">영남지역 건설 · 레미콘·시멘트 업계 · 그 외 지역 소식</div>
     </div>
   </div>
   <div class="header-meta">
@@ -156,18 +154,22 @@
   </div>
 
   <div class="result-bar">
-    영남지역 <strong id="count-yn">0</strong>건 · 그 외 지역 <strong id="count-other">0</strong>건 표시 중 (최근 30일 기준)
+    건설 <strong id="count-construction">0</strong>건 · 레미콘·시멘트 <strong id="count-cement">0</strong>건 · 그 외 지역 <strong id="count-other">0</strong>건 표시 중 (최근 30일 기준)
   </div>
 
   <!-- 뉴스 패널 -->
   <div class="news-panel">
-    <div class="news-main">
-      <div class="news-panel-title">🏭 영남 건설 · 레미콘·시멘트 뉴스</div>
-      <div class="news-list" id="news-main-list"></div>
+    <div class="news-col">
+      <div class="news-panel-title">🏗️ 영남 건설·부동산</div>
+      <div class="news-list" id="news-construction-list"></div>
     </div>
-    <div class="news-side">
+    <div class="news-col">
+      <div class="news-panel-title">🏭 레미콘·시멘트 업계</div>
+      <div class="news-list" id="news-cement-list"></div>
+    </div>
+    <div class="news-col is-side">
       <div class="news-panel-title">그 외 지역 소식</div>
-      <ul class="news-side-list" id="news-side-list"></ul>
+      <div class="news-list" id="news-other-list"></div>
     </div>
   </div>
 
@@ -202,6 +204,15 @@ function matchesKeyword(n, kw) {
   return hay.includes(kw);
 }
 
+function renderList(elId, items, emptyMsg) {
+  const el = document.getElementById(elId);
+  el.innerHTML = items.length ? items.map(n => `
+    <div class="news-item">
+      <a href="${n.url}" target="_blank" rel="noopener noreferrer">${n.title}</a>
+      <div class="news-meta">${n.source} · ${fmtDate(n.date)}</div>
+    </div>`).join('') : `<div class="empty-state">${emptyMsg}</div>`;
+}
+
 function render() {
   const kw = document.getElementById('f-search').value.trim().toLowerCase();
 
@@ -209,25 +220,17 @@ function render() {
     'https://search.naver.com/search.naver?where=news&query=' +
     encodeURIComponent(kw ? kw : '영남 건설 레미콘 시멘트');
 
-  const yn = withinWindowSorted(typeof NEWS_YN !== 'undefined' ? NEWS_YN : []).filter(n => matchesKeyword(n, kw));
+  const construction = withinWindowSorted(typeof NEWS_CONSTRUCTION !== 'undefined' ? NEWS_CONSTRUCTION : []).filter(n => matchesKeyword(n, kw));
+  const cement = withinWindowSorted(typeof NEWS_CEMENT !== 'undefined' ? NEWS_CEMENT : []).filter(n => matchesKeyword(n, kw));
   const other = withinWindowSorted(typeof NEWS_OTHER !== 'undefined' ? NEWS_OTHER : []).filter(n => matchesKeyword(n, kw));
 
-  document.getElementById('count-yn').textContent = yn.length;
+  document.getElementById('count-construction').textContent = construction.length;
+  document.getElementById('count-cement').textContent = cement.length;
   document.getElementById('count-other').textContent = other.length;
 
-  const mainEl = document.getElementById('news-main-list');
-  mainEl.innerHTML = yn.length ? yn.map(n => `
-    <div class="news-item">
-      <a href="${n.url}" target="_blank" rel="noopener noreferrer">${n.title}</a>
-      <div class="news-meta">${n.source} · <span class="news-date-badge">${fmtDate(n.date)}</span></div>
-    </div>`).join('') : `<div class="empty-state">조건에 맞는 영남지역 기사가 없습니다.</div>`;
-
-  const sideEl = document.getElementById('news-side-list');
-  sideEl.innerHTML = other.length ? other.map(n => `
-    <li>
-      <a href="${n.url}" target="_blank" rel="noopener noreferrer">${n.title}</a>
-      <div class="news-meta">${fmtDate(n.date)}</div>
-    </li>`).join('') : `<li class="empty-state">조건에 맞는 기사가 없습니다.</li>`;
+  renderList('news-construction-list', construction, '조건에 맞는 건설 기사가 없습니다.');
+  renderList('news-cement-list', cement, '조건에 맞는 레미콘·시멘트 기사가 없습니다.');
+  renderList('news-other-list', other, '조건에 맞는 기사가 없습니다.');
 }
 
 function applyFilter() { render(); }
