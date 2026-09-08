@@ -4,10 +4,11 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-09-07";
+const NEWS_UPDATED = "2026-09-08";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
+  { title:"\"부산의 새로운 주거 기준\"… GS건설, 연제갤러리자이 내달 분양", source:"아주경제", date:"2026-09-08", url:"https://www.ajunews.com/view/20260908102856041" },
   { title:"대구시, 달서천 5구역 BTL사업 우선협상대상자 지정…2028년 착공", source:"매일신문", date:"2026-09-03", url:"https://www.imaeil.com/page/view/2026090317295320389" },
   { title:"전세 매물 마른 진주…'판문지구 레이크써밋 웰가' 9월 분양", source:"서울경제TV", date:"2026-09-01", url:"https://www.sentv.co.kr/article/view/sentv202609010090" },
   { title:"'6개월 새 8000만원↑'…교통망 확충에 양산 물금 부동산 '꿈틀'", source:"머니투데이", date:"2026-08-31", url:"https://www.mt.co.kr/estate/2026/08/31/2026083110581385472" },
@@ -15,8 +16,6 @@ const NEWS_CONSTRUCTION = [
   { title:"에스엔시스, 부산 제2공장 신설 추진", source:"뉴스핌", date:"2026-08-27", url:"https://www.newspim.com/news/view/20260827000180" },
   { title:"울산 입주 물량 감소… '그랑라크 에일린의 뜰' 분양", source:"뉴스핌", date:"2026-08-19", url:"https://www.newspim.com/news/view/20260819000943" },
   { title:"대구 건설수주 1년 새 90% 넘게 급감…고용률은 전국 최저", source:"매일신문", date:"2026-08-19", url:"https://www.imaeil.com/page/view/2026081914420694318" },
-  { title:"지방 집값 불안에도 브랜드 대단지 신고가 속출…거제 '센트레빌 아스테리움' 공급", source:"아주경제", date:"2026-08-18", url:"https://www.ajunews.com/view/20260818080656277" },
-  { title:"울산 집값·전셋값 동반 상승…시, 2030년까지 공공주택 6671가구 공급", source:"아주경제", date:"2026-08-13", url:"https://www.ajunews.com/view/20260813164001952" },
 ];
 
 // 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
@@ -29,6 +28,7 @@ const NEWS_CEMENT = [
 // 패널 3 — 그 외 지역 소식 (수도권·인천·충청·호남 등)
 const NEWS_OTHER = [
   { title:"'은마 재건축, 이제 공사비 전쟁'…한미글로벌, 건설사업관리 맡는다", source:"머니투데이", date:"2026-09-07", url:"https://www.mt.co.kr/estate/2026/09/07/2026090709013625898" },
+  { title:"\"14평이 23억\" 1년만에 '5억' 껑충...재건축 속도 내는 목동", source:"머니투데이", date:"2026-09-05", url:"https://www.mt.co.kr/estate/2026/09/05/2026090414063396070" },
   { title:"재건축·재개발 4000세대 풀린다…서울시 통합심의 통과", source:"아주경제", date:"2026-09-04", url:"https://www.ajunews.com/view/20260904110316036" },
   { title:"가락삼익맨숀, 1485가구 대단지 재건축…공공임대 168가구", source:"머니투데이", date:"2026-09-04", url:"https://www.mt.co.kr/estate/2026/09/04/2026090409062331770" },
   { title:"압구정 재건축 '속도전'…2구역 앞서고 3·4구역 추격", source:"머니투데이", date:"2026-09-03", url:"https://www.mt.co.kr/estate/2026/09/03/2026090114500995899" },
