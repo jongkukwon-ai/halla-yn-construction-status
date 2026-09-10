@@ -371,8 +371,8 @@
     </div>
   </div>
   <div class="header-meta">
-    기준일 2026.09.09 (Claude 자동 갱신)<br>
-    호갱노노 · 네이버부동산 · 부동산114 · 국토교통부 통계누리 교차검증
+    기준일 2026.09.11 (Claude 자동 갱신)<br>
+    호갱노노 · 네이버부동산 · 부동산114 · 국토교통부 통계누리 교차검증 · 레미콘 물량은 세대수 기반 추정
   </div>
 </header>
 
@@ -488,6 +488,7 @@
   <!-- 결과 바 -->
   <div class="result-bar">
     <div class="result-count">조회 결과 <strong id="result-num">0</strong>건
+      <span id="remicon-sum" style="margin-left:10px;font-size:12px;color:var(--teal);font-weight:600;"></span>
       <span id="new-note" style="margin-left:8px;font-size:11px;color:var(--pink);display:none;">
         🆕 분홍 행 = 신규 추가 현장
       </span>
@@ -515,6 +516,7 @@
             <th onclick="sortTable(9)"  data-col="9">유형</th>
             <th onclick="sortTable(10)" data-col="10">착공 상태</th>
             <th onclick="sortTable(11)" data-col="11">분양여부</th>
+            <th onclick="sortTable(14)" data-col="14">레미콘 추정(㎥)</th>
             <th>비고</th>
           </tr>
         </thead>
@@ -653,6 +655,27 @@ const saleClass = {
   "후분양예정":"sale-pre","미확인":"sale-unknown"
 };
 
+// ── 레미콘·시멘트 추정 물량 ──
+// 착공현황 원자료에는 레미콘/콘크리트 물량이 없어 세대수로 개략 추정한다.
+// 원단위 130㎥/세대 = 아파트 1세대당 레미콘 소요량 산업계 통용치(60~200㎥)의 중앙값,
+//   지상 골조 + 지하주차장 + 기초 포함 개략치. 세대수 미확인 시 산출 불가.
+// 시멘트 환산 0.30t/㎥ = 레미콘 1㎥당 시멘트 평균 함유량 가정.
+const REMICON_PER_UNIT = 130;
+const CEMENT_PER_M3 = 0.30;
+function estRemicon(units) {
+  if (units == null) return null;
+  return Math.round(units * REMICON_PER_UNIT / 100) * 100;
+}
+function estCement(units) {
+  const v = estRemicon(units);
+  return v == null ? null : Math.round(v * CEMENT_PER_M3 / 10) * 10;
+}
+function fmtRemiconTotal(total) {
+  if (!total) return '';
+  if (total >= 10000) return `레미콘 추정 합계 약 ${(total/10000).toLocaleString(undefined,{maximumFractionDigits:1})}만 ㎥`;
+  return `레미콘 추정 합계 약 ${total.toLocaleString()} ㎥`;
+}
+
 let currentData = [...RAW];
 let sortCol = 0, sortDir = 'asc';
 
@@ -691,8 +714,11 @@ function render(data) {
   const hasNew = data.some(r=>r[13]);
   document.getElementById('new-note').style.display = hasNew ? '' : 'none';
 
+  const remTotal = data.reduce((s,r)=> s + (estRemicon(r[7]) || 0), 0);
+  document.getElementById('remicon-sum').textContent = fmtRemiconTotal(remTotal);
+
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="13">
+    tbody.innerHTML = `<tr><td colspan="14">
       <div class="empty-state">
         <div class="icon">🔍</div>
         <p>조건에 맞는 현장이 없습니다.</p>
@@ -713,6 +739,10 @@ function render(data) {
     const sc    = statusClass[r[10]] || '';
     const rc    = regionClass[r[2]] || '';
     const slc   = saleClass[saleCategory(r[11])] || 'sale-unknown';
+    const rem   = estRemicon(r[7]);
+    const remCell = rem == null
+      ? '<span style="color:var(--ink-faint)">산출불가</span>'
+      : rem.toLocaleString();
     const newMark = r[13] ? ' <span style="color:var(--pink);font-size:10px;">🆕</span>' : '';
 
     tr.innerHTML = `
@@ -728,6 +758,7 @@ function render(data) {
       <td class="td-center">${r[9]}</td>
       <td class="td-center"><span class="status ${sc}">${r[10]}</span></td>
       <td class="td-center"><span class="sale-badge ${slc}">${r[11]}</span></td>
+      <td class="td-num">${remCell}</td>
       <td style="font-size:11.5px;color:var(--ink-muted)">${r[12]}</td>`;
     tbody.appendChild(tr);
   });
@@ -789,7 +820,9 @@ function sortTable(col) {
 
 function sortData() {
   currentData.sort((a,b)=>{
-    let va=a[sortCol], vb=b[sortCol];
+    let va, vb;
+    if (sortCol === 14) { va = estRemicon(a[7]); vb = estRemicon(b[7]); }
+    else { va = a[sortCol]; vb = b[sortCol]; }
     if (va==null) va = sortDir==='asc'?Infinity:-Infinity;
     if (vb==null) vb = sortDir==='asc'?Infinity:-Infinity;
     if (typeof va==='string') return sortDir==='asc'?va.localeCompare(vb,'ko'):vb.localeCompare(va,'ko');
@@ -811,6 +844,8 @@ function openDetail(r) {
     ['유형',        r[9]],
     ['착공 상태',   r[10]],
     ['분양여부',    r[11]],
+    ['레미콘 추정', r[7]!=null ? '약 '+estRemicon(r[7]).toLocaleString()+' ㎥' : '산출불가 (세대수 미확인)'],
+    ['시멘트 환산', r[7]!=null ? '약 '+estCement(r[7]).toLocaleString()+' 톤' : '산출불가 (세대수 미확인)'],
     ['신규 추가',   r[13]?'🆕 신규 추가 현장':'기존 현장'],
   ];
   document.getElementById('d-body').innerHTML = `
@@ -820,6 +855,9 @@ function openDetail(r) {
         <div class="detail-val">${v}</div>
       </div>`).join('')}
     <div class="detail-note">${r[12]}</div>
+    <div class="detail-note" style="margin-top:10px;font-size:11px;line-height:1.55;">
+      ※ 레미콘·시멘트 물량은 <b>세대수 × ${REMICON_PER_UNIT}㎥/세대</b>(아파트 세대당 레미콘 소요량 산업계 통용치 60~200㎥의 중앙값, 지하주차장·기초 포함 개략치)와 시멘트 <b>${CEMENT_PER_M3}t/㎥</b> 가정으로 자동 산출한 <b>추정치</b>입니다. 실제 물량은 골조형식·층수·지하규모·기초공법에 따라 ±30% 이상 차이날 수 있습니다.
+    </div>
     <a class="eais-btn" href="https://www.eais.go.kr/modistatsdscview.do" target="_blank" rel="noopener">
       🔍 세움터에서 착공면적 직접 조회 →
     </a>
@@ -842,8 +880,8 @@ async function exportExcel() {
     return;
   }
 
-  const hdr = ['No','단지명','광역','시·군·구','건설사','착공(예정)','준공(예정)','세대수','착공면적(㎡)','유형','착공 상태','분양여부','비고'];
-  const colWidths = [5, 34, 8, 14, 20, 14, 14, 10, 14, 10, 12, 20, 46];
+  const hdr = ['No','단지명','광역','시·군·구','건설사','착공(예정)','준공(예정)','세대수','착공면적(㎡)','유형','착공 상태','분양여부','레미콘 추정(㎥)','비고'];
+  const colWidths = [5, 34, 8, 14, 20, 14, 14, 10, 14, 10, 12, 20, 15, 46];
 
   const wb = new ExcelJS.Workbook();
   wb.creator = '한라시멘트 영남지사';
@@ -859,7 +897,9 @@ async function exportExcel() {
       r[1], r[2], r[3], r[4], r[5], r[6],
       r[7] != null ? r[7] : '미확인',
       r[8] != null ? r[8] : '미확인',
-      r[9], r[10], r[11], r[12]
+      r[9], r[10], r[11],
+      estRemicon(r[7]) != null ? estRemicon(r[7]) : '산출불가',
+      r[12]
     ]);
   });
 
@@ -901,7 +941,7 @@ async function exportExcel() {
     const rec = currentData[dataIdx];
     row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       cell.font = { name: '맑은 고딕', size: 10 };
-      cell.alignment = { vertical: 'middle', wrapText: colNumber === 13 };
+      cell.alignment = { vertical: 'middle', wrapText: colNumber === 14 };
       cell.border = {
         top: { style: 'hair', color: { argb: 'FFDDE3EC' } },
         bottom: { style: 'hair', color: { argb: 'FFDDE3EC' } },
@@ -911,7 +951,7 @@ async function exportExcel() {
       if (colNumber === 1 || colNumber === 3 || colNumber === 6 || colNumber === 7 || colNumber === 10 || colNumber === 12) {
         cell.alignment.horizontal = 'center';
       }
-      if (colNumber === 8 || colNumber === 9) {
+      if (colNumber === 8 || colNumber === 9 || colNumber === 13) {
         cell.alignment.horizontal = 'right';
         if (typeof cell.value === 'number') cell.numFmt = '#,##0';
       }
