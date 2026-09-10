@@ -513,10 +513,10 @@
             <th onclick="sortTable(6)"  data-col="6">준공(예정)</th>
             <th onclick="sortTable(7)"  data-col="7">세대수</th>
             <th onclick="sortTable(8)"  data-col="8">착공면적(㎡)</th>
+            <th onclick="sortTable(14)" data-col="14">레미콘 추정(㎥)</th>
             <th onclick="sortTable(9)"  data-col="9">유형</th>
             <th onclick="sortTable(10)" data-col="10">착공 상태</th>
             <th onclick="sortTable(11)" data-col="11">분양여부</th>
-            <th onclick="sortTable(14)" data-col="14">레미콘 추정(㎥)</th>
             <th>비고</th>
           </tr>
         </thead>
@@ -629,6 +629,10 @@ const RAW = [
   // ── GS건설 등 ──
   [76,"연제갤러리자이","부산","연제구","GS건설","미확인","미확인",499,null,"주상복합","착공임박","분양예정(2026.10)","연산동 1123-1 일원, 옛 GS건설 '자이갤러리' 전시부지. 지하4층~지상최고43층 3개동. 2026.10 분양(견본주택 10월 개관) 예정.",true],
   [77,"창원자이 더 스카이","경남","창원 성산구","GS건설","미확인","2030 상반기",519,null,"주상복합","착공임박","분양완료(2026.02)","성산구 중앙동 99-4·5·6 일원(옛 창원호텔 부지). 지하5층~지상최고49층 4개동. 2026.2 분양(청약) 완료.",true],
+  // ── 대형건설사 분양완료/분양예정 보완 (대우·삼성물산·현대ENG) ──
+  [78,"서면 써밋 더뉴","부산","부산진구","대우건설","2026","2031.04",919,null,"주상복합","착공임박","분양완료(2025.09)","전포동 668-1(옛 NC백화점 서면점 부지). 지하8층~지상47층 4개동, 아파트 919세대(전용 84~147㎡)+상업시설 29,767㎡. 대우건설 하이엔드 '써밋'. 2025.8 청약, 2025.12 계약 100% 완료. 서면역 도보 5분",true],
+  [79,"힐스테이트 거제 시그니처","경남","거제시","현대엔지니어링","2026 하반기","미확인",1963,null,"아파트","착공임박","분양예정(2026.10)","옥포동 일원, 거제시 최대 규모 공동주택. 지하7층~지상36층, 전용 84~165㎡. 2026.10 견본주택·분양 예정",true],
+  [80,"래미안 마크 더 스위트 (명륜2구역 재건축)","부산","동래구","삼성물산","2026 하반기~2027","2029.03",499,null,"아파트","착공임박","후분양예정","명륜동 명륜2구역 주택재건축. 지하3층~지상28층 5개동 499세대(일반분양 86세대, 후분양). 삼성물산 공사비 약 1,890억원. 조합원분양 2024.6~7 완료",true],
 ];
 
 // 상태 → CSS 클래스
@@ -755,10 +759,10 @@ function render(data) {
       <td class="td-center">${r[6]}</td>
       <td class="td-num" style="font-weight:${r[7]>=1000?'700':'400'}">${units}</td>
       <td class="td-num">${area}</td>
+      <td class="td-num">${remCell}</td>
       <td class="td-center">${r[9]}</td>
       <td class="td-center"><span class="status ${sc}">${r[10]}</span></td>
       <td class="td-center"><span class="sale-badge ${slc}">${r[11]}</span></td>
-      <td class="td-num">${remCell}</td>
       <td style="font-size:11.5px;color:var(--ink-muted)">${r[12]}</td>`;
     tbody.appendChild(tr);
   });
@@ -880,8 +884,8 @@ async function exportExcel() {
     return;
   }
 
-  const hdr = ['No','단지명','광역','시·군·구','건설사','착공(예정)','준공(예정)','세대수','착공면적(㎡)','유형','착공 상태','분양여부','레미콘 추정(㎥)','비고'];
-  const colWidths = [5, 34, 8, 14, 20, 14, 14, 10, 14, 10, 12, 20, 15, 46];
+  const hdr = ['No','단지명','광역','시·군·구','건설사','착공(예정)','준공(예정)','세대수','착공면적(㎡)','레미콘 추정(㎥)','유형','착공 상태','분양여부','비고'];
+  const colWidths = [5, 34, 8, 14, 20, 14, 14, 10, 14, 15, 10, 12, 20, 46];
 
   const wb = new ExcelJS.Workbook();
   wb.creator = '한라시멘트 영남지사';
@@ -897,8 +901,8 @@ async function exportExcel() {
       r[1], r[2], r[3], r[4], r[5], r[6],
       r[7] != null ? r[7] : '미확인',
       r[8] != null ? r[8] : '미확인',
-      r[9], r[10], r[11],
       estRemicon(r[7]) != null ? estRemicon(r[7]) : '산출불가',
+      r[9], r[10], r[11],
       r[12]
     ]);
   });
@@ -948,21 +952,21 @@ async function exportExcel() {
         left: { style: 'hair', color: { argb: 'FFDDE3EC' } },
         right: { style: 'hair', color: { argb: 'FFDDE3EC' } }
       };
-      if (colNumber === 1 || colNumber === 3 || colNumber === 6 || colNumber === 7 || colNumber === 10 || colNumber === 12) {
+      if (colNumber === 1 || colNumber === 3 || colNumber === 6 || colNumber === 7 || colNumber === 11 || colNumber === 13) {
         cell.alignment.horizontal = 'center';
       }
-      if (colNumber === 8 || colNumber === 9 || colNumber === 13) {
+      if (colNumber === 8 || colNumber === 9 || colNumber === 10) {
         cell.alignment.horizontal = 'right';
         if (typeof cell.value === 'number') cell.numFmt = '#,##0';
       }
-      if (colNumber === 11 && rec) {
+      if (colNumber === 12 && rec) {
         const fill = statusFill[rec[10]];
         const font = statusFont[rec[10]];
         if (fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
         if (font) cell.font = { name: '맑은 고딕', size: 10, bold: true, color: { argb: font } };
         cell.alignment.horizontal = 'center';
       }
-      if (rec && rec[13] && colNumber !== 11) {
+      if (rec && rec[13] && colNumber !== 12) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F5' } };
       }
     });
