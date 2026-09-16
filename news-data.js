@@ -4,10 +4,11 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-09-15";
+const NEWS_UPDATED = "2026-09-16";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
+  { title:"\"분양가 상승 계속되는데\"… 부산서 1억원대 보증금 신축 아파트 관심", source:"서울신문", date:"2026-09-16", url:"https://www.seoul.co.kr/news/economy/estate/2026/09/16/20260916500135" },
   { title:"부산 첫 '리뉴얼 자이'… 새달 499가구 분양", source:"서울신문", date:"2026-09-15", url:"https://www.seoul.co.kr/news/economy/estate/2026/09/15/20260915022001" },
   { title:"국가철도공단, '동해남부선 센텀역'·'거제역' 유휴부지 민간개발 공모", source:"머니투데이", date:"2026-09-14", url:"https://www.mt.co.kr/policy/2026/09/14/2026091412555770282" },
   { title:"부산 사상∼해운대 고속도 건설, 동서고가로는 철거 등 방안 모색", source:"머니투데이", date:"2026-09-11", url:"https://www.mt.co.kr/policy/2026/09/11/2026091114574278447" },
@@ -22,7 +23,7 @@ const NEWS_CONSTRUCTION = [
 const NEWS_CEMENT = [
   { title:"한일시멘트, 추석 앞두고 협력사 대금 420억원 조기 지급", source:"아시아투데이", date:"2026-09-14", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260914010004981" },
   { title:"아세아시멘트, '강우 환경 대응 콘크리트' 기술인증 획득", source:"대한경제", date:"2026-09-14", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609141412220540931" },
-  { title:"시멘트·레미콘·건설업계, '저탄소 건축자재' 적용 확대 협력 논의", source:"아시아경제", date:"2026-09-10", url:"https://view.asiae.co.kr/article/2026091015134520350" },
+  { title:"전근식 시멘트협회장 \"탄소중립 기술, 산업간 신뢰제고로 함께 실현\"", source:"뉴스핌", date:"2026-09-10", url:"https://www.newspim.com/news/view/20260910000453" },
   { title:"시멘트 불황에 '무역' 키운 성신양회…매출 40% 뛰었다", source:"아시아투데이", date:"2026-09-04", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260904010001680" },
   { title:"삼표그룹, 특수 콘크리트 전문가 키운다…'VAP 제너럴리스트' 양성", source:"아시아투데이", date:"2026-09-01", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260901010000095" },
 ];
