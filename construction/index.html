@@ -178,7 +178,7 @@
     border-radius: 10px;
     overflow: hidden;
   }
-  .table-scroll { overflow-x: auto; }
+  .table-scroll { overflow: auto; max-height: max(360px, calc(100vh - 130px)); }
 
   table {
     width: 100%;
@@ -195,6 +195,8 @@
     white-space: nowrap;
     position: sticky;
     top: 0;
+    z-index: 2;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
     cursor: pointer;
     user-select: none;
   }
