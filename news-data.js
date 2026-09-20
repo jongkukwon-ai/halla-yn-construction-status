@@ -4,37 +4,35 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-09-15";
+const NEWS_UPDATED = "2026-09-20";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
-  { title:"부산 첫 '리뉴얼 자이'… 새달 499가구 분양", source:"서울신문", date:"2026-09-15", url:"https://www.seoul.co.kr/news/economy/estate/2026/09/15/20260915022001" },
-  { title:"국가철도공단, '동해남부선 센텀역'·'거제역' 유휴부지 민간개발 공모", source:"머니투데이", date:"2026-09-14", url:"https://www.mt.co.kr/policy/2026/09/14/2026091412555770282" },
-  { title:"부산 사상∼해운대 고속도 건설, 동서고가로는 철거 등 방안 모색", source:"머니투데이", date:"2026-09-11", url:"https://www.mt.co.kr/policy/2026/09/11/2026091114574278447" },
-  { title:"진주 신축 아파트 품귀…'진주 판문지구 레이크써밋 웰가' 9월 공급", source:"뉴스핌", date:"2026-09-09", url:"https://www.newspim.com/news/view/20260909000381" },
-  { title:"당리4구역 재개발조합 시공자 선정 입찰공고", source:"위클리한국주택경제신문", date:"2026-09-09", url:"https://www.arunews.com/news/articleView.html?idxno=66986" },
-  { title:"대구시, 청년세대주 부동산 중개수수료 최대 30만원 지원", source:"아시아경제", date:"2026-09-08", url:"https://view.asiae.co.kr/article/2026090810175148557" },
-  { title:"대구시, 달서천 5구역 BTL사업 우선협상대상자 지정…2028년 착공", source:"매일신문", date:"2026-09-03", url:"https://www.imaeil.com/page/view/2026090317295320389" },
-  { title:"'6개월 새 8000만원↑'…교통망 확충에 양산 물금 부동산 '꿈틀'", source:"머니투데이", date:"2026-08-31", url:"https://www.mt.co.kr/estate/2026/08/31/2026083110581385472" },
+  { title:"현대건설, 2년 연속 정비사업 수주 10조 돌파…\"목표액 넘어설 듯\"", source:"머니투데이", date:"2026-09-20", url:"https://www.mt.co.kr/estate/2026/09/20/2026092009240340453" },
+  { title:"울산·경주, 전철부터 도시가스까지…'생활권 동맹' 속도 낸다", source:"아시아경제", date:"2026-09-17", url:"https://view.asiae.co.kr/article/2026091715095686792" },
+  { title:"울산 남구 '그랑라크 에일린의 뜰' 1521세대, 14일 특별공급 시작", source:"아시아경제", date:"2026-09-14", url:"https://view.asiae.co.kr/article/2026091410181299661" },
+  { title:"부산 상승세 이끄는 '위브더제니스'… '두산위브더제니스 대연' 무순위 청약 주목", source:"아시아경제", date:"2026-09-14", url:"https://view.asiae.co.kr/article/2026091415170826709" },
+  { title:"신동아건설, '부산 범천동 가로주택정비사업' 수주…누적 3500억원", source:"아시아경제", date:"2026-09-09", url:"https://view.asiae.co.kr/article/2026090909550078408" },
+  { title:"\"부산 첫 리뉴얼 자이 브랜드\"…GS건설, 연제갤러리자이 10월 분양", source:"머니투데이", date:"2026-09-08", url:"https://www.mt.co.kr/estate/2026/09/08/2026090809265295720" },
+  { title:"양산 집값·개발호재 같이 움직인다…'힐스테이트 양산더스카이' 관심", source:"뉴스핌", date:"2026-08-27", url:"https://www.newspim.com/news/view/20260827000926" },
 ];
 
 // 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
 const NEWS_CEMENT = [
-  { title:"한일시멘트, 추석 앞두고 협력사 대금 420억원 조기 지급", source:"아시아투데이", date:"2026-09-14", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260914010004981" },
-  { title:"아세아시멘트, '강우 환경 대응 콘크리트' 기술인증 획득", source:"대한경제", date:"2026-09-14", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609141412220540931" },
-  { title:"시멘트·레미콘·건설업계, '저탄소 건축자재' 적용 확대 협력 논의", source:"아시아경제", date:"2026-09-10", url:"https://view.asiae.co.kr/article/2026091015134520350" },
+  { title:"매출 줄어도 이익 늘렸다...전근식 한일시멘트 대표 '내실 경영' 주력", source:"뉴스핌", date:"2026-09-14", url:"https://www.newspim.com/news/view/20260914000813" },
+  { title:"[2026 대경 스마트건설대상] 건설자재대상 쌍용레미콘", source:"대한경제", date:"2026-09-12", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609122218121310732" },
+  { title:"시멘트·레미콘·건설업계, 저탄소 콘크리트 확산에 총력", source:"파이낸셜뉴스", date:"2026-09-10", url:"https://www.fnnews.com/news/202609101131067992" },
   { title:"시멘트 불황에 '무역' 키운 성신양회…매출 40% 뛰었다", source:"아시아투데이", date:"2026-09-04", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260904010001680" },
-  { title:"삼표그룹, 특수 콘크리트 전문가 키운다…'VAP 제너럴리스트' 양성", source:"아시아투데이", date:"2026-09-01", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260901010000095" },
 ];
 
 // 패널 3 — 그 외 지역 소식 (수도권·인천·충청·호남 등)
 const NEWS_OTHER = [
-  { title:"GTX-C 15일 착공…수원~청량리 '75분→30분' 단축", source:"머니투데이", date:"2026-09-14", url:"https://www.mt.co.kr/estate/2026/09/14/2026091411185578958" },
+  { title:"금호건설, 송도세브란스병원 우선협상대상자 선정", source:"아시아경제", date:"2026-09-18", url:"https://view.asiae.co.kr/article/2026091821291204536" },
+  { title:"추석 앞둔 9월 넷째주, 4591가구 청약…'더샵분당하이스트' 등 8곳", source:"머니투데이", date:"2026-09-18", url:"https://www.mt.co.kr/estate/2026/09/18/2026091813495279781" },
+  { title:"실적 회복한 IPARK현대산업개발, 숙대입구역세권서 '용산벨트' 확장 속도", source:"아시아경제", date:"2026-09-16", url:"https://view.asiae.co.kr/article/2026091615381781015" },
+  { title:"\"미니신도시부터 한강변 대단지까지\"…한남뉴타운 5곳 개발 속도전", source:"머니투데이", date:"2026-09-16", url:"https://www.mt.co.kr/estate/2026/09/16/2026091612191969761" },
+  { title:"KCC건설, 교육·녹지 다 잡은 하이브리드 입지… '향남역 그로브 스위첸' 10월 분양", source:"아시아경제", date:"2026-09-15", url:"https://view.asiae.co.kr/article/2026091510032214037" },
+  { title:"\"용적률 1.4배 완화는 과도한 인센티브\"…서울 도심공공복합사업 올스톱", source:"아시아경제", date:"2026-09-14", url:"https://view.asiae.co.kr/article/2026091418443213317" },
   { title:"금호건설, 수원 파장1구역 시공사 선정…수원 첫 '아테라' 브랜드 단지", source:"머니투데이", date:"2026-09-14", url:"https://www.mt.co.kr/estate/2026/09/14/2026091409294781837" },
-  { title:"LH 손잡은 산본 9-2구역, 3376가구 재건축 시공사 선정 착수", source:"한국경제", date:"2026-09-14", url:"https://www.hankyung.com/article/202609142661i" },
-  { title:"\"향남 5년만의 새 아파트\"…KCC건설, 향남역 그로브 스위첸 10월 분양", source:"머니투데이", date:"2026-09-11", url:"https://www.mt.co.kr/estate/2026/09/11/2026091109001823324" },
-  { title:"아파트 안 허물고 지하4층 판다…'더샵 분당하이스트' 가보니", source:"머니투데이", date:"2026-09-10", url:"https://www.mt.co.kr/estate/2026/09/10/2026090915185398035" },
-  { title:"송파도 꺾였다…강남3구 아파트값 동반 하락", source:"아시아경제", date:"2026-09-10", url:"https://view.asiae.co.kr/article/2026091013431620915" },
-  { title:"현대건설, 평택 '힐스테이트 고덕엘리스트' 1779가구 분양", source:"머니투데이", date:"2026-09-09", url:"https://www.mt.co.kr/estate/2026/09/09/2026090913441191577" },
-  { title:"광주·전남 9월 분양전망 엇갈린 온도차…광주 100·전남 60", source:"아시아경제", date:"2026-09-04", url:"https://view.asiae.co.kr/article/2026090412545304616" },
+  { title:"\"공공임대 비율 조정·분담금 최저화\"…광명 철산하안 재건축 향방은?", source:"머니투데이", date:"2026-09-09", url:"https://www.mt.co.kr/policy/2026/09/09/2026090914314666611" },
 ];
