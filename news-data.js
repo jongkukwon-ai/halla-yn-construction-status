@@ -4,10 +4,11 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-09-24";
+const NEWS_UPDATED = "2026-09-25";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
+  { title:"리치오션, 부산 다대포항역 인근 350세대 규모 주상복합단지 추진", source:"서울신문", date:"2026-09-23", url:"https://www.seoul.co.kr/news/economy/2026/09/23/20260923500258" },
   { title:"현대건설, 부산 감천2구역 주택재개발 공사 8828억원 수주", source:"디지털투데이", date:"2026-09-22", url:"https://www.digitaltoday.co.kr/disclosure/articleView.html?idxno=702601" },
   { title:"대구 서문시장 4지구, 10년 기다림 끝 연내 착공…상인들 다시 뛴다", source:"글로벌이코노믹", date:"2026-09-22", url:"https://www.g-enews.com/article/General-News/2026/09/202609221021141626d2e64277d7_1" },
   { title:"서희건설, 부산 서면(전포1동) 지역주택조합 아파트 신축공사 3182억원 수주", source:"글로벌이코노믹", date:"2026-09-21", url:"https://www.g-enews.com/article/Securities/2026/09/2026092110210135444093b5d4e_1" },
@@ -24,6 +25,7 @@ const NEWS_CONSTRUCTION = [
 
 // 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
 const NEWS_CEMENT = [
+  { title:"\"바닥 다졌나\"...건자재·시멘트株, 주택·인프라 투자에 내년 반등 기대", source:"파이낸셜뉴스", date:"2026-09-23", url:"https://www.fnnews.com/news/202609232158260773" },
   { title:"탄소 줄이니 염소 늘었다…시멘트업계 설비투자 확대(한일시멘트·쌍용C&E 염소바이패스 설비 총 403억원 투자)", source:"시대", date:"2026-09-22", url:"https://www.sidae.com/article/2026092213413082859" },
   { title:"[현장에서] 반도체 볼모 노조 파업 유감...레미콘 트럭 규제 풀어야", source:"뉴스핌", date:"2026-09-15", url:"https://www.newspim.com/news/view/20260915000917" },
   { title:"매출 줄어도 이익 늘렸다...전근식 한일시멘트 대표 '내실 경영' 주력", source:"뉴스핌", date:"2026-09-14", url:"https://www.newspim.com/news/view/20260914000813" },
@@ -47,8 +49,8 @@ const NEWS_OTHER = [
   { title:"산본, 1기 신도시 재건축 첫 시공사 선정 나선다", source:"한국경제", date:"2026-09-14", url:"https://www.hankyung.com/article/2026091437701" },
   { title:"[도시정비시장 풍향계] 쌍문 한양1차 재건축 현설 4곳 참석…내달 30일 입찰", source:"대한경제", date:"2026-09-14", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609141620383530983" },
   { title:"계룡건설, 서울 종로 '신영1구역 재개발' 시공자 선정(916억원, 199가구)", source:"신아일보", date:"2026-09-14", url:"https://www.shinailbo.co.kr/news/articleView.html?idxno=5062119" },
+  { title:"삼성물산, '공사비 5122억원' 여의도 목화아파트 재건축 수주", source:"파이낸셜뉴스", date:"2026-09-13", url:"https://www.fnnews.com/news/202609131344590590" },
   { title:"미아2구역 현설에 5개사 참석했으나…입찰참여확약서 롯데건설만 제출", source:"네이트뉴스", date:"2026-09-11", url:"https://m.news.nate.com/view/20260911n33712" },
   { title:"목동12단지 재입찰 현설도 GS건설 홀로…수의계약 가능성 높아져", source:"네이트뉴스", date:"2026-09-09", url:"https://m.news.nate.com/view/20260909n25704" },
   { title:"롯데건설, 도곡우성 재건축 수주…도시정비 4조 돌파", source:"파이낸셜뉴스", date:"2026-09-06", url:"https://www.fnnews.com/news/202609061337294029" },
-  { title:"3기 신도시 공공분양 나온다...'부천대장 하우스토리 디센트' 공급", source:"파이낸셜뉴스", date:"2026-09-04", url:"https://www.fnnews.com/news/202609041256029249" },
 ];
