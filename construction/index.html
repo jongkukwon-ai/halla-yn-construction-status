@@ -141,6 +141,34 @@
     background: #fff;
   }
   .filter-group input { min-width: 200px; }
+
+  /* ── 시·군·구 다중선택 ── */
+  .msel { position: relative; }
+  .msel-btn {
+    height: 34px; min-width: 160px; text-align: left;
+    padding: 0 30px 0 10px; border: 1px solid var(--border-strong); border-radius: 6px;
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238898AA'/%3E%3C/svg%3E") no-repeat right 10px center;
+    font-size: 13px; color: var(--ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .msel-btn:hover, .msel-btn.active { border-color: var(--navy-light); background-color: #fff; }
+  .msel-panel {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
+    background: #fff; border: 1px solid var(--border-strong); border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(15,27,45,.14); padding: 8px; max-height: 340px; overflow-y: auto; min-width: 230px;
+  }
+  .msel-panel.open { display: block; }
+  .msel-group-label { font-size: 11px; font-weight: 700; color: var(--ink-faint); margin: 8px 2px 3px; }
+  .msel-group-label:first-child { margin-top: 2px; }
+  .msel-item { display: flex; align-items: center; gap: 7px; padding: 4px 5px; font-size: 12.5px; border-radius: 5px; cursor: pointer; color: var(--ink); }
+  .msel-item:hover { background: var(--surface); }
+  .msel-item input { margin: 0; cursor: pointer; }
+  .msel-actions { display: flex; gap: 6px; padding-top: 7px; margin-top: 5px; border-top: 1px solid var(--border); }
+  .msel-actions button {
+    flex: 1; font-size: 11px; padding: 5px; border: 1px solid var(--border-strong); border-radius: 5px;
+    background: #fff; color: var(--ink-muted); cursor: pointer;
+  }
+  .msel-actions button:hover { background: var(--surface); color: var(--ink); }
+
   .btn-group { display: flex; gap: 8px; align-items: flex-end; }
   .btn {
     height: 34px;
@@ -468,6 +496,13 @@
       </select>
     </div>
     <div class="filter-group">
+      <span class="filter-label">시·군·구 (다중선택)</span>
+      <div class="msel" id="msel-sigungu">
+        <button type="button" class="msel-btn" id="msel-sigungu-btn" onclick="toggleMsel('sigungu')">전체</button>
+        <div class="msel-panel" id="msel-sigungu-panel"></div>
+      </div>
+    </div>
+    <div class="filter-group">
       <span class="filter-label">착공 상태</span>
       <select id="f-status">
         <option value="">전체</option>
@@ -528,6 +563,7 @@
   <!-- 결과 바 -->
   <div class="result-bar">
     <div class="result-count">조회 결과 <strong id="result-num">0</strong>건
+      <span id="area-sum" style="margin-left:10px;font-size:12px;color:var(--navy-light);font-weight:600;"></span>
       <span id="remicon-sum" style="margin-left:10px;font-size:12px;color:var(--teal);font-weight:600;"></span>
       <span id="new-note" style="margin-left:8px;font-size:11px;color:var(--pink);display:none;">
         🆕 분홍 행 = 신규 추가 현장
@@ -596,6 +632,13 @@
         <option value="경북">경북</option>
         <option value="대구">대구</option>
       </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">시·군·구 (다중선택)</span>
+      <div class="msel" id="msel-sigungu-soc">
+        <button type="button" class="msel-btn" id="msel-sigungu-soc-btn" onclick="toggleMsel('sigungu-soc')">전체</button>
+        <div class="msel-panel" id="msel-sigungu-soc-panel"></div>
+      </div>
     </div>
     <div class="filter-group">
       <span class="filter-label">카테고리</span>
@@ -878,6 +921,9 @@ function render(data) {
   const remTotal = data.reduce((s,r)=> s + (estRemicon(r[7]) || 0), 0);
   document.getElementById('remicon-sum').textContent = fmtRemiconTotal(remTotal);
 
+  const areaTotal = data.reduce((s,r)=> s + (r[8] != null ? r[8] : 0), 0);
+  document.getElementById('area-sum').textContent = data.length ? `면적합계 ${areaTotal.toLocaleString()} ㎡` : '';
+
   if (!data.length) {
     tbody.innerHTML = `<tr><td colspan="14">
       <div class="empty-state">
@@ -939,6 +985,7 @@ function applyFilter() {
 
   currentData = RAW.filter(r => {
     if (region  && r[2] !== region)  return false;
+    if (mselSelections['sigungu'].size && !mselSelections['sigungu'].has(r[2]+'|'+r[3])) return false;
     if (status  && r[10]!== status)  return false;
     if (builder && r[4] !== builder) return false;
     if (type    && r[9] !== type)    return false;
@@ -957,6 +1004,7 @@ function resetFilter() {
     document.getElementById(id).value='';
   });
   document.getElementById('f-search').value='';
+  clearMselSelection('sigungu');
   currentData = [...RAW];
   sortCol=0; sortDir='asc';
   document.querySelectorAll('#main-table thead th').forEach(th=>{
@@ -1138,6 +1186,89 @@ async function exportExcel() {
   a.click();
   document.body.removeChild(a);
 }
+
+// ── 시·군·구 다중선택 (아파트·SOC 공통) ──
+const mselSelections = { 'sigungu': new Set(), 'sigungu-soc': new Set() };
+
+function populateMsel(key, data, regionIdx, sggIdx, onChangeCb) {
+  const panel = document.getElementById('msel-' + key + '-panel');
+  const byRegion = {};
+  data.forEach(r => {
+    const region = r[regionIdx], sgg = r[sggIdx];
+    if (!byRegion[region]) byRegion[region] = new Set();
+    byRegion[region].add(sgg);
+  });
+  const regionOrder = ['부산','울산','대구','경남','경북'];
+  let html = '';
+  regionOrder.forEach(region => {
+    if (!byRegion[region]) return;
+    html += `<div class="msel-group-label">${region}</div>`;
+    [...byRegion[region]].sort((a,b)=>a.localeCompare(b,'ko')).forEach(sgg => {
+      const val = region + '|' + sgg;
+      const id = 'msel-' + key + '-' + val.replace(/[^0-9A-Za-z가-힣]/g,'_');
+      html += `<label class="msel-item" for="${id}">
+        <input type="checkbox" id="${id}" value="${val.replace(/"/g,'&quot;')}">
+        <span>${sgg}</span>
+      </label>`;
+    });
+  });
+  html += `<div class="msel-actions">
+    <button type="button" data-act="all">전체선택</button>
+    <button type="button" data-act="clear">선택해제</button>
+  </div>`;
+  panel.innerHTML = html;
+
+  panel.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) mselSelections[key].add(cb.value);
+      else mselSelections[key].delete(cb.value);
+      updateMselLabel(key);
+      onChangeCb();
+    });
+  });
+  panel.querySelector('[data-act="all"]').addEventListener('click', () => {
+    panel.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = true; mselSelections[key].add(cb.value); });
+    updateMselLabel(key);
+    onChangeCb();
+  });
+  panel.querySelector('[data-act="clear"]').addEventListener('click', () => {
+    panel.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+    mselSelections[key].clear();
+    updateMselLabel(key);
+    onChangeCb();
+  });
+}
+
+function updateMselLabel(key) {
+  const btn = document.getElementById('msel-' + key + '-btn');
+  const sel = mselSelections[key];
+  if (sel.size === 0) btn.textContent = '전체';
+  else if (sel.size <= 2) btn.textContent = [...sel].map(v => v.split('|')[1]).join(', ');
+  else btn.textContent = `${sel.size}개 구 선택됨`;
+  btn.classList.toggle('active', sel.size > 0);
+}
+
+function toggleMsel(key) {
+  const panel = document.getElementById('msel-' + key + '-panel');
+  const willOpen = !panel.classList.contains('open');
+  document.querySelectorAll('.msel-panel').forEach(p => p.classList.remove('open'));
+  if (willOpen) panel.classList.add('open');
+}
+
+function clearMselSelection(key) {
+  mselSelections[key].clear();
+  const panel = document.getElementById('msel-' + key + '-panel');
+  if (panel) panel.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+  updateMselLabel(key);
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.msel')) {
+    document.querySelectorAll('.msel-panel').forEach(p => p.classList.remove('open'));
+  }
+});
+
+populateMsel('sigungu', RAW, 2, 3, applyFilter);
 
 // ── 실시간 검색 ──
 document.getElementById('f-search').addEventListener('input', ()=>{ applyFilter(); });
@@ -1332,6 +1463,7 @@ function applyFilterSoc() {
 
   currentDataSoc = RAW_SOC.filter(r => {
     if (region && r[3] !== region) return false;
+    if (mselSelections['sigungu-soc'].size && !mselSelections['sigungu-soc'].has(r[3]+'|'+r[4])) return false;
     if (cat    && r[2] !== cat)    return false;
     if (status && r[13]!== status) return false;
     if (kw && !`${r[1]} ${r[5]} ${r[6]} ${r[4]}`.toLowerCase().includes(kw)) return false;
@@ -1344,6 +1476,7 @@ function applyFilterSoc() {
 function resetFilterSoc() {
   ['f-region-soc','f-cat-soc','f-status-soc'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('f-search-soc').value='';
+  clearMselSelection('sigungu-soc');
   currentDataSoc = [...RAW_SOC];
   sortColSoc=0; sortDirSoc='asc';
   document.querySelectorAll('#main-table-soc thead th').forEach(th=>{ th.classList.remove('sorted-asc','sorted-desc'); });
@@ -1498,6 +1631,7 @@ document.getElementById('f-search-soc').addEventListener('input', ()=>{ applyFil
 ['f-region-soc','f-cat-soc','f-status-soc'].forEach(id=>{
   document.getElementById(id).addEventListener('change', applyFilterSoc);
 });
+populateMsel('sigungu-soc', RAW_SOC, 3, 4, applyFilterSoc);
 
 // ── 탭 전환 ──
 function showTab(name) {
