@@ -112,6 +112,25 @@
     appearance:none;border:1px solid var(--border-strong);background:var(--card);color:var(--ink);
     font:inherit;font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;
   }
+  .tableWrap tfoot td{position:sticky;bottom:0;background:var(--surface);font-weight:700;border-top:1px solid var(--border-strong)}
+  .tableWrap tfoot td:first-child{z-index:2}
+
+  .qControls{display:flex;gap:10px 22px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .qGroup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .qLabel{font-size:11.5px;font-weight:700;color:var(--ink-muted)}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border-strong);border-radius:999px;
+    padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer;user-select:none;background:var(--card);color:var(--ink-muted);
+  }
+  .chip input{position:absolute;opacity:0;pointer-events:none}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .chip:focus-within{outline:2px solid var(--teal);outline-offset:2px}
+  .qGroup select{
+    height:32px;border:1px solid var(--border-strong);border-radius:6px;padding:0 8px;
+    font:inherit;font-size:12.5px;background:var(--card);color:var(--ink);cursor:pointer;
+  }
+  .qSummary{margin-top:14px;font-size:12.5px;color:var(--ink-muted);line-height:1.6}
+  .qSummary b{color:var(--ink);font-variant-numeric:tabular-nums}
 
   footer{font-size:11.5px;color:var(--ink-faint);line-height:1.7;border-top:1px solid var(--border);padding-top:14px}
 
@@ -177,6 +196,33 @@
       </div>
     </div>
     <div id="tableHolder" hidden style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2 style="margin-bottom:2px">지역별 조회</h2>
+        <div class="cardsub" style="margin-bottom:0" id="qSub"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="tableToggle" id="qExport" type="button">EXCEL 다운로드</button>
+        <button class="tableToggle" id="qToggle" type="button">표 펼치기</button>
+      </div>
+    </div>
+    <div class="qControls">
+      <div class="qGroup" role="group" aria-label="지역 선택">
+        <span class="qLabel">지역</span>
+        <span id="qRegions" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+      </div>
+      <div class="qGroup">
+        <label class="qLabel" for="qFrom">기간</label>
+        <select id="qFrom" aria-label="시작월"></select>
+        <span style="color:var(--ink-faint)">~</span>
+        <select id="qTo" aria-label="종료월"></select>
+      </div>
+    </div>
+    <div class="qSummary" id="qSummary"></div>
+    <div id="qHolder" hidden style="margin-top:10px"></div>
   </div>
 
   <footer>
@@ -405,74 +451,186 @@ function renderTable(){
   holder.innerHTML = html;
 }
 
-// ── EXCEL 다운로드 (현재 지표·표 그대로) ──
-async function exportExcelTrend(){
+const metricLabel = () => metric==='area' ? '연면적(㎡)' : '동수(건)';
+const metricName  = () => metric==='area' ? '연면적' : '동수';
+const today = () => new Date().toISOString().slice(0,10);
+
+// ── EXCEL 공용: 제목행 + 네이비 헤더행 + 데이터(+합계행) ──
+async function downloadXlsx({ title, hdr, rows, footer, sheetName, fileName }){
   if (typeof ExcelJS === 'undefined') {
     alert('엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.');
     return;
   }
-
-  const metricLabel = metric==='area' ? '연면적(㎡)' : '동수(건)';
-  const hdr = ['월'];
-  DATA.regions.forEach(r => hdr.push(`${r} 착공`, `${r} 인허가`));
-
   const wb = new ExcelJS.Workbook();
   wb.creator = '한라시멘트 영남지사';
   wb.created = new Date();
-  const ws = wb.addWorksheet(`착공인허가_${metricLabel}`, { views: [{ state: 'frozen', ySplit: 1 }] });
+  const ws = wb.addWorksheet(sheetName, { views: [{ state: 'frozen', ySplit: 2 }] });
+  ws.columns = hdr.map((_, i) => ({ width: i === 0 ? 12 : 14 }));
 
-  ws.columns = [{ width: 12 }, ...DATA.regions.flatMap(()=>[{ width: 13 }, { width: 13 }])];
+  ws.addRow([title]);
+  ws.mergeCells(1, 1, 1, hdr.length);
+  ws.getRow(1).font = { name: '맑은 고딕', size: 11, bold: true, color: { argb: 'FF1E2761' } };
 
-  ws.addRow(hdr);
-  for (let i = DATA.months.length - 1; i >= 0; i--) {
-    const row = [DATA.months[i]];
-    DATA.regions.forEach(r => {
-      row.push(DATA.series[r][fieldStart()][i] ?? null, DATA.series[r][fieldPermit()][i] ?? null);
-    });
-    ws.addRow(row);
-  }
-
-  const headerRow = ws.getRow(1);
+  const headerRow = ws.addRow(hdr);
   headerRow.height = 22;
   headerRow.eachCell(cell => {
     cell.font = { name: '맑은 고딕', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E2761' } };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
   });
-  ws.eachRow((row, rowNum) => {
-    if (rowNum === 1) return;
-    row.eachCell((cell, colNum) => {
-      if (colNum > 1 && typeof cell.value === 'number') cell.numFmt = '#,##0';
-    });
-  });
 
-  ws.insertRow(1, [`영남권 착공·인허가 통계 — ${metricLabel} 기준 (${DATA.months[0]} ~ ${DATA.months[DATA.months.length-1]})`]);
-  ws.mergeCells(1, 1, 1, hdr.length);
-  ws.getRow(1).font = { name: '맑은 고딕', size: 11, bold: true, color: { argb: 'FF1E2761' } };
-  ws.getRow(2).height = 22;
-  ws.getRow(2).eachCell(cell => {
-    cell.font = { name: '맑은 고딕', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E2761' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+  rows.forEach(r => ws.addRow(r));
+  if (footer) {
+    const f = ws.addRow(footer);
+    f.eachCell(cell => {
+      cell.font = { name: '맑은 고딕', bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
+    });
+  }
+  ws.eachRow((row, n) => {
+    if (n <= 2) return;
+    row.eachCell((cell, c) => { if (c > 1 && typeof cell.value === 'number') cell.numFmt = '#,##0'; });
   });
-  ws.views = [{ state: 'frozen', ySplit: 2 }];
 
   const buf = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buf], { type: 'application/octet-stream' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `영남권_착공인허가_통계_${metricLabel.replace(/[()㎡건]/g,'')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  a.href = URL.createObjectURL(new Blob([buf], { type: 'application/octet-stream' }));
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
 }
+
+// ── 월별 상세표 EXCEL (현재 지표·표 그대로) ──
+function exportExcelTrend(){
+  const hdr = ['월'];
+  DATA.regions.forEach(r => hdr.push(`${r} 착공`, `${r} 인허가`));
+  const rows = [];
+  for (let i = DATA.months.length - 1; i >= 0; i--) {
+    rows.push([DATA.months[i], ...DATA.regions.flatMap(r => [DATA.series[r][fieldStart()][i], DATA.series[r][fieldPermit()][i]])]);
+  }
+  return downloadXlsx({
+    title: `영남권 착공·인허가 통계 — ${metricLabel()} 기준 (${DATA.months[0]} ~ ${DATA.months[DATA.months.length-1]})`,
+    hdr, rows,
+    sheetName: `착공인허가_${metricLabel()}`,
+    fileName: `영남권_착공인허가_통계_${metricName()}_${today()}.xlsx`
+  });
+}
 document.getElementById('tableExport').addEventListener('click', exportExcelTrend);
+
+// ── 지역별 조회 (지역 다중선택 + 기간) ──
+const q = { regions: new Set(DATA.regions), from: 0, to: DATA.months.length - 1 };
+
+function queryTable(){
+  const regs = DATA.regions.filter(r => q.regions.has(r));
+  const multi = regs.length > 1;
+  const hdr = ['월'];
+  regs.forEach(r => hdr.push(`${r} 착공`, `${r} 인허가`));
+  if (multi) hdr.push('선택지역 착공', '선택지역 인허가');
+
+  const rows = [];
+  const tot = new Array(hdr.length - 1).fill(0);
+  for (let i = q.to; i >= q.from; i--) {
+    const vals = regs.flatMap(r => [DATA.series[r][fieldStart()][i], DATA.series[r][fieldPermit()][i]]);
+    if (multi) {
+      vals.push(
+        regs.reduce((s, r) => s + DATA.series[r][fieldStart()][i], 0),
+        regs.reduce((s, r) => s + DATA.series[r][fieldPermit()][i], 0)
+      );
+    }
+    vals.forEach((v, k) => { tot[k] += v; });
+    rows.push([DATA.months[i], ...vals]);
+  }
+  const n = tot.length;
+  return {
+    regs, hdr, rows,
+    total: ['기간 합계', ...tot],
+    sumStart: multi ? tot[n-2] : tot[0],
+    sumPermit: multi ? tot[n-1] : tot[1]
+  };
+}
+
+function renderQueryTable(t){
+  const holder = document.getElementById('qHolder');
+  const cells = row => row.map((v, k) => `<td>${k === 0 ? v : fmt(v)}</td>`).join('');
+  holder.innerHTML = `<div class="tableWrap"><table>
+    <thead><tr>${t.hdr.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${t.rows.map(r => `<tr>${cells(r)}</tr>`).join('')}</tbody>
+    <tfoot><tr>${cells(t.total)}</tr></tfoot>
+  </table></div>`;
+}
+
+function renderQuery(){
+  const t = queryTable();
+  const holder = document.getElementById('qHolder');
+  const summary = document.getElementById('qSummary');
+  if (!t.regs.length) {
+    summary.textContent = '지역을 1개 이상 선택하세요.';
+    holder.innerHTML = '';
+    return;
+  }
+  summary.innerHTML = `${t.regs.join('·')} · ${DATA.months[q.from]} ~ ${DATA.months[q.to]} (${q.to - q.from + 1}개월) — `
+    + `착공 합계 <b>${fmt(t.sumStart)}${unitLabel()}</b> · 인허가 합계 <b>${fmt(t.sumPermit)}${unitLabel()}</b>`;
+  if (!holder.hidden) renderQueryTable(t);
+}
+
+function initQuery(){
+  document.getElementById('qSub').textContent =
+    `현재 선택된 지표 기준 · 조회 가능 기간 ${DATA.months[0]} ~ ${DATA.months[DATA.months.length-1]} (국토부 공표 최신월 기준 최근 5년)`;
+
+  const box = document.getElementById('qRegions');
+  box.innerHTML = DATA.regions.map(r =>
+    `<label class="chip on"><input type="checkbox" value="${r}" checked>${r}</label>`).join('');
+  box.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => {
+    if (cb.checked) q.regions.add(cb.value); else q.regions.delete(cb.value);
+    cb.parentElement.classList.toggle('on', cb.checked);
+    renderQuery();
+  }));
+
+  const from = document.getElementById('qFrom');
+  const to = document.getElementById('qTo');
+  const opts = DATA.months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+  from.innerHTML = opts;
+  to.innerHTML = opts;
+  from.value = q.from;
+  to.value = q.to;
+  from.addEventListener('change', () => {
+    q.from = +from.value;
+    if (q.from > q.to) { q.to = q.from; to.value = q.to; }
+    renderQuery();
+  });
+  to.addEventListener('change', () => {
+    q.to = +to.value;
+    if (q.to < q.from) { q.from = q.to; from.value = q.from; }
+    renderQuery();
+  });
+
+  document.getElementById('qToggle').addEventListener('click', e => {
+    const holder = document.getElementById('qHolder');
+    holder.hidden = !holder.hidden;
+    e.target.textContent = holder.hidden ? '표 펼치기' : '표 접기';
+    renderQuery();
+  });
+
+  document.getElementById('qExport').addEventListener('click', () => {
+    const t = queryTable();
+    if (!t.regs.length) { alert('지역을 1개 이상 선택하세요.'); return; }
+    const period = `${DATA.months[q.from]} ~ ${DATA.months[q.to]}`;
+    downloadXlsx({
+      title: `영남권 지역별 착공·인허가 — ${t.regs.join('·')} · ${period} · ${metricLabel()} 기준`,
+      hdr: t.hdr, rows: t.rows, footer: t.total,
+      sheetName: `지역별조회_${metricLabel()}`,
+      fileName: `영남권_지역별조회_${t.regs.join('')}_${DATA.months[q.from]}_${DATA.months[q.to]}_${metricName()}.xlsx`
+    });
+  });
+}
 
 function renderAll(){
   renderStats();
   renderHeadline();
   renderRegions();
   if (!document.getElementById('tableHolder').hidden) renderTable();
+  renderQuery();
 }
 
 document.getElementById('btnArea').addEventListener('click', ()=>{
@@ -494,6 +652,7 @@ document.getElementById('tableToggle').addEventListener('click', (e)=>{
   if (!holder.hidden) renderTable();
 });
 
+initQuery();
 renderAll();
 </script>
 </body>
