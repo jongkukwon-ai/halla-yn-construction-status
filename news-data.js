@@ -4,13 +4,14 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-09-28";
+const NEWS_UPDATED = "2026-09-29";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
   { title:"김해시, '원도심 RE:CORE 프로젝트' 신규 공모 총력 대응(국비 242억원 규모)", source:"뉴스핌", date:"2026-09-26", url:"https://www.newspim.com/news/view/20260926000094" },
   { title:"삼성물산, 5000억 규모 '부산 사직2 재개발' 시공사 선정(927가구, 4492억원)", source:"이데일리", date:"2026-09-25", url:"https://edaily.co.kr/News/Read?mediaCodeNo=257&newsId=01226726638990928" },
   { title:"리치오션, 부산 다대포항역 인근 350세대 규모 주상복합단지 추진", source:"서울신문", date:"2026-09-23", url:"https://www.seoul.co.kr/news/economy/2026/09/23/20260923500258" },
+  { title:"경남도, 재개발·재건축 표준정관 제정 추진…투명한 조합 운영 지원", source:"뉴스핌", date:"2026-09-23", url:"https://www.newspim.com/news/view/20260923000525" },
   { title:"현대건설, 부산 감천2구역 주택재개발 공사 8828억원 수주", source:"디지털투데이", date:"2026-09-22", url:"https://www.digitaltoday.co.kr/disclosure/articleView.html?idxno=702601" },
   { title:"대구 서문시장 4지구, 10년 기다림 끝 연내 착공…상인들 다시 뛴다", source:"글로벌이코노믹", date:"2026-09-22", url:"https://www.g-enews.com/article/General-News/2026/09/202609221021141626d2e64277d7_1" },
   { title:"부산진해경자청, 명지지구 개발사업 실시계획(25차) 변경 완료… 도시 품격·개발사업 활성화 동시에 잡는다", source:"대한경제", date:"2026-09-22", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609222253116020246" },
@@ -21,8 +22,7 @@ const NEWS_CONSTRUCTION = [
   { title:"현대건설, 하루 3곳서 1.7조 확보…도시정비 누적 10조 돌파(울산 남구 B-01구역 '힐스테이트 신정리버프론트' 7110억원 포함)", source:"EBN", date:"2026-09-20", url:"https://www.ebn.co.kr/news/articleView.html?idxno=1724980" },
   { title:"현대건설, 2년 연속 도시정비사업 10조원 수주 돌파(대구 명륜지구 재개발 5001억원 포함)", source:"데일리안", date:"2026-09-20", url:"https://www.dailian.co.kr/news/view/1692606/%ED%98%84%EB%8C%80%EA%B1%B4%EC%84%A4-2%EB%85%84-%EC%97%B0%EC%86%8D-%EB%8F%84%EC%8B%9C%EC%A0%95%EB%B9%84%EC%82%AC%EC%97%85-10-2026" },
   { title:"수성구 30-11구역 재개발조합 시공자 선정 입찰공고(2차)", source:"위클리한국주택경제신문", date:"2026-09-18", url:"https://www.arunews.com/news/articleView.html?idxno=67397" },
-  { title:"\"대규모 공원과 명문 학군\"...태영건설 '구미 파크원 데시앙' 11월 분양", source:"파이낸셜뉴스", date:"2026-09-17", url:"https://www.fnnews.com/news/202609171053525401" },
-  { title:"연산13구역, 10월 3일 시공자 선정 총회… IPARK현산 유력", source:"위클리한국주택경제신문", date:"2026-09-17", url:"https://www.arunews.com/news/articleView.html?idxno=67356" },
+  { title:"대구·경북 8월 주택가격도 하락…낙폭은 절반으로 축소", source:"매일신문", date:"2026-09-15", url:"https://kbmaeil.com/article/20260915500393" },
 ];
 
 // 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
@@ -52,8 +52,8 @@ const NEWS_OTHER = [
   { title:"평택 '힐스테이트 고덕엘리스트' 18일 견본주택 개관…반도체 수혜 기대", source:"뉴스핌", date:"2026-09-17", url:"https://www.newspim.com/news/view/20260917000598" },
   { title:"멈췄던 전주 북부권 개발 다시 뛴다…전주대대 이전 2027년 착공", source:"아시아투데이", date:"2026-09-17", url:"https://www.asiatoday.co.kr/kn/view.php?key=20260917010006585" },
   { title:"서울 미아2구역 4003가구 공급…'강북 미니 신도시'로", source:"아시아경제", date:"2026-09-16", url:"https://view.asiae.co.kr/article/2026091610291717115" },
-  { title:"안산 주공4단지, 재건축 시공자 현설에 4곳", source:"위클리한국주택경제신문", date:"2026-09-15", url:"https://www.arunews.com/news/articleView.html?idxno=67300" },
-  { title:"산본, 1기 신도시 재건축 첫 시공사 선정 나선다", source:"한국경제", date:"2026-09-14", url:"https://www.hankyung.com/article/2026091437701" },
-  { title:"[도시정비시장 풍향계] 쌍문 한양1차 재건축 현설 4곳 참석…내달 30일 입찰", source:"대한경제", date:"2026-09-14", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609141620383530983" },
+  { title:"송파 전역 재건축 열기…대단지 시공사 선정 '2막' 열렸다", source:"머니투데이", date:"2026-09-11", url:"https://news.mtn.co.kr/news-detail/2026091116254450487" },
+  { title:"'옆단지는 속도내는데'…평촌 리모델링 단지 엇갈린 행보", source:"머니투데이", date:"2026-09-03", url:"https://news.mtn.co.kr/news-detail/2026090316323240912" },
+  { title:"'1.8조' 목동12단지, GS건설 단독 응찰로 유찰…수의계약 수순", source:"머니투데이", date:"2026-08-31", url:"https://news.mtn.co.kr/news-detail/2026083113230427301" },
   { title:"'30조 규모' 목동 재건축 속도... 11개 단지 시공사 선정 목전", source:"파이낸셜뉴스", date:"2026-09-27", url:"https://www.fnnews.com/news/202609271757472371" },
 ];
