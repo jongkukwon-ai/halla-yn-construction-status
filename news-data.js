@@ -4,7 +4,7 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-09-30";
+const NEWS_UPDATED = "2026-10-01";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
@@ -12,7 +12,6 @@ const NEWS_CONSTRUCTION = [
   { title:"김해시, '원도심 RE:CORE 프로젝트' 신규 공모 총력 대응(국비 242억원 규모)", source:"뉴스핌", date:"2026-09-26", url:"https://www.newspim.com/news/view/20260926000094" },
   { title:"삼성물산, 5000억 규모 '부산 사직2 재개발' 시공사 선정(927가구, 4492억원)", source:"이데일리", date:"2026-09-25", url:"https://edaily.co.kr/News/Read?mediaCodeNo=257&newsId=01226726638990928" },
   { title:"리치오션, 부산 다대포항역 인근 350세대 규모 주상복합단지 추진", source:"서울신문", date:"2026-09-23", url:"https://www.seoul.co.kr/news/economy/2026/09/23/20260923500258" },
-  { title:"경남도, 재개발·재건축 표준정관 제정 추진…투명한 조합 운영 지원", source:"뉴스핌", date:"2026-09-23", url:"https://www.newspim.com/news/view/20260923000525" },
   { title:"현대건설, 부산 감천2구역 주택재개발 공사 8828억원 수주", source:"디지털투데이", date:"2026-09-22", url:"https://www.digitaltoday.co.kr/disclosure/articleView.html?idxno=702601" },
   { title:"대구 서문시장 4지구, 10년 기다림 끝 연내 착공…상인들 다시 뛴다", source:"글로벌이코노믹", date:"2026-09-22", url:"https://www.g-enews.com/article/General-News/2026/09/202609221021141626d2e64277d7_1" },
   { title:"부산진해경자청, 명지지구 개발사업 실시계획(25차) 변경 완료… 도시 품격·개발사업 활성화 동시에 잡는다", source:"대한경제", date:"2026-09-22", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609222253116020246" },
@@ -22,7 +21,8 @@ const NEWS_CONSTRUCTION = [
   { title:"갑절로 뛴 재개발·재건축 공사비…부산 사업장도 배 가까이 증가", source:"부산일보", date:"2026-09-21", url:"https://www.busan.com/view/busan/view.php?code=2026092118212106997" },
   { title:"현대건설, 하루 3곳서 1.7조 확보…도시정비 누적 10조 돌파(울산 남구 B-01구역 '힐스테이트 신정리버프론트' 7110억원 포함)", source:"EBN", date:"2026-09-20", url:"https://www.ebn.co.kr/news/articleView.html?idxno=1724980" },
   { title:"현대건설, 2년 연속 도시정비사업 10조원 수주 돌파(대구 명륜지구 재개발 5001억원 포함)", source:"데일리안", date:"2026-09-20", url:"https://www.dailian.co.kr/news/view/1692606/%ED%98%84%EB%8C%80%EA%B1%B4%EC%84%A4-2%EB%85%84-%EC%97%B0%EC%86%8D-%EB%8F%84%EC%8B%9C%EC%A0%95%EB%B9%84%EC%82%AC%EC%97%85-10-2026" },
-  { title:"수성구 30-11구역 재개발조합 시공자 선정 입찰공고(2차)", source:"위클리한국주택경제신문", date:"2026-09-18", url:"https://www.arunews.com/news/articleView.html?idxno=67397" },
+  { title:"울산 B-01구역 재개발, 19일 시공사 선정 총회…현대건설 '유력'", source:"네이트뉴스", date:"2026-09-18", url:"https://m.news.nate.com/view/20260918n18677" },
+  { title:"'진주 판문지구 레이크써밋 웰가' 18일 견본주택 개관", source:"한경비즈니스", date:"2026-09-17", url:"https://magazine.hankyung.com/money/article/202609170867c" },
 ];
 
 // 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
@@ -43,7 +43,10 @@ const NEWS_CEMENT = [
 const NEWS_OTHER = [
   { title:"'또 너냐' 삼성물산 vs 포스코이앤씨…송파 오금현대 재건축서 맞붙나", source:"뉴스핌", date:"2026-09-30", url:"https://www.newspim.com/news/view/20260930001001" },
   { title:"전주시, 재개발·재건축 신속 추진 '전문가 전담반' 구성", source:"뉴스핌", date:"2026-09-30", url:"https://www.newspim.com/news/view/20260930000510" },
+  { title:"DL이앤씨, 성수2지구 재개발 위해 10개 금융기관과 업무협약", source:"아시아투데이", date:"2026-09-30", url:"https://asiatoday.co.kr/kn/view.php?key=20260930010010492" },
+  { title:"10월 전국 4만5691가구 분양…경기 남부·3기 신도시 물량 집중", source:"네이트뉴스", date:"2026-09-30", url:"https://m.news.nate.com/view/20260930n25765" },
   { title:"군포 원도심 재개발 본격화...1만 8000세대 신흥 주거타운 탈바꿈", source:"뉴스핌", date:"2026-09-29", url:"https://www.newspim.com/news/view/20260929000661" },
+  { title:"50년된 중곡동 노후주택지 35층 2200가구로 재개발 … 강남 한솔·이촌 반도도 재건축", source:"뉴데일리", date:"2026-09-29", url:"https://www.newdaily.co.kr/site/data/html/2026/09/29/2026092900100.html" },
   { title:"'광명시티프라디움에듀하임' 등 9월 마지막 주 전국 8개 단지 3641가구 분양", source:"메트로서울", date:"2026-09-27", url:"https://www.metroseoul.co.kr/article/20260927500011" },
   { title:"'30조 규모' 목동 재건축 속도... 11개 단지 시공사 선정 목전", source:"파이낸셜뉴스", date:"2026-09-27", url:"https://www.fnnews.com/news/202609271757472371" },
   { title:"두산건설, 5154억 규모 부천 원미 도심복합사업 수주(1628세대)", source:"이투데이", date:"2026-09-21", url:"https://www.etoday.co.kr/news/view/2627896" },
@@ -53,7 +56,4 @@ const NEWS_OTHER = [
   { title:"분당·일산·산본·평촌…수도권 재건축 시계 빨라진다", source:"한국경제", date:"2026-09-20", url:"https://www.hankyung.com/article/2026092063451" },
   { title:"불당·탕정서 검증된 브랜드 파워, 성성호수로… '더샵 천안라크원' 내달 분양", source:"파이낸셜뉴스", date:"2026-09-18", url:"https://www.fnnews.com/news/202609180914569860" },
   { title:"대신자산신탁, 석촌 하단구역 1500가구 도심복합개발 추진", source:"아시아타임", date:"2026-09-18", url:"https://www.asiatime.co.kr/article/20260918500244" },
-  { title:"집값 부담에 서울 떠나 수도권으로...경기·인천 신규 분양 관심 ↑", source:"글로벌이코노믹", date:"2026-09-17", url:"https://www.g-enews.com/article/Real-Estate/2026/09/2026091709521185722aa6f4cdad_1" },
-  { title:"산본 선도지구 9-2구역, 3376가구 재건축…시공자 선정 착수", source:"파이낸셜뉴스", date:"2026-09-15", url:"https://www.fnnews.com/news/202609150832522341" },
-  { title:"[르포] \"반도체 호재 제대로\"…올 뉴 챔피언스시티, 광주 랜드마크로 '우뚝'", source:"뉴스핌", date:"2026-09-09", url:"https://www.newspim.com/news/view/20260909000746" },
 ];
