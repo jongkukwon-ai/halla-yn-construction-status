@@ -4,7 +4,7 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-10-01";
+const NEWS_UPDATED = "2026-10-02";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
@@ -54,6 +54,6 @@ const NEWS_OTHER = [
   { title:"19만㎡·450억…멈췄던 인천 영종구 용유 개발, 다시 뛴다", source:"데일리안", date:"2026-09-21", url:"https://www.dailian.co.kr/news/view/1692727/19%EB%A7%8C%E3%8E%A1450%EC%96%B5%EB%A9%88%EC%B7%84%EB%8D%98-%EC%9D%B8%EC%B2%9C-%EC%98%81%EC%A2%85%EA%B5%AC-%EC%9A%A9-2026" },
   { title:"현대건설, '여의도 광장아파트' 수주…도시정비 10조 돌파(38-1구역 재건축, 5463억원)", source:"뉴스1", date:"2026-09-20", url:"https://www.news1.kr/realestate/general/6296346" },
   { title:"분당·일산·산본·평촌…수도권 재건축 시계 빨라진다", source:"한국경제", date:"2026-09-20", url:"https://www.hankyung.com/article/2026092063451" },
-  { title:"불당·탕정서 검증된 브랜드 파워, 성성호수로… '더샵 천안라크원' 내달 분양", source:"파이낸셜뉴스", date:"2026-09-18", url:"https://www.fnnews.com/news/202609180914569860" },
-  { title:"대신자산신탁, 석촌 하단구역 1500가구 도심복합개발 추진", source:"아시아타임", date:"2026-09-18", url:"https://www.asiatime.co.kr/article/20260918500244" },
+  { title:"분당 재건축 두 번째 대상 나왔다…5개 구역·1만 3429가구 선정", source:"서울신문", date:"2026-09-29", url:"https://www.seoul.co.kr/news/economy/2026/09/29/20260929500212" },
+  { title:"호반건설, 창동상아1차·중화역2의6구역 시공사로 선정…수도권 누적 수주 1조1526억원", source:"스마트투데이", date:"2026-09-20", url:"https://www.smarttoday.co.kr/ko-kr/articles/111831" },
 ];
