@@ -4,7 +4,7 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-10-03";
+const NEWS_UPDATED = "2026-10-04";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
@@ -54,5 +54,5 @@ const NEWS_OTHER = [
   { title:"19만㎡·450억…멈췄던 인천 영종구 용유 개발, 다시 뛴다", source:"데일리안", date:"2026-09-21", url:"https://www.dailian.co.kr/news/view/1692727/19%EB%A7%8C%E3%8E%A1450%EC%96%B5%EB%A9%88%EC%B7%84%EB%8D%98-%EC%9D%B8%EC%B2%9C-%EC%98%81%EC%A2%85%EA%B5%AC-%EC%9A%A9-2026" },
   { title:"현대건설, '여의도 광장아파트' 수주…도시정비 10조 돌파(38-1구역 재건축, 5463억원)", source:"뉴스1", date:"2026-09-20", url:"https://www.news1.kr/realestate/general/6296346" },
   { title:"분당 재건축 두 번째 대상 나왔다…5개 구역·1만 3429가구 선정", source:"서울신문", date:"2026-09-29", url:"https://www.seoul.co.kr/news/economy/2026/09/29/20260929500212" },
-  { title:"광주·전남 9월 분양전망 엇갈린 온도차…광주 100·전남 60", source:"아시아경제", date:"2026-09-04", url:"https://view.asiae.co.kr/article/2026090412545304616" },
+  { title:"송파 전역 재건축 열기…대단지 시공사 선정 '2막' 열렸다(오금현대·잠실 장미 등)", source:"머니투데이", date:"2026-09-11", url:"https://news.mtn.co.kr/news-detail/2026091116254450487" },
 ];
