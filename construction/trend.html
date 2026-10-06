@@ -260,6 +260,38 @@
     <div id="qHolder" hidden style="margin-top:10px"></div>
   </div>
 
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2 style="margin-bottom:2px">지역별 누적 조회</h2>
+        <div class="cardsub" style="margin-bottom:0" id="cSub"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="tableToggle" id="cExport" type="button">EXCEL 다운로드</button>
+        <button class="tableToggle" id="cToggle" type="button">표 펼치기</button>
+      </div>
+    </div>
+    <div class="qControls">
+      <div class="qGroup">
+        <span class="qLabel">시도</span>
+        <div class="dd" id="ddSidoC"></div>
+      </div>
+      <div class="qGroup">
+        <span class="qLabel">시·군·구</span>
+        <div class="dd" id="ddSubC"></div>
+      </div>
+      <div class="qGroup">
+        <label class="qLabel" for="cFrom">기준월</label>
+        <select id="cFrom" aria-label="기준월 시작"></select>
+        <span style="color:var(--ink-faint)">~</span>
+        <select id="cTo" aria-label="기준월 끝"></select>
+      </div>
+    </div>
+    <div class="qSummary" id="cSummary"></div>
+    <div class="qNote" id="cNote" hidden></div>
+    <div id="cHolder" hidden style="margin-top:10px"></div>
+  </div>
+
   <footer>
     출처: 국토교통부 통계누리 — 승인통계 「건축허가·착공·준공통계 · 시도별 건축착공현황 / 시도별 건축허가현황」 (stat.molit.go.kr), 조회기간 2021-08~2026-07, 조회일 2026-09-28.
     수치는 신축·증축·용도변경 등 모든 공사구분과 모든 건축 용도(주택 포함 전체)를 합산한 「계/계」 기준이며, 세움터 기반 행정통계 특성상 사후 정정될 수 있습니다.
@@ -268,6 +300,7 @@
     <br>「지역별 조회」의 시·군·구 값: 국토교통부 건축HUB 대용량 제공 서비스(hub.go.kr)의 「건축인허가 기본개요」·「주택인허가 기본개요」(2026년 08월 제공분, 이용허락 제한 없음) 원자료를 자체 집계한 연면적입니다.
     건축허가는 신축분만, 주택법 사업계획승인은 세대가 있는 정상 사업만(변경 기록 중복 제거) 합산했고, 인허가는 허가·승인일, 착공은 실제 착공일이 기록된 건만 기준으로 했습니다.
     공식 통계와 집계 기준이 달라 시도 합계가 공식값과 다르며(인허가 약 78~90%, 착공 약 46~70%), 동수는 제공하지 않습니다.
+    <br>「지역별 누적 조회」: 각 기준월마다 그 달을 포함한 직전 16개월(예: 2026-07 → 2025-04~2026-07)의 착공·인허가를 합산한 값입니다. 데이터 시작(2021-08)부터 16개월이 채워지는 2022-11부터 기준월로 고를 수 있습니다.
   </footer>
 
 </div>
@@ -667,28 +700,48 @@ function buildQuery(cols){
 }
 
 // 시·군·구를 고르면 원자료 연면적(SUB), 안 고르면 시도 공식 통계(DATA, 현재 지표)
-function queryTable(){
-  if (q.subs.size) {
+// state(q 또는 cq)의 선택 → 열 목록. 시·군·구를 고르면 원자료 연면적(SUB), 안 고르면 시도 공식 통계(DATA, 현재 지표)
+function selectCols(state){
+  if (state.subs.size) {
     const cols = [];
     DATA.regions.forEach(sd => SUB[sd].forEach(([name, permit, start]) => {
-      if (q.subs.has(`${sd}|${name}`)) cols.push({ sd, label: `${sd} ${name}`, permit, start });
+      if (state.subs.has(`${sd}|${name}`)) cols.push({ sd, label: `${sd} ${name}`, permit, start });
     }));
-    return { mode: 'sub', cols, unit: '㎡', ...buildQuery(cols) };
+    return { mode: 'sub', cols, unit: '㎡' };
   }
-  const cols = DATA.regions.filter(r => q.regions.has(r)).map(r => ({
+  const cols = DATA.regions.filter(r => state.regions.has(r)).map(r => ({
     sd: r, label: r, start: DATA.series[r][fieldStart()], permit: DATA.series[r][fieldPermit()]
   }));
-  return { mode: 'sido', cols, unit: unitLabel(), ...buildQuery(cols) };
+  return { mode: 'sido', cols, unit: unitLabel() };
 }
 
-function renderQueryTable(t){
-  const holder = document.getElementById('qHolder');
-  const cells = row => row.map((v, k) => `<td>${k === 0 ? v : fmt(v)}</td>`).join('');
-  holder.innerHTML = `<div class="tableWrap"><table>
+function queryTable(){
+  const sel = selectCols(q);
+  return { ...sel, ...buildQuery(sel.cols) };
+}
+
+// 문자열 열(월·누적기간)은 그대로, 숫자는 천 단위 구분. total이 없으면 합계행 생략
+function renderTableInto(holderId, t){
+  const cells = row => row.map(v => `<td>${typeof v === 'number' ? fmt(v) : v}</td>`).join('');
+  document.getElementById(holderId).innerHTML = `<div class="tableWrap"><table>
     <thead><tr>${t.hdr.map(h => `<th>${h}</th>`).join('')}</tr></thead>
     <tbody>${t.rows.map(r => `<tr>${cells(r)}</tr>`).join('')}</tbody>
-    <tfoot><tr>${cells(t.total)}</tr></tfoot>
+    ${t.total ? `<tfoot><tr>${cells(t.total)}</tr></tfoot>` : ''}
   </table></div>`;
+}
+
+// 시·군·구 모드 안내문 (공식 통계 대비 검증 결과)
+function showSubNote(note, t){
+  if (t.mode !== 'sub') { note.hidden = true; return; }
+  const sidos = [...new Set(t.cols.map(c => c.sd))];
+  note.innerHTML = '시·군·구 값은 국토부 건축HUB 원자료를 자체 집계한 <b>연면적</b>이라 공식 통계와 기준이 다릅니다. 시도 합계로 검증한 결과 — '
+    + sidos.map(sd => {
+        const v = SUB_VALID[sd];
+        return `${sd}: 인허가 공식 대비 ${Math.round(v[0] * 100)}%(월별 흐름 일치도 ${v[1].toFixed(2)}), 착공 ${Math.round(v[2] * 100)}%(${v[3].toFixed(2)})`;
+      }).join(' / ')
+    + '. 착공은 실제 착공일이 기록된 건만 세어 적게 잡힙니다.'
+    + (metric === 'count' ? ' <b>시·군·구는 동수를 제공하지 않아 연면적으로 표시합니다.</b>' : '');
+  note.hidden = false;
 }
 
 function renderQuery(){
@@ -704,80 +757,75 @@ function renderQuery(){
   }
   summary.innerHTML = `${t.cols.map(c => c.label).join('·')} · ${DATA.months[q.from]} ~ ${DATA.months[q.to]} (${q.to - q.from + 1}개월) — `
     + `착공 합계 <b>${fmt(t.sumStart)}${t.unit}</b> · 인허가 합계 <b>${fmt(t.sumPermit)}${t.unit}</b>`;
+  showSubNote(note, t);
+  if (!holder.hidden) renderTableInto('qHolder', t);
+}
 
-  if (t.mode === 'sub') {
-    const sidos = [...new Set(t.cols.map(c => c.sd))];
-    note.innerHTML = '시·군·구 값은 국토부 건축HUB 원자료를 자체 집계한 <b>연면적</b>이라 공식 통계와 기준이 다릅니다. 시도 합계로 검증한 결과 — '
-      + sidos.map(sd => {
-          const v = SUB_VALID[sd];
-          return `${sd}: 인허가 공식 대비 ${Math.round(v[0] * 100)}%(월별 흐름 일치도 ${v[1].toFixed(2)}), 착공 ${Math.round(v[2] * 100)}%(${v[3].toFixed(2)})`;
-        }).join(' / ')
-      + '. 착공은 실제 착공일이 기록된 건만 세어 적게 잡힙니다.'
-      + (metric === 'count' ? ' <b>시·군·구는 동수를 제공하지 않아 연면적으로 표시합니다.</b>' : '');
-    note.hidden = false;
-  } else {
-    note.hidden = true;
-  }
-  if (!holder.hidden) renderQueryTable(t);
+// 시도·시군구 드롭다운 + 기간(월 인덱스 minIdx 이상) 셀렉트 + 표 펼치기 버튼을 state에 연결
+function setupControls(state, ids, minIdx, onChange){
+  const subDD = makeDropdown(document.getElementById(ids.sub), {
+    placeholder: '전체 (시도 단위)',
+    unitWord: '지역',
+    selected: state.subs,
+    groups: () => DATA.regions.filter(r => state.regions.has(r)).map(sd => ({
+      label: `${sd} (${subUnit(sd)})`,
+      items: SUB[sd].map(([name]) => ({ value: `${sd}|${name}`, label: name, short: `${sd} ${name}` }))
+    })),
+    onChange
+  });
+  makeDropdown(document.getElementById(ids.sido), {
+    placeholder: '선택 안 함',
+    allLabel: '전체 (5개 시도)',
+    unitWord: '시도',
+    selected: state.regions,
+    groups: () => [{ label: null, items: DATA.regions.map(r => ({ value: r, label: r })) }],
+    onChange: () => {
+      [...state.subs].forEach(k => { if (!state.regions.has(k.split('|')[0])) state.subs.delete(k); });
+      subDD.render();
+      onChange();
+    }
+  });
+
+  const from = document.getElementById(ids.from);
+  const to = document.getElementById(ids.to);
+  const opts = DATA.months.map((m, i) => i < minIdx ? '' : `<option value="${i}">${m}</option>`).join('');
+  from.innerHTML = opts;
+  to.innerHTML = opts;
+  from.value = state.from;
+  to.value = state.to;
+  from.addEventListener('change', () => {
+    state.from = +from.value;
+    if (state.from > state.to) { state.to = state.from; to.value = state.to; }
+    onChange();
+  });
+  to.addEventListener('change', () => {
+    state.to = +to.value;
+    if (state.to < state.from) { state.from = state.to; from.value = state.from; }
+    onChange();
+  });
+
+  document.getElementById(ids.toggle).addEventListener('click', e => {
+    const holder = document.getElementById(ids.holder);
+    holder.hidden = !holder.hidden;
+    e.target.textContent = holder.hidden ? '표 펼치기' : '표 접기';
+    onChange();
+  });
+}
+
+function fileNameTag(cols){
+  const names = cols.map(c => c.label.replace(/\s/g, ''));
+  return names.length > 3 ? `${names.slice(0, 3).join('_')}_외${names.length - 3}` : names.join('_');
 }
 
 function initQuery(){
   document.getElementById('qSub').textContent =
     `조회 가능 기간 ${DATA.months[0]} ~ ${DATA.months[DATA.months.length-1]} · 시·군·구를 고르지 않으면 시도 단위 공식 통계, 고르면 원자료 기반 연면적으로 조회합니다`;
-
-  const subDD = makeDropdown(document.getElementById('ddSub'), {
-    placeholder: '전체 (시도 단위)',
-    unitWord: '지역',
-    selected: q.subs,
-    groups: () => DATA.regions.filter(r => q.regions.has(r)).map(sd => ({
-      label: `${sd} (${subUnit(sd)})`,
-      items: SUB[sd].map(([name]) => ({ value: `${sd}|${name}`, label: name, short: `${sd} ${name}` }))
-    })),
-    onChange: renderQuery
-  });
-  makeDropdown(document.getElementById('ddSido'), {
-    placeholder: '선택 안 함',
-    allLabel: '전체 (5개 시도)',
-    unitWord: '시도',
-    selected: q.regions,
-    groups: () => [{ label: null, items: DATA.regions.map(r => ({ value: r, label: r })) }],
-    onChange: () => {
-      [...q.subs].forEach(k => { if (!q.regions.has(k.split('|')[0])) q.subs.delete(k); });
-      subDD.render();
-      renderQuery();
-    }
-  });
-
-  const from = document.getElementById('qFrom');
-  const to = document.getElementById('qTo');
-  const opts = DATA.months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
-  from.innerHTML = opts;
-  to.innerHTML = opts;
-  from.value = q.from;
-  to.value = q.to;
-  from.addEventListener('change', () => {
-    q.from = +from.value;
-    if (q.from > q.to) { q.to = q.from; to.value = q.to; }
-    renderQuery();
-  });
-  to.addEventListener('change', () => {
-    q.to = +to.value;
-    if (q.to < q.from) { q.from = q.to; from.value = q.from; }
-    renderQuery();
-  });
-
-  document.getElementById('qToggle').addEventListener('click', e => {
-    const holder = document.getElementById('qHolder');
-    holder.hidden = !holder.hidden;
-    e.target.textContent = holder.hidden ? '표 펼치기' : '표 접기';
-    renderQuery();
-  });
+  setupControls(q, { sido: 'ddSido', sub: 'ddSub', from: 'qFrom', to: 'qTo', toggle: 'qToggle', holder: 'qHolder' }, 0, renderQuery);
 
   document.getElementById('qExport').addEventListener('click', () => {
     const t = queryTable();
     if (!t.cols.length) { alert('시도를 1개 이상 선택하세요.'); return; }
-    const names = t.cols.map(c => c.label.replace(/\s/g, ''));
-    const nameTag = names.length > 3 ? `${names.slice(0, 3).join('_')}_외${names.length - 3}` : names.join('_');
+    const nameTag = fileNameTag(t.cols);
     const sub = t.mode === 'sub';
     downloadXlsx({
       title: `영남권 지역별 착공·인허가 — ${t.cols.map(c => c.label).join('·')} · ${DATA.months[q.from]} ~ ${DATA.months[q.to]} · `
@@ -789,12 +837,76 @@ function initQuery(){
   });
 }
 
+// ── 지역별 누적 조회: 기준월 포함 직전 CUM_WIN개월 합계 (예: 2026-07 → 2025-04~2026-07) ──
+const CUM_WIN = 16;
+const CUM_MIN = CUM_WIN - 1; // 창이 데이터 시작월 안에서 다 채워지는 첫 기준월
+const cq = { regions: new Set(DATA.regions), subs: new Set(), from: Math.max(CUM_MIN, DATA.months.length - 12), to: DATA.months.length - 1 };
+const windowLabel = i => `${DATA.months[i - CUM_WIN + 1]}~${DATA.months[i]}`;
+const windowSum = (arr, i) => { let s = 0; for (let k = i - CUM_WIN + 1; k <= i; k++) s += arr[k]; return s; };
+
+function cumTable(){
+  const sel = selectCols(cq);
+  const { cols } = sel;
+  const multi = cols.length > 1;
+  const hdr = ['기준월', '누적기간'];
+  cols.forEach(c => hdr.push(`${c.label} 착공 누적`, `${c.label} 인허가 누적`));
+  if (multi) hdr.push('선택지역 착공 누적', '선택지역 인허가 누적');
+  const rows = [];
+  for (let i = cq.to; i >= cq.from; i--) {
+    const vals = cols.flatMap(c => [windowSum(c.start, i), windowSum(c.permit, i)]);
+    if (multi) {
+      vals.push(cols.reduce((s, c) => s + windowSum(c.start, i), 0), cols.reduce((s, c) => s + windowSum(c.permit, i), 0));
+    }
+    rows.push([DATA.months[i], windowLabel(i), ...vals]);
+  }
+  const latest = rows[0] || [];
+  const n = latest.length;
+  return { ...sel, hdr, rows, latestStart: multi ? latest[n-2] : latest[2], latestPermit: multi ? latest[n-1] : latest[3] };
+}
+
+function renderCum(){
+  const t = cumTable();
+  const holder = document.getElementById('cHolder');
+  const summary = document.getElementById('cSummary');
+  const note = document.getElementById('cNote');
+  if (!t.cols.length) {
+    summary.textContent = '시도를 1개 이상 선택하세요.';
+    note.hidden = true;
+    holder.innerHTML = '';
+    return;
+  }
+  summary.innerHTML = `${t.cols.map(c => c.label).join('·')} · 기준월 ${DATA.months[cq.to]} 누적(${windowLabel(cq.to)}, ${CUM_WIN}개월) — `
+    + `착공 <b>${fmt(t.latestStart)}${t.unit}</b> · 인허가 <b>${fmt(t.latestPermit)}${t.unit}</b>`;
+  showSubNote(note, t);
+  if (!holder.hidden) renderTableInto('cHolder', t);
+}
+
+function initCum(){
+  document.getElementById('cSub').textContent =
+    `기준월마다 그 달을 포함한 직전 ${CUM_WIN}개월 누적 · 기준월 선택 가능 ${DATA.months[CUM_MIN]} ~ ${DATA.months[DATA.months.length-1]} · 시도·시·군·구 기준은 지역별 조회와 같습니다`;
+  setupControls(cq, { sido: 'ddSidoC', sub: 'ddSubC', from: 'cFrom', to: 'cTo', toggle: 'cToggle', holder: 'cHolder' }, CUM_MIN, renderCum);
+
+  document.getElementById('cExport').addEventListener('click', () => {
+    const t = cumTable();
+    if (!t.cols.length) { alert('시도를 1개 이상 선택하세요.'); return; }
+    const sub = t.mode === 'sub';
+    downloadXlsx({
+      title: `영남권 지역별 ${CUM_WIN}개월 누적 착공·인허가 — ${t.cols.map(c => c.label).join('·')} · 기준월 ${DATA.months[cq.from]} ~ ${DATA.months[cq.to]} · `
+        + (sub ? '연면적(㎡), 건축HUB 원자료 자체 집계(공식 통계와 기준 다름)' : `${metricLabel()} 기준`),
+      hdr: t.hdr, rows: t.rows,
+      sheetName: sub ? '시군구별누적_연면적' : `지역별누적_${metricLabel()}`,
+      fileName: `영남권_누적조회_${fileNameTag(t.cols)}_${DATA.months[cq.from]}_${DATA.months[cq.to]}_${sub ? '연면적' : metricName()}.xlsx`
+    });
+  });
+}
+
 function renderAll(){
   renderStats();
   renderHeadline();
   renderRegions();
   if (!document.getElementById('tableHolder').hidden) renderTable();
   renderQuery();
+  renderCum();
 }
 
 document.getElementById('btnArea').addEventListener('click', ()=>{
@@ -826,6 +938,7 @@ window.addEventListener('resize', () => {
 });
 
 initQuery();
+initCum();
 renderAll();
 </script>
 </body>
