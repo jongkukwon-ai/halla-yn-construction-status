@@ -4,11 +4,13 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-10-05";
+const NEWS_UPDATED = "2026-10-06";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
   { title:"대구시 '주택시장 정상화' 종합대책 무얼 담았나", source:"뉴스핌", date:"2026-10-02", url:"https://www.newspim.com/news/view/20261002000049" },
+  { title:"대구시, 3년 8개월 만에 주택 공급 빗장 푼다… 공급 정상화 수순", source:"서울신문", date:"2026-10-01", url:"https://www.seoul.co.kr/news/economy/2026/10/01/20261001500244" },
+  { title:"교통·평지·생활 인프라 삼박자… GS건설, '연제갤러리자이' 10월 분양", source:"뉴데일리경제", date:"2026-09-30", url:"https://biz.newdaily.co.kr/site/data/html/2026/09/30/2026093000111.html" },
   { title:"[이번주 재개발ㆍ재건축] 부산 연산13구역 재개발 시공사 결정", source:"대한경제", date:"2026-09-27", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609271318336830438" },
   { title:"경남도, 재개발·재건축 표준정관 제정 추진…투명한 조합 운영 지원", source:"뉴스핌", date:"2026-09-23", url:"https://www.newspim.com/news/view/20260923000525" },
   { title:"김해시, '원도심 RE:CORE 프로젝트' 신규 공모 총력 대응(국비 242억원 규모)", source:"뉴스핌", date:"2026-09-26", url:"https://www.newspim.com/news/view/20260926000094" },
@@ -18,10 +20,8 @@ const NEWS_CONSTRUCTION = [
   { title:"대구 서문시장 4지구, 10년 기다림 끝 연내 착공…상인들 다시 뛴다", source:"글로벌이코노믹", date:"2026-09-22", url:"https://www.g-enews.com/article/General-News/2026/09/202609221021141626d2e64277d7_1" },
   { title:"부산 강서구 에코델타시티 '금강펜테리움 에코리버', 9월 마지막 주 청약 접수", source:"파이낸셜뉴스", date:"2026-09-22", url:"https://www.fnnews.com/news/202609221454364832" },
   { title:"4년 새 분양 89% 급감한 구미…태영건설, 1355가구 '데시앙' 공급", source:"EBN", date:"2026-09-17", url:"https://www.ebn.co.kr/news/articleView.html?idxno=1724601" },
-  { title:"'진주 판문지구 레이크써밋 웰가' 18일 견본주택 개관", source:"한경비즈니스", date:"2026-09-17", url:"https://magazine.hankyung.com/money/article/202609170867c" },
   { title:"울산 B-01구역 재개발, 19일 시공사 선정 총회…현대건설 '유력'", source:"네이트뉴스", date:"2026-09-18", url:"https://m.news.nate.com/view/20260918n18677" },
   { title:"갑절로 뛴 재개발·재건축 공사비…부산 사업장도 배 가까이 증가", source:"부산일보", date:"2026-09-21", url:"https://www.busan.com/view/busan/view.php?code=2026092118212106997" },
-  { title:"신동아건설, 부산 범천1구역 가로주택정비사업 수주...2500억 규모", source:"뉴스핌", date:"2026-09-09", url:"https://www.newspim.com/news/view/20260909000457" },
   { title:"\"부산 부동산 시장 반등?\", '힐스테이트 사직아시아드'·'베뉴브 해운대' 특별공급 청약에 수요자 몰려", source:"파이낸셜뉴스", date:"2026-09-30", url:"https://www.fnnews.com/news/202509301036250431" },
 ];
 
