@@ -4,7 +4,7 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-10-06";
+const NEWS_UPDATED = "2026-10-07";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
@@ -20,6 +20,7 @@ const NEWS_CONSTRUCTION = [
   { title:"대구 서문시장 4지구, 10년 기다림 끝 연내 착공…상인들 다시 뛴다", source:"글로벌이코노믹", date:"2026-09-22", url:"https://www.g-enews.com/article/General-News/2026/09/202609221021141626d2e64277d7_1" },
   { title:"부산 강서구 에코델타시티 '금강펜테리움 에코리버', 9월 마지막 주 청약 접수", source:"파이낸셜뉴스", date:"2026-09-22", url:"https://www.fnnews.com/news/202609221454364832" },
   { title:"4년 새 분양 89% 급감한 구미…태영건설, 1355가구 '데시앙' 공급", source:"EBN", date:"2026-09-17", url:"https://www.ebn.co.kr/news/articleView.html?idxno=1724601" },
+  { title:"현대건설, 도시정비 수주 2년 연속 10조 돌파(대구 명륜지구 재개발 등 3건, 1조7574억원)", source:"이투데이", date:"2026-09-20", url:"https://www.etoday.co.kr/news/view/2627535" },
   { title:"울산 B-01구역 재개발, 19일 시공사 선정 총회…현대건설 '유력'", source:"네이트뉴스", date:"2026-09-18", url:"https://m.news.nate.com/view/20260918n18677" },
   { title:"갑절로 뛴 재개발·재건축 공사비…부산 사업장도 배 가까이 증가", source:"부산일보", date:"2026-09-21", url:"https://www.busan.com/view/busan/view.php?code=2026092118212106997" },
   { title:"\"부산 부동산 시장 반등?\", '힐스테이트 사직아시아드'·'베뉴브 해운대' 특별공급 청약에 수요자 몰려", source:"파이낸셜뉴스", date:"2026-09-30", url:"https://www.fnnews.com/news/202509301036250431" },
