@@ -4,16 +4,17 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-10-10";
+const NEWS_UPDATED = "2026-10-11";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
   { title:"IPARK현대산업개발, 부산 연산13구역 재개발 시공사 최종 선정(도급액 2812억원)", source:"파이낸셜뉴스", date:"2026-10-06", url:"https://www.fnnews.com/news/202610061035254853" },
-  { title:"연 200만명 찾는 동래온천…전국 네 번째 '온천도시' 지정", source:"데일리안", date:"2026-10-01", url:"https://www.dailian.co.kr/news/view/1696651" },
   { title:"대구시 '주택시장 정상화' 종합대책 무얼 담았나", source:"뉴스핌", date:"2026-10-02", url:"https://www.newspim.com/news/view/20261002000049" },
   { title:"대구시, 3년 8개월 만에 주택 공급 빗장 푼다… 공급 정상화 수순", source:"서울신문", date:"2026-10-01", url:"https://www.seoul.co.kr/news/economy/2026/10/01/20261001500244" },
+  { title:"연 200만명 찾는 동래온천…전국 네 번째 '온천도시' 지정", source:"데일리안", date:"2026-10-01", url:"https://www.dailian.co.kr/news/view/1696651" },
   { title:"교통·평지·생활 인프라 삼박자… GS건설, '연제갤러리자이' 10월 분양", source:"뉴데일리경제", date:"2026-09-30", url:"https://biz.newdaily.co.kr/site/data/html/2026/09/30/2026093000111.html" },
   { title:"\"부산 부동산 시장 반등?\", '힐스테이트 사직아시아드'·'베뉴브 해운대' 특별공급 청약에 수요자 몰려", source:"파이낸셜뉴스", date:"2026-09-30", url:"https://www.fnnews.com/news/202509301036250431" },
+  { title:"대구 생산·건설수주 증가…경북은 생산·건설수주 동반 감소(8월 산업활동동향)", source:"경북매일", date:"2026-09-30", url:"https://kbmaeil.com/article/20260930500161" },
   { title:"전국 건설계약 27% 늘었는데 대구는 반토막…17개 시·도 꼴찌", source:"경북매일", date:"2026-09-29", url:"https://kbmaeil.com/article/20260928500560" },
   { title:"김해시, '원도심 RE:CORE 프로젝트' 신규 공모 총력 대응(국비 242억원 규모)", source:"뉴스핌", date:"2026-09-26", url:"https://www.newspim.com/news/view/20260926000094" },
   { title:"삼성물산, 5000억 규모 '부산 사직2 재개발' 시공사 선정(927가구, 4492억원)", source:"이데일리", date:"2026-09-25", url:"https://edaily.co.kr/News/Read?mediaCodeNo=257&newsId=01226726638990928" },
@@ -22,7 +23,6 @@ const NEWS_CONSTRUCTION = [
   { title:"현대건설, 부산 감천2구역 주택재개발 공사 8828억원 수주", source:"디지털투데이", date:"2026-09-22", url:"https://www.digitaltoday.co.kr/disclosure/articleView.html?idxno=702601" },
   { title:"갑절로 뛴 재개발·재건축 공사비…부산 사업장도 배 가까이 증가", source:"부산일보", date:"2026-09-21", url:"https://www.busan.com/view/busan/view.php?code=2026092118212106997" },
   { title:"현대건설, 도시정비 수주 2년 연속 10조 돌파(대구 명륜지구 재개발 등 3건, 1조7574억원)", source:"이투데이", date:"2026-09-20", url:"https://www.etoday.co.kr/news/view/2627535" },
-  { title:"4년 새 분양 89% 급감한 구미…태영건설, 1355가구 '데시앙' 공급", source:"EBN", date:"2026-09-17", url:"https://www.ebn.co.kr/news/articleView.html?idxno=1724601" },
 ];
 
 // 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
@@ -34,8 +34,6 @@ const NEWS_CEMENT = [
   { title:"유진기업, 완전자회사 천안기업·지구레미콘 흡수합병 결정…\"경영 효율화 승부수\"", source:"EBN", date:"2026-09-21", url:"https://www.ebn.co.kr/news/articleView.html?idxno=1725192" },
   { title:"매출 줄어도 이익 늘렸다...전근식 한일시멘트 대표 '내실 경영' 주력", source:"뉴스핌", date:"2026-09-14", url:"https://www.newspim.com/news/view/20260914000813" },
   { title:"[2026 대경 스마트건설대상] 건설자재대상 쌍용레미콘", source:"대한경제", date:"2026-09-12", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609122218121310732" },
-  { title:"전근식 시멘트협회장 \"탄소중립 기술, 산업간 신뢰제고로 함께 실현\"", source:"뉴스핌", date:"2026-09-10", url:"https://www.newspim.com/news/view/20260910000453" },
-  { title:"시멘트·레미콘·건설업계 '저탄소 자재 확산' 연대", source:"파이낸셜뉴스", date:"2026-09-10", url:"https://www.fnnews.com/news/202609101830526240" },
 ];
 
 // 패널 3 — 그 외 지역 소식 (수도권·인천·충청·호남 등)
@@ -53,6 +51,6 @@ const NEWS_OTHER = [
   { title:"노량진4구역이 쏘아올린 '1+1 분양'…곳곳서 추가주택 가격 놓고 갈등", source:"뉴스핌", date:"2026-09-23", url:"https://www.newspim.com/news/view/20260923000746" },
   { title:"서대문구 옛 홍제4구역 일대, 30층-2520가구 재개발 신통기획 확정", source:"뉴스핌", date:"2026-09-22", url:"https://www.newspim.com/news/view/20260922000663" },
   { title:"한남5구역, 조합원 분양신청 돌입…관리처분계획 시동", source:"머니투데이", date:"2026-09-21", url:"https://news.mtn.co.kr/news-detail/2026092117000543031" },
-  { title:"두산건설, 5154억 규모 부천 원미 도심복합사업 수주(1628세대)", source:"이투데이", date:"2026-09-21", url:"https://www.etoday.co.kr/news/view/2627896" },
-  { title:"삼성물산, 성수3지구 재개발 시공사 선정", source:"아주경제", date:"2026-09-21", url:"https://www.ajunews.com/view/20260921093921069" },
+  { title:"대형건설사 시선 분당으로…선도지구 시공사 선정 '초읽기'", source:"머니투데이", date:"2026-09-18", url:"https://news.mtn.co.kr/news-detail/2026091816290195515" },
+  { title:"[단독]대치 '우쌍', 조합설립인가…10월 시공사 공고에 삼성물산도 채비", source:"머니투데이", date:"2026-09-16", url:"https://news.mtn.co.kr/news-detail/2026091615025075679" },
 ];
