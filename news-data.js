@@ -4,12 +4,13 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-10-11";
+const NEWS_UPDATED = "2026-10-12";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
   { title:"IPARK현대산업개발, 부산 연산13구역 재개발 시공사 최종 선정(도급액 2812억원)", source:"파이낸셜뉴스", date:"2026-10-06", url:"https://www.fnnews.com/news/202610061035254853" },
   { title:"대구시 '주택시장 정상화' 종합대책 무얼 담았나", source:"뉴스핌", date:"2026-10-02", url:"https://www.newspim.com/news/view/20261002000049" },
+  { title:"6조 삼성 AI 데이터센터 공사, 구미 업체에 문 열릴까…15일 삼성물산·지역건설업체 매칭데이", source:"데일리안", date:"2026-10-02", url:"https://www.dailian.co.kr/news/view/1697587" },
   { title:"대구시, 3년 8개월 만에 주택 공급 빗장 푼다… 공급 정상화 수순", source:"서울신문", date:"2026-10-01", url:"https://www.seoul.co.kr/news/economy/2026/10/01/20261001500244" },
   { title:"연 200만명 찾는 동래온천…전국 네 번째 '온천도시' 지정", source:"데일리안", date:"2026-10-01", url:"https://www.dailian.co.kr/news/view/1696651" },
   { title:"교통·평지·생활 인프라 삼박자… GS건설, '연제갤러리자이' 10월 분양", source:"뉴데일리경제", date:"2026-09-30", url:"https://biz.newdaily.co.kr/site/data/html/2026/09/30/2026093000111.html" },
@@ -21,13 +22,13 @@ const NEWS_CONSTRUCTION = [
   { title:"경남도, 재개발·재건축 표준정관 제정 추진…투명한 조합 운영 지원", source:"뉴스핌", date:"2026-09-23", url:"https://www.newspim.com/news/view/20260923000525" },
   { title:"리치오션, 부산 다대포항역 인근 350세대 규모 주상복합단지 추진", source:"서울신문", date:"2026-09-23", url:"https://www.seoul.co.kr/news/economy/2026/09/23/20260923500258" },
   { title:"현대건설, 부산 감천2구역 주택재개발 공사 8828억원 수주", source:"디지털투데이", date:"2026-09-22", url:"https://www.digitaltoday.co.kr/disclosure/articleView.html?idxno=702601" },
-  { title:"갑절로 뛴 재개발·재건축 공사비…부산 사업장도 배 가까이 증가", source:"부산일보", date:"2026-09-21", url:"https://www.busan.com/view/busan/view.php?code=2026092118212106997" },
-  { title:"현대건설, 도시정비 수주 2년 연속 10조 돌파(대구 명륜지구 재개발 등 3건, 1조7574억원)", source:"이투데이", date:"2026-09-20", url:"https://www.etoday.co.kr/news/view/2627535" },
+  { title:"구미시, 삼성SDS·삼성물산과 'AI데이터센터 지역 상생 발전 간담회' 개최…지역기업 참여 확대 논의", source:"경북매일", date:"2026-09-15", url:"https://kbmaeil.com/article/20260915500746" },
 ];
 
 // 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
 const NEWS_CEMENT = [
   { title:"레미콘조합연합회, 제주서 경영혁신 해법 모색…\"단단한 성장으로\"", source:"머니투데이", date:"2026-10-06", url:"https://news.mtn.co.kr/news-detail/2026100613165763691" },
+  { title:"건설경기 침체 장기화…레미콘업계, AI·저탄소로 돌파구", source:"SBS Biz", date:"2026-10-06", url:"https://biz.sbs.co.kr/amp/article/20000338419" },
   { title:"'레미콘 빅2' 유진·삼표그룹, 국정감사·청문회 촉각", source:"뉴스핌", date:"2026-10-02", url:"https://www.newspim.com/news/view/20261002000897" },
   { title:"건설 착공 늘었는데 시멘트업황 개선은 언제?", source:"머니투데이", date:"2026-10-02", url:"https://news.mtn.co.kr/news-detail/2026100213043415013" },
   { title:"탄소 줄이니 염소 늘었다…시멘트업계 설비투자 확대(한일시멘트·쌍용C&E 염소바이패스 설비 총 403억원 투자)", source:"시대", date:"2026-09-22", url:"https://www.sidae.com/article/2026092213413082859" },
@@ -42,6 +43,7 @@ const NEWS_OTHER = [
   { title:"대치쌍용1차·개포우성4차, 삼성물산과 도급계약…인허가 '속도'", source:"머니투데이", date:"2026-10-07", url:"https://news.mtn.co.kr/news-detail/2026100716341111961" },
   { title:"목동 재건축 '수주 홍보관' 대전 시작…10단지, 18일 시공사 선정", source:"머니투데이", date:"2026-10-05", url:"https://news.mtn.co.kr/news-detail/2026100518382248649" },
   { title:"목동7단지 재건축, 시공사 선정 지원 CM업체로 건원CM 선정", source:"한경비즈니스", date:"2026-10-02", url:"https://magazine.hankyung.com/money/article/202610029562c" },
+  { title:"\"서울까지 30분이면 이동\" 산곡역자이힐스테이트&하늘채 부스에 실수요자 발길 [헤럴드머니페스타 2026]", source:"헤럴드경제", date:"2026-10-02", url:"https://www.heraldk.com/article/2026100218225475275" },
   { title:"성수전략구역 '옆'도 움직인다…존치 아파트 정비 잰걸음", source:"머니투데이", date:"2026-10-01", url:"https://news.mtn.co.kr/news-detail/2026100116254951561" },
   { title:"'또 너냐' 삼성물산 vs 포스코이앤씨…송파 오금현대 재건축서 맞붙나", source:"뉴스핌", date:"2026-09-30", url:"https://www.newspim.com/news/view/20260930001001" },
   { title:"DL이앤씨, 성수2지구 재개발 위해 10개 금융기관과 업무협약", source:"아시아투데이", date:"2026-09-30", url:"https://asiatoday.co.kr/kn/view.php?key=20260930010010492" },
@@ -52,5 +54,4 @@ const NEWS_OTHER = [
   { title:"서대문구 옛 홍제4구역 일대, 30층-2520가구 재개발 신통기획 확정", source:"뉴스핌", date:"2026-09-22", url:"https://www.newspim.com/news/view/20260922000663" },
   { title:"한남5구역, 조합원 분양신청 돌입…관리처분계획 시동", source:"머니투데이", date:"2026-09-21", url:"https://news.mtn.co.kr/news-detail/2026092117000543031" },
   { title:"대형건설사 시선 분당으로…선도지구 시공사 선정 '초읽기'", source:"머니투데이", date:"2026-09-18", url:"https://news.mtn.co.kr/news-detail/2026091816290195515" },
-  { title:"[단독]대치 '우쌍', 조합설립인가…10월 시공사 공고에 삼성물산도 채비", source:"머니투데이", date:"2026-09-16", url:"https://news.mtn.co.kr/news-detail/2026091615025075679" },
 ];
