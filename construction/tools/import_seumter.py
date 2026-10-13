@@ -3,11 +3,12 @@
 세움터 「인허가정보집계」에서 받은 공식 시·군·구 수치로, 자체 집계(update_trend.py)한 값을 덮어쓴다.
 덮어쓴 달은 SUB_SRC에 기록되어 화면 안내문에 '세움터 집계'로 표시된다.
 
-입력 두 가지 (여러 개 섞어서 줄 수 있음)
-  1) 세움터 월별 파일  : 「시군구별_용도별_건축허가_착공_준공_현황(YYYY년MM월).xlsx」 → 그 달 허가·착공
-  2) 착공 백데이터 파일 : 시트 '데이터'(연월·구분·시도_현재·시군구_현재·…·연면적_㎡) → 여러 달 착공
+입력 세 가지 (여러 개 섞어서 줄 수 있음, 같은 달이 겹치면 뒤에 준 파일이 이김)
+  1) 세움터 월별 파일  : 「시군구별_용도별_건축허가_착공_준공_현황(YYYY년MM월).xlsx/.xls」 → 그 달 허가·착공
+  2) 연도별 확정치 zip : 「YYYY년_월별_인허가현황(확정치).zip」 (안의 시군구별 파일 12개) → 1년치 허가·착공
+  3) 착공 백데이터 파일 : 시트 '데이터'(연월·구분·시도_현재·시군구_현재·…·연면적_㎡) → 여러 달 착공
 
-사용법 (openpyxl 필요: pip install openpyxl)
+사용법 (openpyxl 필요, .xls는 xlrd 필요: pip install openpyxl xlrd)
   python import_seumter.py <백데이터.xlsx> <월별파일1.xlsx> [<월별파일2.xlsx> ...]
   python import_seumter.py ... --dry-run
 
@@ -36,31 +37,59 @@ def district(name):
     return m.group(1) if m else name
 
 
-def read_monthly(path):
+def sheets(name, data):
+    """xlsx(openpyxl)·xls(xlrd, 2024년 이전 확정치 파일) 공통: {시트명: 행 리스트}"""
+    import io
+    if name.lower().endswith('.xls'):
+        import xlrd   # pip install xlrd
+        wb = xlrd.open_workbook(file_contents=data)
+        return {s.name: [s.row_values(r) for r in range(s.nrows)] for s in wb.sheets()}
+    wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+    return {ws.title: [list(r) for r in ws.iter_rows(values_only=True)] for ws in wb.worksheets}
+
+
+def read_monthly(name, data):
     """세움터 월별 파일 → {('허가'|'착공', 시도, 구군, 'YYYY-MM'): ㎡}"""
-    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    text = ' '.join(str(c) for r in wb['목차'].iter_rows(values_only=True) for c in r if c)
-    m = re.search(r'(\d{4})\.(\d{2})\.01\s*~', text) or re.search(r'(\d{4})년\s*(\d{2})월', Path(path).name)
+    sh = sheets(name, data)
+    text = ' '.join(str(c) for r in sh['목차'] for c in r if c)
+    m = re.search(r'(\d{4})\.(\d{2})\.01\s*~', text) or re.search(r'(\d{4})년\s*(\d{2})월', Path(name).name)
     if not m:
-        sys.exit(f'{path}: 기준 월을 찾지 못했습니다.')
+        sys.exit(f'{name}: 기준 월을 찾지 못했습니다.')
     month = f'{m.group(1)}-{m.group(2)}'
     out = defaultdict(float)
     totals = {}
-    for ws in wb.worksheets:
-        kind = '허가' if '허가' in ws.title else '착공' if '착공' in ws.title else None
-        if not kind or not ws.title.endswith('_01'):       # _01 시트의 3번째 열이 총계
+    for title, rows in sh.items():
+        kind = '허가' if '허가' in title else '착공' if '착공' in title else None
+        if not kind or not title.endswith('_01'):       # _01 시트의 3번째 열이 총계
             continue
-        for r in ws.iter_rows(values_only=True):
+        for r in rows:
             if r and r[0] in SIDO and isinstance(r[2], (int, float)):
+                sd = SIDO[r[0]]
                 if r[1] == '소계':
-                    totals[(kind, SIDO[r[0]])] = r[2]
-                else:
-                    out[(kind, SIDO[r[0]], district(r[1]), month)] += r[2]
-    for (kind, sd), v in totals.items():                  # 소계와 구·군 합이 맞는지 확인
+                    totals[(kind, sd)] = r[2]
+                    continue
+                d = district(r[1])
+                if sd == '경북' and d == '군위군':        # 2023.7 대구 편입 — 사이트는 현재 행정구역(대구)으로 둠
+                    sd = '대구'
+                out[(kind, sd, d, month)] += r[2]
+    for (kind, sd), v in totals.items():                  # 소계와 구·군 합이 맞는지 확인(군위 이동분 감안)
         s = sum(x for (k, a, _, mm), x in out.items() if k == kind and a == sd)
-        if abs(s - v) > 1:
-            print(f'  경고 {path.name} {month} {kind} {sd}: 소계 {v:,.0f} ≠ 구·군 합 {s:,.0f}')
-    print(f'  {Path(path).name}: {month} 허가·착공')
+        if abs(s - v) > 1 and not (sd in ('대구', '경북') and month < '2023-07'):
+            print(f'  경고 {Path(name).name} {month} {kind} {sd}: 소계 {v:,.0f} ≠ 구·군 합 {s:,.0f}')
+    basis = re.search(r'자료기준일\s*:\s*([\d.]+)', text)
+    print(f'  {Path(name).name}: {month} 허가·착공 (자료기준일 {basis.group(1) if basis else "?"})')
+    return out
+
+
+def read_zip(path):
+    """연도별 확정치 zip — 안의 「시군구별_용도별…」 파일만 읽음"""
+    import zipfile
+    out = defaultdict(float)
+    with zipfile.ZipFile(path) as zf:
+        for info in sorted(zf.infolist(), key=lambda i: i.filename):
+            if '시군구별_용도별' in info.filename and info.filename.lower().endswith(('.xls', '.xlsx')):
+                for k, v in read_monthly(info.filename, zf.read(info)).items():
+                    out[k] += v
     return out
 
 
@@ -110,7 +139,12 @@ def main():
     vals = {}
     for f in a.files:
         p = Path(f)
-        part = read_backdata(p) if '데이터' in openpyxl.load_workbook(p, read_only=True).sheetnames else read_monthly(p)
+        if p.suffix.lower() == '.zip':
+            part = read_zip(p)
+        elif p.suffix.lower() == '.xlsx' and '데이터' in openpyxl.load_workbook(p, read_only=True).sheetnames:
+            part = read_backdata(p)
+        else:
+            part = read_monthly(p.name, p.read_bytes())
         months_in = {(k[0], k[3]) for k in part}
         for key in [k for k in vals if (k[0], k[3]) in months_in]:
             del vals[key]
@@ -125,7 +159,10 @@ def main():
     for sd in data['regions']:
         rows = {r[0]: r for r in sub[sd]}
         names = {d for (k, s, d, m) in vals if s == sd and m in months}
-        for d in sorted(names - set(rows)):           # 시·도 직접 등 새 항목
+        new = sorted(names - set(rows))
+        if [d for d in new if d != DIRECT]:
+            print(f'  확인 필요 — {sd}에 기존 목록에 없는 이름: {[d for d in new if d != DIRECT]}')
+        for d in new:                                  # 시·도 직접 등 새 항목
             rows[d] = [d, [0] * n, [0] * n]
             sub[sd].append(rows[d])
         for kind, ms in covered.items():
