@@ -1,0 +1,42 @@
+name: 업종 관련 뉴스 자동 갱신
+
+on:
+  schedule:
+    - cron: '5 22 * * *'   # 매일 07:05 KST (UTC 22:05)
+  workflow_dispatch: {}      # Actions 탭에서 수동 실행
+
+permissions:
+  contents: write
+
+concurrency:
+  group: news-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Google 뉴스 RSS로 news-data.js 갱신
+        run: python .github/scripts/update_news.py
+
+      - name: 변경 시 커밋·푸시
+        run: |
+          if git diff --quiet -- news-data.js; then
+            echo "변경 없음"; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add news-data.js
+          git commit -m "업종 관련 뉴스 자동 갱신 $(TZ=Asia/Seoul date +%F)"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
