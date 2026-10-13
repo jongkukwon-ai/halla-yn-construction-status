@@ -139,7 +139,29 @@ def build_sub(months, monthly, final, order):
     return sub, {k: seum.ranges(v) for k, v in covered.items()}, final_years
 
 
-def validate(sub, data):
+def keep_backdata(sub, sub_old, old_months, months, ranges):
+    """SUB_SRC['착공_백데이터'] 구간의 착공은 사업계획 백데이터 값을 그대로 둠(세움터 확정치로 덮어쓰지 않음).
+    반환: 고정한 달 집합"""
+    frozen = {m for a, b in ranges for m in months if a <= m <= b and m in old_months}
+    if not frozen:
+        return frozen
+    for sd in sub:
+        old = {r[0]: r for r in sub_old.get(sd, [])}
+        rows = {r[0]: r for r in sub[sd]}
+        for name in old:
+            if name not in rows:                      # 백데이터에만 있던 항목도 유지
+                r = [name, [0] * len(months), [0] * len(months)]
+                sub[sd].insert(len(sub[sd]) - 1, r)
+                rows[name] = r
+        for name, r in rows.items():
+            for i, m in enumerate(months):
+                if m in frozen:
+                    r[2][i] = old[name][2][old_months.index(m)] if name in old else 0
+    print(f'  착공 {min(frozen)}~{max(frozen)}은 사업계획 백데이터 값 유지')
+    return frozen
+
+
+def validate(sub, data, skip_start=frozenset()):
     bad, valid = [], {}
     n = len(data['months'])
     for sd in data['regions']:
@@ -148,6 +170,8 @@ def validate(sub, data):
         op, os_ = data['series'][sd]['permit_area'], data['series'][sd]['start_area']
         for i, m in enumerate(data['months']):
             for a, b, k in ((tp[i], op[i], '허가'), (ts[i], os_[i], '착공')):
+                if k == '착공' and m in skip_start:      # 백데이터(잠정치)로 고정한 달은 확정치와 다를 수 있음
+                    continue
                 if abs(a - b) > max(50, TOLERANCE * b):
                     bad.append(f'{sd} {m} {k}: 시군구합 {a:,.0f} / 시도 {b:,.0f}')
         valid[sd] = [round(sum(tp) / sum(op), 2), round(seum.corr(tp, op), 2),
@@ -220,7 +244,10 @@ def main():
     order = {sd: [r[0] for r in sub_old[sd]] for sd in data['regions']}
     sub, src, final_years = build_sub(months, monthly, final, order)
     src['확정'] = max(final_years, default=0)
-    bad, valid = validate(sub, data)
+    frozen = keep_backdata(sub, sub_old, data_old['months'], months, src_old.get('착공_백데이터', []))
+    if frozen:
+        src['착공_백데이터'] = src_old['착공_백데이터']
+    bad, valid = validate(sub, data, skip_start=frozen)
     if bad:
         print('시·군·구 합이 시도 통계와 맞지 않아 중단합니다:')
         print('\n'.join('  ' + b for b in bad[:30]))
