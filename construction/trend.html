@@ -842,7 +842,7 @@ function initQuery(){
     const sub = t.mode === 'sub';
     downloadXlsx({
       title: `영남권 지역별 착공·인허가 — ${t.cols.map(c => c.label).join('·')} · ${DATA.months[q.from]} ~ ${DATA.months[q.to]} · `
-        + (sub ? '연면적(㎡), 건축HUB 원자료 자체 집계(공식 통계와 기준 다름)' : `${metricLabel()} 기준`),
+        + (sub ? '연면적(㎡), 세움터 시군구별 공식 집계' : `${metricLabel()} 기준`),
       hdr: t.hdr, rows: t.rows, footer: t.total,
       sheetName: sub ? '시군구별조회_연면적' : `지역별조회_${metricLabel()}`,
       fileName: `영남권_지역별조회_${nameTag}_${DATA.months[q.from]}_${DATA.months[q.to]}_${sub ? '연면적' : metricName()}.xlsx`
@@ -924,7 +924,7 @@ function initCum(){
     const sub = t.mode === 'sub';
     downloadXlsx({
       title: `영남권 지역별 ${CUM_WIN}개월 누적 착공·인허가 — ${t.cols.map(c => c.label).join('·')} · 기준월 ${DATA.months[cq.from]} ~ ${DATA.months[cq.to]} · `
-        + (sub ? '연면적(㎡), 건축HUB 원자료 자체 집계(공식 통계와 기준 다름)' : `${metricLabel()} 기준`),
+        + (sub ? '연면적(㎡), 세움터 시군구별 공식 집계' : `${metricLabel()} 기준`),
       hdr: t.hdr, rows: t.rows,
       sheetName: sub ? '시군구별누적_연면적' : `지역별누적_${metricLabel()}`,
       fileName: `영남권_누적조회_${fileNameTag(t.cols)}_${DATA.months[cq.from]}_${DATA.months[cq.to]}_${sub ? '연면적' : metricName()}.xlsx`
