@@ -48,30 +48,36 @@ def month_range(end, n=60):
 
 
 # ── 1. 시도 공식 통계 ──
-def fetch_molit(months):
+def fetch_molit(months, national=False):
+    """시도별 착공·허가 연면적·동수. national=True면 전국 16개 시도(현재 행정구역 — 광주+전남은 '전남광주'로 합산)"""
+    if national:
+        from import_seumter import NAT_SIDO, NAT_REGIONS
+        names, regions = NAT_SIDO, NAT_REGIONS
+    else:
+        names, regions = SIDO_NAME, REGIONS
     s, e = months[0].replace('-', ''), months[-1].replace('-', '')
-    vals = {}
+    vals = defaultdict(float)
     for kind, (form, style) in MOLIT_FORMS.items():
         req = urllib.request.Request(MOLIT.format(form=form, style=style, s=s, e=e), headers=UA)
         rows = json.load(urllib.request.urlopen(req, timeout=300))['data']
         for r in rows:
             # '계/계' = 모든 용도·구조 합계, 열 '9' = 합계
-            if r['2'] != '계' or r['3'] != '계' or r['1'] not in SIDO_NAME:
+            if r['2'] != '계' or r['3'] != '계' or r['1'] not in names:
                 continue
             v = r['9'].replace(',', '')
-            vals[(kind, SIDO_NAME[r['1']], r['0'][:7], r['4'])] = float(v) if v not in ('-', '') else 0.0
-    missing = [m for m in months if ('start', '부산', m, '연면적') not in vals]
+            vals[(kind, names[r['1']], r['0'][:7], r['4'])] += float(v) if v not in ('-', '') else 0.0
+    missing = [m for m in months if ('start', regions[0], m, '연면적') not in vals]
     if missing:
         sys.exit(f'국토부 통계에 아직 없는 월: {missing} — --end를 공표된 마지막 달로 지정하세요.')
     series = {}
-    for r in REGIONS:
+    for r in regions:
         series[r] = {
             'permit_count': [vals[('permit', r, m, '동수')] for m in months],
             'permit_area': [vals[('permit', r, m, '연면적')] for m in months],
             'start_count': [vals[('start', r, m, '동수')] for m in months],
             'start_area': [vals[('start', r, m, '연면적')] for m in months],
         }
-    return {'months': months, 'regions': REGIONS, 'series': series}
+    return {'months': months, 'regions': regions, 'series': series}
 
 
 # ── 2. 건축HUB 원자료 ──

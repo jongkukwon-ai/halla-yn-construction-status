@@ -5,6 +5,7 @@
 3. 새 달이 나왔거나(DATA 마지막 달 < M) 새 확정치 연도가 올라왔으면:
    - 통계누리에서 M월까지 60개월 시도 통계(DATA)를 다시 받음
    - 세움터에서 기간 안의 연도는 확정치 zip, 확정치가 없는 연도는 월별 잠정치 파일을 받아 시·군·구(SUB) 구성
+   - 같은 파일로 전국 조회용 시·군·구(NAT_SUB)도 만들고, 통계누리 전국 16개 시도 통계(NAT)를 받음
    - 시·군·구 합이 시도 통계와 맞는지 검사(어긋나면 파일을 고치지 않고 실패로 종료)
    - trend.html의 데이터 줄과 기간 문구를 바꿈
 4. 바뀐 게 없으면 아무것도 하지 않음
@@ -91,13 +92,14 @@ def read_zip_bytes(data):
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
         for info in sorted(zf.infolist(), key=lambda i: i.filename):
             if '시군구별_용도별' in info.filename and info.filename.lower().endswith(('.xls', '.xlsx')):
-                for k, v in seum.read_monthly(info.filename, zf.read(info)).items():
+                for k, v in seum.read_raw(info.filename, zf.read(info)).items():
                     out[k] += v
     return out
 
 
 def build_sub(months, monthly, final, order):
-    """기간(months) 시·군·구 값: 확정치 zip이 있는 해는 그것, 없는 해는 월별 잠정치"""
+    """기간(months) 시·군·구 값: 확정치 zip이 있는 해는 그것, 없는 해는 월별 잠정치.
+    반환: 영남 SUB, 구간, 확정치 연도, 전국 값({(종류, 시도, 비교단위, 월): ㎡})"""
     vals = {}
     years = sorted({int(m[:4]) for m in months})
     final_years = []
@@ -113,8 +115,9 @@ def build_sub(months, monthly, final, order):
                 if m not in monthly:
                     sys.exit(f'세움터에 {m} 월별 파일이 없습니다 — 갱신 중단')
                 f = eais_files(monthly[m])[0]
-                part.update(seum.read_monthly(f['orignlFileNm'], eais_download(f['fileId'])))
+                part.update(seum.read_raw(f['orignlFileNm'], eais_download(f['fileId'])))
         vals.update({k: v for k, v in part.items() if k[3] in months})
+    raw, vals = vals, seum.to_yn(vals)
     n = len(months)
     col = {'허가': 1, '착공': 2}
     sub = {}
@@ -136,7 +139,7 @@ def build_sub(months, monthly, final, order):
     covered = defaultdict(set)
     for kind, sd, d, m in vals:
         covered[kind].add(m)
-    return sub, {k: seum.ranges(v) for k, v in covered.items()}, final_years
+    return sub, {k: seum.ranges(v) for k, v in covered.items()}, final_years, seum.to_nat(raw)
 
 
 def keep_backdata(sub, sub_old, old_months, months, ranges):
@@ -164,7 +167,7 @@ def keep_backdata(sub, sub_old, old_months, months, ranges):
 def validate(sub, data, skip_start=frozenset()):
     bad, valid = [], {}
     n = len(data['months'])
-    for sd in data['regions']:
+    for sd in sub:
         tp = [sum(r[1][i] for r in sub[sd]) for i in range(n)]
         ts = [sum(r[2][i] for r in sub[sd]) for i in range(n)]
         op, os_ = data['series'][sd]['permit_area'], data['series'][sd]['start_area']
@@ -213,6 +216,8 @@ def main():
     html = TREND.read_text(encoding='utf-8')
     data_old = json.loads(re.search(r'const DATA =(\{.*?\});\n', html).group(1))
     sub_old = json.loads(re.search(r'const SUB = (\{.*?\});\n', html).group(1))
+    nat_old = re.search(r'const NAT_SUB = (\{.*?\});\n', html)
+    nat_old = json.loads(nat_old.group(1)) if nat_old else {}
     src_old = json.loads(re.search(r'const SUB_SRC = (\{.*?\});\n', html).group(1))
 
     monthly, final = eais_list()
@@ -242,23 +247,31 @@ def main():
 
     data = ut.fetch_molit(months)
     order = {sd: [r[0] for r in sub_old[sd]] for sd in data['regions']}
-    sub, src, final_years = build_sub(months, monthly, final, order)
+    sub, src, final_years, nat_vals = build_sub(months, monthly, final, order)
     src['확정'] = max(final_years, default=0)
     frozen = keep_backdata(sub, sub_old, data_old['months'], months, src_old.get('착공_백데이터', []))
     if frozen:
         src['착공_백데이터'] = src_old['착공_백데이터']
     bad, valid = validate(sub, data, skip_start=frozen)
+
+    # 전국 조회(영남 외 11개 시도): 같은 세움터 파일 + 통계누리 전국 시도 통계, 백데이터 구간 착공은 고정
+    nat = ut.fetch_molit(months, national=True)
+    nat_sub = seum.build_nat_sub(nat_vals, months, data['regions'], nat_old)
+    keep_backdata(nat_sub, nat_old, data_old['months'], months, src_old.get('착공_백데이터', []))
+    nat_bad, nat_valid = validate(nat_sub, nat, skip_start=frozen)
+    bad += nat_bad
     if bad:
         print('시·군·구 합이 시도 통계와 맞지 않아 중단합니다:')
         print('\n'.join('  ' + b for b in bad[:30]))
         sys.exit(1)
-    print('검증 통과 — 시·군·구 합 = 시도 통계 (', json.dumps(valid, ensure_ascii=False), ')')
+    print('검증 통과 — 시·군·구 합 = 시도 통계 (', json.dumps({**valid, **nat_valid}, ensure_ascii=False), ')')
 
     dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(',', ':'))
     html = re.sub(r'const DATA =\{.*?\};\n', lambda _: f'const DATA ={dump(data)};\n', html, count=1)
     html = re.sub(r'const SUB = \{.*?\};\n', lambda _: f'const SUB = {dump(sub)};\n', html, count=1)
     html = re.sub(r'const SUB_VALID = \{.*?\};\n', lambda _: f'const SUB_VALID = {dump(valid)};\n', html, count=1)
     html = re.sub(r'const SUB_SRC = \{.*?\};\n', lambda _: f'const SUB_SRC = {dump(src)};\n', html, count=1)
+    html = seum.write_nat(html, nat, nat_sub, nat_valid)
     html = update_texts(html, months, molit_provisional(months))
     TREND.write_text(html, encoding='utf-8', newline='')
     print(f'{TREND.name} 갱신 완료')
