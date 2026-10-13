@@ -167,7 +167,7 @@ SUB_VALID = { "경남": [0.87, 0.96, 0.63, 0.70], ... }   // [인허가 공식 �
 1. **로컬에서 미리보기**: `construction/trend.html` 파일을 더블클릭하거나 브라우저 주소창에 `file:///...` 경로로 열면 바로 동작합니다(서버 구동 불필요).
 2. **배포**: 이 저장소는 **GitHub Pages**로 서빙됩니다. `main` 브랜치에 파일을 커밋·푸시하면 별도 빌드 과정 없이 몇 분 내로 아래 URL에 자동 반영됩니다.
    - https://jongkukwon-ai.github.io/halla-yn-construction-status/construction/trend.html
-3. **데이터 갱신 방법**(월 1회 정도 권장): `construction/tools/update_trend.py --end YYYYMM --download` 한 번으로 아래 두 단계를 자동 수행합니다(자세한 사용법·직접 고칠 문구는 `construction/tools/README.md`).
+3. **데이터 갱신 방법**: 매일 GitHub Actions(`.github/workflows/trend.yml`)가 `construction/tools/auto_update.py`로 세움터(시·군·구)·통계누리(시도)에 새 달이 나왔는지 확인해 자동 갱신합니다(검증 실패 시 미반영). 아래는 자동 갱신이 막혔을 때의 수동 절차입니다. `construction/tools/update_trend.py --end YYYYMM --download` 한 번으로 아래 두 단계를 자동 수행합니다(자세한 사용법·직접 고칠 문구는 `construction/tools/README.md`).
    - 시도 공식 통계: 위 5-3의 두 URL을 `startDate`/`endDate`를 최신 구간으로 바꿔 다시 조회 → 응답 JSON을 지역×월×지표별로 집계 → 파일 안의 `const DATA = {...}` 리터럴을 새 값으로 교체.
    - 시·군·구: 매월 20일 이후 건축HUB 대용량 파일 두 개를 새로 받아 5-3의 집계 규칙대로 다시 집계 → `const SUB = ...`, `const SUB_VALID = ...`를 교체. **`SUB`의 월 범위는 반드시 `DATA.months`와 같게 맞춰야 합니다**(두 배열을 같은 인덱스로 씁니다).
    - 교체 후 커밋·푸시.

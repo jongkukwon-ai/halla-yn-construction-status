@@ -1,0 +1,59 @@
+name: 착공·인허가 통계 자동 갱신
+
+on:
+  schedule:
+    - cron: '30 0 * * *'     # 매일 09:30 KST — 새 달(세움터·통계누리)이 나왔을 때만 갱신
+  workflow_dispatch:
+    inputs:
+      force:
+        description: '새 달이 없어도 다시 만들기'
+        type: boolean
+        default: false
+  push:                       # 이 설정이나 스크립트를 고치면 접속 확인만 한 번 돌림
+    branches: [main]
+    paths:
+      - '.github/workflows/trend.yml'
+      - 'construction/tools/auto_update.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trend-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install openpyxl xlrd
+
+      - name: 접속 확인(세움터·통계누리)
+        run: python construction/tools/auto_update.py --check
+
+      - name: 갱신
+        if: github.event_name != 'push'
+        run: python construction/tools/auto_update.py ${{ inputs.force && '--force' || '' }}
+
+      - name: 변경 시 커밋·푸시
+        if: github.event_name != 'push'
+        run: |
+          if git diff --quiet -- construction/trend.html; then
+            echo "변경 없음"; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add construction/trend.html
+          git commit -m "착공·인허가 통계 자동 갱신 ($(grep -o '조회기간 [0-9.]*~[0-9.]*' construction/trend.html | head -1))"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
