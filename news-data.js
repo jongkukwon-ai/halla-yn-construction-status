@@ -4,29 +4,43 @@
 // "최근 한 달만 표시" 필터링에 사용됩니다.
 // 매일 자동 갱신됩니다 (Claude 예약 작업).
 // ══════════════════════════════════════════
-const NEWS_UPDATED = "2026-10-12";
+const NEWS_UPDATED = "2026-10-13";
 
 // 패널 1 — 영남지역 건설·부동산 뉴스
 const NEWS_CONSTRUCTION = [
-  { title:"IPARK현대산업개발, 부산 연산13구역 재개발 시공사 최종 선정(도급액 2812억원)", source:"파이낸셜뉴스", date:"2026-10-06", url:"https://www.fnnews.com/news/202610061035254853" },
+  { title:"대구 재개발·재건축 절차 손질…사업 추진 기반 정비", source:"공뉴스", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMibEFVX3lxTE9Id1J4NG11S3ZqQkprRHFnWTJPbmcxa0poU1F1ZnhOTVJ3aVEzVzd5MjllTFhnc3Jub3J5VVpSWG54V2RDVFVHdjZxSkNkUGZzdDg1RFpPbmhyM25yVS15S0ZKN29paW1NMVNZdg?oc=5" },
+  { title:"부산 광안7구역 재개발, 무응찰 유찰 뒤 시공자 2차 입찰...11월 16일 마감", source:"데일리하우징", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMia0FVX3lxTE9Xb2J3MFY1MFBIR1FKMUVVYWEzYTJBM0NjczlxRjdwa0NWX3UyNDAzOXh4bDliVVQxZmFNZUdtTFJHOHc2emV1MnhfZThRYlNHZFE1ZVphSUlndFoycmRFNmRJT2tOcGNseTA4?oc=5" },
+  { title:"부산 연산13구역 재개발 시공사에 IPARK현대산업개발", source:"비건뉴스", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiZkFVX3lxTE12RTFPWVcyTGFzLVlWLV9iUWlxTElXdzU5NER0WmNKMUdBNnp6Ym05bjdJbVdidXdNN19vQTAtRzdDLXVmZnpHa2IzYWw3cV92TzljU2xBYjBlcUx0UHkyWWgyMXpiZw?oc=5" },
+  { title:"우리자산신탁, 부산 해운대2구역 통합재건축 정비사업 추진 본격화", source:"일간투데이", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMia0FVX3lxTFBxOUI3aFd0eXpEYjhnUmZiYnMzalhhZVRIbm5sQ3hQcWY2eTRqb0RDLXVIMVF0T3hiVWstVE5iV2Q0SGt6Y1FSZ2tXQWthT1k1ZHJPWHZiMmlfQ3dfN2ZEMHFrcF9tdm81ajRF?oc=5" },
+  { title:"부산 해운대2구역, 우리자산신탁과 MOU...특별정비구역 지정 준비 착수", source:"데일리하우징", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMia0FVX3lxTE50T2JKbHJKejBYTXJJajE2N2tCOVhNNnEtdUc2QThVMG5PdE82TnhNdkhkZ0hqaXRFZTFjUkRIaEZyT2k5Tl9pWVlkbWVkQVUyM1M5T1NFV09HUDBCUHFXVnFOeGxnekxOWC1j?oc=5" },
+  { title:"부산 자이갤러리 부지에 ‘연제갤러리자이’…최고 43층 499가구 분양", source:"대한경제", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMic0FVX3lxTE80SWxqdnlFaVNtNFFkRWpkNkZQMzNOck9mLV93enNJakdLQU1yaUI1Q08yUmtPRHowZTJ3R1hVZFBhUUhNN1M3QjBoNGw4N0t1UEFpQmdTUGR4R3ZSZEs5ZENEX2NFYlZrdlVmR3lRVG9iTFU?oc=5" },
+  { title:"연제갤러리자이, 오는 20일 1순위 청약 진행…부산 첫 리뉴얼 자이 브랜드 오픈", source:"국토일보", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiY0FVX3lxTFB3MU5HUTJuaTJadUlYVDF5QkdFZ3ZOWXVKcE16NHUtOGNROGhvX0lHVy02NGVMYjdKMnhKbWZzRVBTSGpqejdNbHhHeExVODBxdnVhd2o3SHZEcmt4WXh6TEgtNA?oc=5" },
+  { title:"울산 남구B-14구역 재개발조합 법인세 절감 감정평가업체 선정 입찰공고", source:"한국주택경제신문", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiaEFVX3lxTE5sNENBdWpqd3RZMzhrVnBJcjVwV184akkxYjk2R0JKWWtTczJKN19SN3VmUk9kVVM0cS1yc0xwMjVYRFdfa0EycEkwTVZZQXFiUTdnaUJzMmh6UVNURVo1dzMwVURDZkRY?oc=5" },
+  { title:"대구·경북·경남 전세 매물 '뚝'…분양 가뭄에 전세난까지", source:"매일일보", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiZEFVX3lxTE43bWRqeDhXdDk0Z202WEFRYjVBeFBYaG9oMmhqeFFvOFJfb0J2cmFiUnNNajNNQVQ1dlJnS2MyX3dlbWVaWmJYU0tLbnMzUGFWN05wMFoyM0lZQXJMVVhVa3lsTnE?oc=5" },
+  { title:"\"울산 건설기계 장비도 지역공사 참여 관심 필요\"", source:"울산신문", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMibkFVX3lxTE9reWUwaHJIdkp6OHA1d1FHZXlfdzRwYnZqdDVZOW13ZXYtZVpaQmZoaVhCMUNOSkdXZ0U2X0EyZHEydHNXM2lZU21UMjRJcWRyM3RVazV0Q095RUd2R3JiUnB5LXI2RlNxNDBmSWpn0gFyQVVfeXFMT1lUT0RjZzZUVE5JQlh1cThCRTRrNEpJTTFHeFNvU2owUXFJVE9DODF1OFppSHpKSGUwTHJsTF92Ulo5aFpZNjhqRlEyTV9fZ1NqT1VXWC11YndTQ2NpOFZvMkR0aFNyejNGS3BmWmI5YmNR?oc=5" },
+  { title:"정일균 의원, 대구시 소규모주택 정비 조례 개정안 발의", source:"한국주택경제신문", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiaEFVX3lxTE9IX3FUZE1fMzJ5MWlhbUY2ZWFWN3hJMHpROVBVeFMzNTVzQWZtQm1fem5pRzhpZjJtZzZZdTRZZ0dZclozOEJZQzhVSUJFbFlDQ01JbjVXenV4U0xLc3hpSExLdjZQa0tk?oc=5" },
+  { title:"대구시, '지방 주택시장 맞춤형 처방' 건의", source:"LG헬로비전", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMickFVX3lxTFBpQk1DTHl2RVpFYTAyVjEyRkpibm1fX1Yya2Q5WUhhTUFKRjhzd0txWmZzd2QzdGtfTExrNHNSNl9aTi01Z0dQN19ZV3VTSUZSbVdCRjJNMERXWVYwSTdEaERVNWZHTTJ3NUF5TV9fMDZ5Z9IBdkFVX3lxTE1TVW9xOFNLb1R5cTJNUnJJeEd0bDJGOE1CMWFObnlwcjUwdjdZbzRFRVVObnVRNi1TQkI2bGFmYUVBZXJsbVEtenVZNlp3ZXJUcnRJTkFDZzZfbm9Oam1hUUFPcF90WThzVUFlU2xtdVFURzZHM1E?oc=5" },
+  { title:"정일균 대구시의원, 소규모주택 정비 규제 완화 추진…노후 도심 주거환경 개선 기대", source:"웹플러스뉴스", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMia0FVX3lxTE1wUzJBT05RZ1owbGNiN3RwaHo2RlludGtseWZ5TTE3bDNHNUtXSFZsMFpaRVZZbUFvaWhFWFhxb2t3STBDbnhzN3BTQzA2bWFSekQtd0hyZ0c0d2NIaGRYV2E4aDI1TkhOM3BN?oc=5" },
+  { title:"이주 조달청 공공공사 입찰 3조364억원…대구는 3억원대 불과", source:"영남경제", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9WSmpycnd6Xzd0Y3JMX29MUm92N2M3S1VBV2NjRXg2MmtGYUJPaEZVVjh6STlrVVpCMHViOXFQLXlOeFoxWUtjcW5ZLXprdl82ekgyQjhjbkRjeFVjUkItR1VrblV2TzA?oc=5" },
+  { title:"금호건설, ‘형곡 센트럴 아테라’ 11월 분양…구미 첫 아테라 적용", source:"팍스경제TV", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5nNklWYWNtTnBiU0p6OGpmZ3k0VU1YUWtyeHJBYm9NVXFoSUdWUUJQbkhZVVhRR2cxQ0FWREFFZ3o0eV91LURBVi1sU0xqOGxIa0pIdmRWS1BUZjN1cHY0OU5kLUxNd2s?oc=5" },
+  { title:"'구미 파크원 데시앙' 1355가구 공급", source:"한국경제", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiWkFVX3lxTE5vUTBpeF9XQlZGT3pCZGpQeUZQOUUzRG1pX2lJRzRDU3d5R0xHMW5EQnY3a0I2YmhNS2Zud2VoODVVanZTbEx6RzQ4VGFIZm9GdlJ5YTZfeHdoQQ?oc=5" },
+  { title:"[카드] \"10년 만에 신축 아파트\" 구미 형곡 센트럴 아테라 출격", source:"프라임경제", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiYEFVX3lxTE9sUnVQaUs4cVB3ckdVanJyM1FWb1hCdU9fR2pwZU9EUVhpTjR2ZzA5MUNPR05wY2VFanVOMVBiNjl3N3NsYlVJc3c3QW80eTZxSm1vQ29TbUpfcldRZlJuVg?oc=5" },
   { title:"대구시 '주택시장 정상화' 종합대책 무얼 담았나", source:"뉴스핌", date:"2026-10-02", url:"https://www.newspim.com/news/view/20261002000049" },
   { title:"6조 삼성 AI 데이터센터 공사, 구미 업체에 문 열릴까…15일 삼성물산·지역건설업체 매칭데이", source:"데일리안", date:"2026-10-02", url:"https://www.dailian.co.kr/news/view/1697587" },
   { title:"대구시, 3년 8개월 만에 주택 공급 빗장 푼다… 공급 정상화 수순", source:"서울신문", date:"2026-10-01", url:"https://www.seoul.co.kr/news/economy/2026/10/01/20261001500244" },
-  { title:"연 200만명 찾는 동래온천…전국 네 번째 '온천도시' 지정", source:"데일리안", date:"2026-10-01", url:"https://www.dailian.co.kr/news/view/1696651" },
-  { title:"교통·평지·생활 인프라 삼박자… GS건설, '연제갤러리자이' 10월 분양", source:"뉴데일리경제", date:"2026-09-30", url:"https://biz.newdaily.co.kr/site/data/html/2026/09/30/2026093000111.html" },
-  { title:"\"부산 부동산 시장 반등?\", '힐스테이트 사직아시아드'·'베뉴브 해운대' 특별공급 청약에 수요자 몰려", source:"파이낸셜뉴스", date:"2026-09-30", url:"https://www.fnnews.com/news/202509301036250431" },
-  { title:"대구 생산·건설수주 증가…경북은 생산·건설수주 동반 감소(8월 산업활동동향)", source:"경북매일", date:"2026-09-30", url:"https://kbmaeil.com/article/20260930500161" },
-  { title:"전국 건설계약 27% 늘었는데 대구는 반토막…17개 시·도 꼴찌", source:"경북매일", date:"2026-09-29", url:"https://kbmaeil.com/article/20260928500560" },
-  { title:"김해시, '원도심 RE:CORE 프로젝트' 신규 공모 총력 대응(국비 242억원 규모)", source:"뉴스핌", date:"2026-09-26", url:"https://www.newspim.com/news/view/20260926000094" },
-  { title:"삼성물산, 5000억 규모 '부산 사직2 재개발' 시공사 선정(927가구, 4492억원)", source:"이데일리", date:"2026-09-25", url:"https://edaily.co.kr/News/Read?mediaCodeNo=257&newsId=01226726638990928" },
-  { title:"경남도, 재개발·재건축 표준정관 제정 추진…투명한 조합 운영 지원", source:"뉴스핌", date:"2026-09-23", url:"https://www.newspim.com/news/view/20260923000525" },
-  { title:"리치오션, 부산 다대포항역 인근 350세대 규모 주상복합단지 추진", source:"서울신문", date:"2026-09-23", url:"https://www.seoul.co.kr/news/economy/2026/09/23/20260923500258" },
-  { title:"현대건설, 부산 감천2구역 주택재개발 공사 8828억원 수주", source:"디지털투데이", date:"2026-09-22", url:"https://www.digitaltoday.co.kr/disclosure/articleView.html?idxno=702601" },
-  { title:"구미시, 삼성SDS·삼성물산과 'AI데이터센터 지역 상생 발전 간담회' 개최…지역기업 참여 확대 논의", source:"경북매일", date:"2026-09-15", url:"https://kbmaeil.com/article/20260915500746" },
 ];
 
-// 패널 2 — 레미콘·시멘트 업계 뉴스 (전국 단위, 지역 제한 없음)
+// 패널 2 — 레미콘·시멘트 업계 뉴스 (전국)
 const NEWS_CEMENT = [
+  { title:"\"수도권 주택공급·GBC·반도체 팹 줄호재\"…시멘트 업계, 기대감 솔솔", source:"뉴스1", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMiZEFVX3lxTE9mLXctaEp6ZXdILV9sT2Q4QTdZUlp4R2lEYnhXNmFxRDJ6emppdWdJbG1jU0RzTXI1NjNWODdmenkzemY2c2NZZzhfbmVmaHBtZHM5eVg2WmtmM0h6SjJsZVJBTHk?oc=5" },
+  { title:"[박수연 칼럼] K-시멘트 체질 개선 시동…관건은 수익성과 저탄소 설비투자", source:"더밸류뉴스", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiU0FVX3lxTFAtSzdjcDVrUjdXLUFNX3ZtZ2RSaFVVQ1ZVX3BqbkNGdzMxUnNEdUNlX3AzaHlMUEFveHZIZmRZdjZlaEtJSXIwT2RYMWdIblpYazdF?oc=5" },
+  { title:"고려시멘트 인근 주민, 130가구 피해 전수조사 발표", source:"장성투데이", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMia0FVX3lxTE9GT0FDVUdaeU9aWEs4aU1abElsam5GOU5CMUtUQmp1ZEJ0akI2c2hEQnVfcUpDSnd1UW4zWF9qbUtnazJpWnFxZ2w0VnhfeFNFdTRyQzduOUJsT1lIM3VBUFh2ZURXVlBUT3ZJ?oc=5" },
+  { title:"삼표시멘트 등 시멘트 관련주 강세…서산 상한가, HC보광산업 두 자릿수 상승률 급등", source:"CBC뉴스", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiaEFVX3lxTE1SM1ZlYlYwU2dBSG1NdklxYW5hWXJuaXNQblNwQURpTWtNZS05MTZlM3l6LV9xVmFpaE1VcUtyLThtQXNHRzlGaUdjbFBLRXV3R1d2UGhlQ1hRSU1uU3JxTE51c1pHZTdS?oc=5" },
+  { title:"강동씨앤엘 14.28% 상승…시멘트 수요와 원가 부담 저울질", source:"잡포스트", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMibkFVX3lxTE1SNE5NX1FGdmx0QXMyMHhlR1dEcGR3XzFuMUdsZlNCSW1hMWJHay1TS0doZ0U5OEhCZ3RIQnVjWDBUUFg1cXlVZkJjZVdZajlZcWxhQjEyQTM1NENhZ3QxLUR5ZjBlWW12Ql9nSndn0gFyQVVfeXFMTnh4ZFlkNXk2Mm84dndHZXAwNkJkUE5NQ0pXYWhfaU1IRjRsRFNTb0lTYnMxd1MxbWZDNFNHNmdMM2cwZ0V1RUxjeGJiUExncXRCeW1CZFVVcFlHQWpUWWMtZXFaR0dxR2g3clAwZHdXUF9R?oc=5" },
+  { title:"삼표시멘트 주가, 급등세... 왜?", source:"금강일보", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiaEFVX3lxTE1PZmpPM090aXI4RGxPQzdpZ0ZpNUJ0cVBRRk9tVTdzWk9HcDQ1WXljYXpBRGhXMHdMckNvVk1mbUN6V0VHRU9qM0FxTnZ2MEI1cThGa3llMnF5ZXlXc0FSWkR0alNDV3Zi?oc=5" },
+  { title:"광주 레미콘 단가 8차례 '마라톤 협상' 끝에 타결…수익성 악화 등 과제도", source:"진일보", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMib0FVX3lxTE5jQW5zSWJnWmhrbE1fVGpHc00zWGQ5WHd3dTVPYTV1VTNpempTTDN3aW9YTjdhclpUbGRDYTljTDROOGxkT2ZFcWUzSk9xVlRMTVpGOTdpNXpDNjZhUHVlcDcwaXBmU2o4S0pBbnlvUQ?oc=5" },
+  { title:"‘물 탄 레미콘’부터 검사 조율 의혹까지…LH 국감서 집중 추궁", source:"울산매일", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiakFVX3lxTE00c0JVaHR4OEJ0c0dDeW82RHplN21uUTRVOVhFdE5yVEhxLXNnVXZvM0c4SS1XNHZtUkhvM2VsdnI3QlIwYkUwcG1LUTFGcTZLeGwtdVc5dFBBNFNYUXpualE1bVZHTEpRT0HSAW5BVV95cUxOOXctZXJ2R3hfcWgwVEN4alMwX2RTd0xndmVxeVd6XzloeHRFZWh2RnVUcUNMa3dXT1gyVkpvemtCSEZWcTU3U0Y4aTRfMmZNaTM5ajY1SDByV3BMN19iZEFUemhmd0xjdkQ4bWhRZw?oc=5" },
+  { title:"[2026국감]LH 공사현장에 물탄 레미콘 지적…이성훈 사장 \"점검 후 조치\"", source:"아시아경제", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMid0FVX3lxTFAyOVVxbkNjRGFkN3JnNzRyM09hbFNNd0Z4MjNrLU5DaGE5SFcydUZsSlNldlB3TkxXeUxsTFhMODVJMkN1RE9fWDVvVmdjU2lDaERjWExIS21yZWdYcTFKdi16cEszXzZJNVhwdXFyeUFyX3JJc2pz?oc=5" },
   { title:"레미콘조합연합회, 제주서 경영혁신 해법 모색…\"단단한 성장으로\"", source:"머니투데이", date:"2026-10-06", url:"https://news.mtn.co.kr/news-detail/2026100613165763691" },
   { title:"건설경기 침체 장기화…레미콘업계, AI·저탄소로 돌파구", source:"SBS Biz", date:"2026-10-06", url:"https://biz.sbs.co.kr/amp/article/20000338419" },
   { title:"'레미콘 빅2' 유진·삼표그룹, 국정감사·청문회 촉각", source:"뉴스핌", date:"2026-10-02", url:"https://www.newspim.com/news/view/20261002000897" },
@@ -34,24 +48,28 @@ const NEWS_CEMENT = [
   { title:"탄소 줄이니 염소 늘었다…시멘트업계 설비투자 확대(한일시멘트·쌍용C&E 염소바이패스 설비 총 403억원 투자)", source:"시대", date:"2026-09-22", url:"https://www.sidae.com/article/2026092213413082859" },
   { title:"유진기업, 완전자회사 천안기업·지구레미콘 흡수합병 결정…\"경영 효율화 승부수\"", source:"EBN", date:"2026-09-21", url:"https://www.ebn.co.kr/news/articleView.html?idxno=1725192" },
   { title:"매출 줄어도 이익 늘렸다...전근식 한일시멘트 대표 '내실 경영' 주력", source:"뉴스핌", date:"2026-09-14", url:"https://www.newspim.com/news/view/20260914000813" },
-  { title:"[2026 대경 스마트건설대상] 건설자재대상 쌍용레미콘", source:"대한경제", date:"2026-09-12", url:"https://www.dnews.co.kr/uhtml/view.jsp?idxno=202609122218121310732" },
 ];
 
-// 패널 3 — 그 외 지역 소식 (수도권·인천·충청·호남 등)
+// 패널 3 — 그 외 지역 건설·부동산 뉴스
 const NEWS_OTHER = [
+  { title:"[취임 100일 ‘The인천’ 인터뷰] 구재용 서해구청장 “개발보다 생활 변화… 원도심 정비-재정 안정 함께 풀겠다”", source:"THE인천", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMiakFVX3lxTE1LNkxVRmRBR2xEOHRZT0lveTRnMFYyLTltN2NXd01tVjNSWjcxV3J5Nl9PeFZwd3p2YURiVWVWWEhHU01WTE9BcTFGeVl6X0Vzb3lpMjZkdnk0NGlyUENuUUk0cTdFLW5Lc2c?oc=5" },
+  { title:"동탄 아파트 값 올해 19% 올랐지만 이천은 -5.57%… 경기도 내 양극화", source:"조선일보", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMiiAFBVV95cUxQVE5adWE2U0FWcHpFb3EwNFphOHhjczl4U3pGWDZpMmlMVjdtSGNYR051V2tVeTBLNkI1Zk10a01oeU4td2xlRk1LMWtaaEM3Skd0cElhamZCNXBDbmdBbFNuaFVjQzJEcGtwbUJTOXkwdHg4WUxReUZSeEtoYlVPeG1MVUI5TkRr?oc=5" },
+  { title:"강남구, 개포주공 '마지막 주자' 6·7단지 관리처분인가…2,698세대 재건축 본궤도", source:"경기뉴스원", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMiY0FVX3lxTE13aU4yVGE5bjdQX0tQMW5XNVlUa3RJa2MwUUNtZTlJUUdqaWJuMkNUZFpKSWlkcDhhTXdvb0Y0cndoekZ2aXhBcGpRbVlLOVN2Vnh5TXRtQkxIaTdrRUFMX214Zw?oc=5" },
+  { title:"수서택지지구 지구단위 재정비 1년 2개월 만에 첫 조합설립…강남구, 가람아파트 인가", source:"경기뉴스원", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMiY0FVX3lxTE40LWpzdGc1dzlKM2FPT25RYjlVR0wzS3BiX2xucFdwM3FyZ3FJUlhFY0FlSnFRdTMxanpPMWt2aERCOFpCUTNsT0MwNEY3bzU0aFQ0cVFyX2s4M0poWlZIaHNtWQ?oc=5" },
+  { title:"서울 공무원 또 몰려오는 세종,새로 입주하는 '아파트 없어 어쩌나'", source:"메트로세종", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMib0FVX3lxTE5qaW53MlpqWDZ1SVUzaVlsR0VsVGQzdXhqSFByRERXMlVVUmdiT096QmtfWlp4c0dIQl8xd0lxbF9qWHFIandmX0k2TGJEc1gxVk42b1JEY0d5aEJCSjBMaVJabmF6bVFnYXJuZjB6RdIBb0FVX3lxTE5qaW53MlpqWDZ1SVUzaVlsR0VsVGQzdXhqSFByRERXMlVVUmdiT096QmtfWlp4c0dIQl8xd0lxbF9qWHFIandmX0k2TGJEc1gxVk42b1JEY0d5aEJCSjBMaVJabmF6bVFnYXJuZjB6RQ?oc=5" },
+  { title:"서울 아파트 거래 40% 급감···전국 부동산 거래액도 23% '뚝'", source:"스마트비즈", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMibEFVX3lxTE42MllOMHdsYkFGUU1SbVBBSXNPVnJvOEkzVnd0ZnhIY3BwWnNWcHVEbWpUOVZsTXpPMHJ3dndmY1htVDY1RVg5TE9JTWpiQjN1dUlOczVtdlFlY2M0U00zWVhwYUpYckhJZDVuVg?oc=5" },
+  { title:"김제시, 검산시영아파트·구산연립주택 예비 입주자 추가 모집", source:"전북제일신문", date:"2026-10-13", url:"https://news.google.com/rss/articles/CBMiakFVX3lxTE5uSjI3azJoekk1MS1ScE1xeElmaFpBdDBJb1BVUE1RZE9LSUVhVlFvb3ZrT0pMS0FFOEozTXdsZGJCMTBCMkxJSjlvM3RUaFVld0cwSWlQZVJrSmRDTG9ZR0p6MklzWGlwTWc?oc=5" },
+  { title:"올 상반기 지방 아파트 거래 5년만에 최대…분양시장 시험대", source:"뉴시스", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiYEFVX3lxTE1uRmRKOHRNWDRiLW4zOFlYYXotc3dodjN2aHpUeUE3azVYWG5zME5xdzJxUUI4WnptOExkVDN2QmFuRVlrQXNqc0xneWV3Y0J5MWF3b182MGZOTXU4MUFiUtIBeEFVX3lxTE5MaWp0cnhOV2UtWHJJcUFVSktQODhrTkFaU0JyT2kzcjJUaE8yNXpubEwzaHBQbC03Wi01MzVYbV9sWWJjZkx5Y2xiVFRWQzZfblFrWTA2QWhEdk1ROEM4b0hkZGZIOE8xbTlwLWxjUFpSa1RqVFZleA?oc=5" },
+  { title:"[이번주 재개발ㆍ재건축] 여의도 시범 ‘삼성물산’ㆍ목동10단지 ‘현대건설’ 시공사 선정 유력", source:"대한경제", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMic0FVX3lxTE5FUlZwazhYWEZuQXE1Tm5QR1FKRy1WUE0yLTVmYlBRbnRUX1lJNVZJamxhcDdtd3BOaUl3WHlVbmlvVDlRV1pya29zTjhOSndBOVpiTHVSN3Q4a21tT1h5WkR6U09kb2dPMDZBdzFreURIVkE?oc=5" },
+  { title:"목동 재건축 놓고 삼성물산·현대건설 등 '빅4 잔치'...경쟁 없이 수의계약으로만", source:"더구루", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiY0FVX3lxTE9Id190U1ZtNUREZEpZZEZEenBxVDRjbTZtdHBrbFBld1I5UlljRmQtVzFFSmtRdjVMZFlqQ3k4MWpNSUxWZnJ0UThkUTZKYUtDTHhXU2ZxX3lMTTlzbVBQVGg1OA?oc=5" },
+  { title:"독산2구역 재개발, GS건설 수의계약 유력…연내 시공사 선정 총회", source:"디벨로퍼뉴스", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiaEFVX3lxTFB1WXNyZF9rSTdkUzhkLVBTdkd2RlVNT0o0cThHYWc0NHp1X2VFMXIxclp3MGdQdzVhQnktY3NNaVVyZ0hJRzBaQVdXZTVzV2M3M0VQd3NnSnRwblBHaTQ1dV8yS1lDTnZ2?oc=5" },
+  { title:"[단독]아파트에 아이스링크를? 국토부, ‘초호화 커뮤니티 시설’ 등장에 실태 파악 착수", source:"경향신문", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiX0FVX3lxTE5tU0I5MXdrY2NpaF9GMU1hVVJJTlBIRmFwTVpKRzJCZEdUWW1RNkxfWkxvcEV0cWF3d2Y0Q0V3eFhIUmZySWxweG5kem1DREtCa25RQXZWNE55WDNZdkRB0gFfQVVfeXFMTm1TQjkxd2tjY2loX0YxTWFVUklOUEhGYXBNWkpHMkJkR1RZbVE2TF9aTG9wRXRxYXd3ZjRDRXd4WEhSZnJJbHB4bmR6bUNES0JrblFBdlY0TnlYM1l2REE?oc=5" },
+  { title:"미아2구역 재개발 유찰…현대건설만 현설 참석", source:"시사오늘", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMia0FVX3lxTFBoYlFQbVJDcGVScGVDZDRrOW8xRTZ6Qmw3czdQV1lia2M1ckdjVzcyYmo4TUtqUEJfUzJSVTEzUGsxcHVwaEhtSW9IaGN3bUd4X21Mc2R6QTFGdjlzQjI2WWVNcmlraWFsc3Rz?oc=5" },
+  { title:"서울 핵심지에 조합없이 LH가 직접 재개발…정부 믿고 들어가볼까 [부동산 손품노트]", source:"매일경제", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMiWEFVX3lxTE5RZDE1ZE1PZ2VpZC1CazcxbzFDY0ZQeTJBQlJRNW5LQXFyTEZRU1R1SlRzV1ZaQkFSa1hYSGJEbU9fTFdPb3c2VEE1UWRwckZ6WXV4WWU5TUk?oc=5" },
+  { title:"\"재개발·재건축 궁금증 현장에서 해결\" 호응… 서울시, '정비사업 아카데미' 2차 운영", source:"서울시티", date:"2026-10-12", url:"https://news.google.com/rss/articles/CBMib0FVX3lxTFBqeFYyQ1BERDB5cnp1V3FTRGVsSTJqdzFqVzRDS09WSFYyQUgxVno5ZVM4YkZfNWNjMFZ1VzA3cGYyWkdnVVhIUl9jc0JaTk41OWQ3VFNwM0p4YkF5MkRRV1NGdE1BMXJMRXZfNnVDOA?oc=5" },
   { title:"[단독]잠실장미, 시공사 선정 또 밀린다…입찰계획서 이사회 '부결'", source:"머니투데이", date:"2026-10-08", url:"https://news.mtn.co.kr/news-detail/2026100818053425530" },
   { title:"대치쌍용1차·개포우성4차, 삼성물산과 도급계약…인허가 '속도'", source:"머니투데이", date:"2026-10-07", url:"https://news.mtn.co.kr/news-detail/2026100716341111961" },
   { title:"목동 재건축 '수주 홍보관' 대전 시작…10단지, 18일 시공사 선정", source:"머니투데이", date:"2026-10-05", url:"https://news.mtn.co.kr/news-detail/2026100518382248649" },
   { title:"목동7단지 재건축, 시공사 선정 지원 CM업체로 건원CM 선정", source:"한경비즈니스", date:"2026-10-02", url:"https://magazine.hankyung.com/money/article/202610029562c" },
   { title:"\"서울까지 30분이면 이동\" 산곡역자이힐스테이트&하늘채 부스에 실수요자 발길 [헤럴드머니페스타 2026]", source:"헤럴드경제", date:"2026-10-02", url:"https://www.heraldk.com/article/2026100218225475275" },
-  { title:"성수전략구역 '옆'도 움직인다…존치 아파트 정비 잰걸음", source:"머니투데이", date:"2026-10-01", url:"https://news.mtn.co.kr/news-detail/2026100116254951561" },
-  { title:"'또 너냐' 삼성물산 vs 포스코이앤씨…송파 오금현대 재건축서 맞붙나", source:"뉴스핌", date:"2026-09-30", url:"https://www.newspim.com/news/view/20260930001001" },
-  { title:"DL이앤씨, 성수2지구 재개발 위해 10개 금융기관과 업무협약", source:"아시아투데이", date:"2026-09-30", url:"https://asiatoday.co.kr/kn/view.php?key=20260930010010492" },
-  { title:"분당 재건축 2차 물량 1만3천429가구…시범단지·파크타운 등 5개 구역", source:"경기일보", date:"2026-09-29", url:"https://www.kyeonggi.com/article/20260929580417" },
-  { title:"군포 원도심 재개발 본격화...1만 8000세대 신흥 주거타운 탈바꿈", source:"뉴스핌", date:"2026-09-29", url:"https://www.newspim.com/news/view/20260929000661" },
-  { title:"'30조 규모' 목동 재건축 속도... 11개 단지 시공사 선정 목전", source:"파이낸셜뉴스", date:"2026-09-27", url:"https://www.fnnews.com/news/202609271757472371" },
-  { title:"노량진4구역이 쏘아올린 '1+1 분양'…곳곳서 추가주택 가격 놓고 갈등", source:"뉴스핌", date:"2026-09-23", url:"https://www.newspim.com/news/view/20260923000746" },
-  { title:"서대문구 옛 홍제4구역 일대, 30층-2520가구 재개발 신통기획 확정", source:"뉴스핌", date:"2026-09-22", url:"https://www.newspim.com/news/view/20260922000663" },
-  { title:"한남5구역, 조합원 분양신청 돌입…관리처분계획 시동", source:"머니투데이", date:"2026-09-21", url:"https://news.mtn.co.kr/news-detail/2026092117000543031" },
-  { title:"대형건설사 시선 분당으로…선도지구 시공사 선정 '초읽기'", source:"머니투데이", date:"2026-09-18", url:"https://news.mtn.co.kr/news-detail/2026091816290195515" },
 ];
