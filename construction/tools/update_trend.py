@@ -268,6 +268,7 @@ def main():
         sys.exit('trend.html에서 DATA/SUB/SUB_VALID 줄을 찾지 못했습니다.')
     TREND.write_text(html, encoding='utf-8', newline='')
     print(f'4) {TREND} 갱신 완료.')
+    print('   다음 단계: import_seumter.py로 세움터 시군구 집계(착공 백데이터 + 월별 파일)를 다시 덮어쓰세요 (README 참고)')
     print('   직접 고칠 문구: 헤더 "조회기간", 하단 출처의 조회기간·조회일·잠정치 구간·검증 비율 범위, 누적 조회 예시 월 (README 참고)')
 
 
