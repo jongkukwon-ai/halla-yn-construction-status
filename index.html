@@ -24,26 +24,55 @@
     }
     #install-btn:hover{background:rgba(78,214,144,0.25)}
 
-    /* ── 첫 화면: CI 로고 + 큰 제목 + 영업소 칸(위), 바로가기 카드 3개(화면 아래 가운데) ── */
-    .page-wrap{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-bottom:max(40px,env(safe-area-inset-bottom))}
-    /* 위쪽(로고·제목·영업소)은 화면 폭의 약 20%만큼 왼쪽으로. 화면 왼쪽 끝에서 24px 안쪽까지만 */
-    .hero{padding:44px 0 8px;position:relative;left:calc(-1 * min(20vw, max(0px, (100vw - 1080px) / 2 - 4px)))}
-    .hero-ci{display:block;width:clamp(150px,22vw,210px);height:auto;opacity:.78}
-    .hero-title{font-size:clamp(30px,7.5vw,48px);margin-top:22px;line-height:1.2;word-break:keep-all;color:rgba(255,255,255,0.74)}
-    .office-chips{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:26px}
-    .office-chip{
-      display:flex;flex-direction:column;align-items:center;gap:2px;
-      padding:11px 6px;border-radius:var(--radius-sm);
-      font-size:16px;font-weight:600;color:rgba(255,255,255,0.7);white-space:nowrap;
+    /* ── 첫 화면 (2026-10 시안): 왼쪽 위 CI·제목, 화면 폭 가득 영업소 알약 6개, 가운데 유리 느낌 카드 3개 ── */
+    body{background:#0a0d0c}
+    .page-wrap{
+      max-width:none;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+      padding:0 clamp(18px,3vw,44px) max(40px,env(safe-area-inset-bottom));
     }
-    .office-chip small{font-size:12px;font-weight:400;color:rgba(255,255,255,0.42)}
-    .nav-grid{margin:auto 0;padding-top:32px}   /* 영업소 칸 아래 남는 공간의 가운데 */
-    .nav-card{text-align:center}
-    .nav-card-title{margin-top:12px;color:rgba(255,255,255,0.74)}
-    .nav-card-icon{opacity:.85}
-    @media(max-width:640px){
-      .office-chips{grid-template-columns:repeat(3,1fr);gap:10px}
-      .office-chip{font-size:15px;padding:10px 4px}
+    .hero{padding:clamp(24px,4.5vh,40px) 0 0}
+    .hero-ci{display:block;width:clamp(140px,14vw,200px);height:auto;opacity:.9}
+    .hero-title{
+      font-size:clamp(28px,3.4vw,46px);font-weight:500;letter-spacing:-.01em;line-height:1.25;
+      margin-top:clamp(18px,3.5vh,30px);color:rgba(255,255,255,0.86);word-break:keep-all;
+    }
+
+    .office-chips{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(10px,1.4vw,20px);margin-top:clamp(22px,4vh,36px)}
+    .office-chip{
+      display:flex;align-items:center;justify-content:center;
+      height:clamp(52px,8.5vh,68px);padding:0 10px;border-radius:22px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.015));
+      border:1px solid rgba(120,205,120,0.42);
+      box-shadow:0 0 16px rgba(78,214,144,0.10), inset 0 0 14px rgba(78,214,144,0.05);
+      font-size:clamp(14px,1.25vw,17px);font-weight:500;color:rgba(255,255,255,0.86);white-space:nowrap;
+    }
+
+    .nav-grid{
+      width:100%;max-width:min(82%,1400px);margin:auto;padding-top:36px;
+      grid-template-columns:repeat(3,1fr);gap:clamp(16px,2.6vw,32px);
+    }
+    .nav-card{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+      min-height:clamp(200px,32vh,248px);padding:32px 20px;border-radius:20px;
+      background:linear-gradient(160deg,rgba(255,255,255,0.085),rgba(255,255,255,0.025) 55%,rgba(255,255,255,0.04));
+      border:1px solid rgba(205,225,215,0.26);
+      box-shadow:0 0 22px rgba(78,214,144,0.08), 0 14px 32px rgba(0,0,0,0.38);
+    }
+    .nav-card:hover{border-color:rgba(120,205,120,0.55);background:linear-gradient(160deg,rgba(255,255,255,0.11),rgba(255,255,255,0.04));transform:translateY(-2px)}
+    .nav-card-icon{font-size:clamp(38px,3.6vw,50px);line-height:1}
+    .nav-card-title{font-size:clamp(17px,1.65vw,22px);font-weight:500;margin-top:20px;color:rgba(255,255,255,0.9)}
+    .nav-card-badge{
+      margin-top:18px;font-size:14px;padding:7px 22px;
+      background:rgba(120,205,90,0.08);border:1px solid rgba(120,205,90,0.55);color:#A6DD62;
+    }
+
+    @media(max-width:900px){
+      .office-chips{grid-template-columns:repeat(3,1fr)}
+      .nav-grid{grid-template-columns:1fr;max-width:520px}
+      .nav-card{min-height:0;padding:26px 20px}
+    }
+    @media(max-width:420px){
+      .office-chips{grid-template-columns:repeat(2,1fr)}
     }
   </style>
 </head>
@@ -61,12 +90,12 @@
     <img class="hero-ci" src="./assets/halla_ci.png" alt="HALLA CEMENT">
     <div class="hero-title">영남지사 정보 조회 시스템</div>
     <div class="office-chips">
-      <span class="office-chip">부산<small>영업소</small></span>
-      <span class="office-chip">울산<small>영업소</small></span>
-      <span class="office-chip">경남동부<small>영업소</small></span>
-      <span class="office-chip">경남서부<small>영업소</small></span>
-      <span class="office-chip">경북동부<small>영업소</small></span>
-      <span class="office-chip">경북서부<small>영업소</small></span>
+      <span class="office-chip">부산 영업소</span>
+      <span class="office-chip">울산 영업소</span>
+      <span class="office-chip">경남동부 영업소</span>
+      <span class="office-chip">경남서부 영업소</span>
+      <span class="office-chip">경북동부 영업소</span>
+      <span class="office-chip">경북서부 영업소</span>
     </div>
   </div>
 
