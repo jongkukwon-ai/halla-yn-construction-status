@@ -75,7 +75,7 @@
   }
 
   /* ── 메인 ── */
-  .main { padding: 20px 24px 48px; max-width: 1600px; margin: 0 auto; }
+  .main { padding: 20px 24px 48px; max-width: 1800px; margin: 0 auto; }
 
   /* ── KPI 바 ── */
   .kpi-bar {
@@ -262,6 +262,27 @@
   .sale-sub     { background: var(--amber-bg);  color: var(--amber); }
   .sale-pre     { background: var(--purple-bg); color: var(--purple); }
   .sale-unknown { background: var(--surface); color: var(--ink-faint); border: 1px solid var(--border); }
+
+  /* ── 아파트 표 열 너비: 짧은 값은 한 줄, 분양여부는 좁게(세부 일정은 배지 아래 2줄까지), 비고는 넓게 ── */
+  #main-table td { white-space: nowrap; padding: 9px 7px; }
+  #main-table thead th { padding: 10px 7px; }
+  #main-table .clip { display: inline-block; max-width: 270px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+  #main-table .clip-builder { max-width: 150px; }
+  #main-table td.td-name { min-width: 0; }
+  #main-table td.td-note { white-space: normal; min-width: 320px; font-size: 11.5px; color: var(--ink-muted); line-height: 1.45; }
+  #main-table td.td-sale { white-space: normal; width: 112px; min-width: 112px; }
+  .sale-detail {
+    margin-top: 3px; font-size: 10.5px; line-height: 1.35; color: var(--ink-faint);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  /* 좌우로 넘길 때 No·단지명은 왼쪽에 고정 */
+  #main-table th:nth-child(1), #main-table td:nth-child(1) { position: sticky; left: 0; width: 44px; min-width: 44px; }
+  #main-table th:nth-child(2), #main-table td:nth-child(2) { position: sticky; left: 44px; box-shadow: 1px 0 0 var(--border); }
+  #main-table thead th:nth-child(-n+2) { z-index: 3; }
+  #main-table tbody td:nth-child(-n+2) { z-index: 1; background: var(--card); }
+  #main-table tbody tr:hover td:nth-child(-n+2) { background: #F0F4FF; }
+  #main-table tbody tr.row-new td:nth-child(-n+2) { background: var(--pink-bg); }
+  #main-table tbody tr.row-new:hover td:nth-child(-n+2) { background: #FFE4F1; }
 
   /* ── 신규 행 ── */
   tr.row-new { background: var(--pink-bg) !important; }
@@ -986,13 +1007,18 @@ function render(data) {
       ? '<span style="color:var(--ink-faint)">산출불가</span>'
       : rem.toLocaleString();
     const newMark = r[13] ? ' <span style="color:var(--pink);font-size:10px;">🆕</span>' : '';
+    // 분양여부 "분양완료(2025.11)" → 배지 "분양완료" + 아래 "2025.11"
+    const saleText = r[11] || '미확인';
+    const sm = saleText.match(/^([^(]+)\((.*)\)$/);
+    const saleMain = sm ? sm[1].trim() : saleText;
+    const saleDetail = sm ? sm[2] : '';
 
     tr.innerHTML = `
       <td class="td-no">${idx+1}</td>
-      <td class="td-name">${r[1]}${newMark}</td>
+      <td class="td-name"><span class="clip" title="${r[1]}">${r[1]}</span>${newMark}</td>
       <td class="td-center"><span class="badge ${rc}">${r[2]}</span></td>
       <td>${r[3]}</td>
-      <td>${r[4]}</td>
+      <td><span class="clip clip-builder" title="${r[4]}">${r[4]}</span></td>
       <td class="td-center">${r[5]}</td>
       <td class="td-center">${r[6]}</td>
       <td class="td-num" style="font-weight:${r[7]>=1000?'700':'400'}">${units}</td>
@@ -1000,8 +1026,8 @@ function render(data) {
       <td class="td-num">${remCell}</td>
       <td class="td-center">${r[9]}</td>
       <td class="td-center"><span class="status ${sc}">${r[10]}</span></td>
-      <td class="td-center"><span class="sale-badge ${slc}">${r[11]}</span></td>
-      <td style="font-size:11.5px;color:var(--ink-muted)">${r[12]}</td>`;
+      <td class="td-center td-sale" title="${saleText}"><span class="sale-badge ${slc}">${saleMain}</span>${saleDetail ? `<div class="sale-detail">${saleDetail}</div>` : ''}</td>
+      <td class="td-note">${r[12]}</td>`;
     tbody.appendChild(tr);
   });
 
