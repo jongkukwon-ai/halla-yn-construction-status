@@ -217,20 +217,6 @@
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
-        <h2 style="margin-bottom:2px">월별 상세 표</h2>
-        <div class="cardsub" style="margin-bottom:0">현재 선택된 지표 기준 · 60개월 전체</div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="tableToggle" id="tableExport" type="button">EXCEL 다운로드</button>
-        <button class="tableToggle" id="tableToggle" type="button">표 펼치기</button>
-      </div>
-    </div>
-    <div id="tableHolder" hidden style="margin-top:10px"></div>
-  </div>
-
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
         <h2 style="margin-bottom:2px">영남권 조회</h2>
         <div class="cardsub" style="margin-bottom:0" id="yqCardSub"></div>
       </div>
@@ -257,6 +243,8 @@
     </div>
     <div class="qSummary" id="yqSummary"></div>
     <div class="qNote" id="yqNote" hidden></div>
+    <div class="cardsub" id="yqChartCap" style="margin:12px 0 4px"></div>
+    <div class="chartBox" id="yqChart"></div>
     <div id="yqHolder" hidden style="margin-top:10px"></div>
   </div>
 
@@ -323,6 +311,8 @@
     </div>
     <div class="qSummary" id="nqSummary"></div>
     <div class="qNote" id="nqNote" hidden></div>
+    <div class="cardsub" id="nqChartCap" style="margin:12px 0 4px"></div>
+    <div class="chartBox" id="nqChart"></div>
     <div id="nqHolder" hidden style="margin-top:10px"></div>
   </div>
 
@@ -604,25 +594,8 @@ function renderRegions(){
   });
 }
 
-function renderTable(){
-  const holder = document.getElementById('tableHolder');
-  let html = '<div class="tableWrap"><table><thead><tr><th>월</th>';
-  DATA.regions.forEach(r=> html += `<th>${r} 착공</th><th>${r} 인허가</th>`);
-  html += '</tr></thead><tbody>';
-  for (let i = DATA.months.length-1; i>=0; i--){
-    html += `<tr><td>${DATA.months[i]}</td>`;
-    DATA.regions.forEach(r=>{
-      html += `<td>${fmt(DATA.series[r][fieldStart()][i])}</td><td>${fmt(DATA.series[r][fieldPermit()][i])}</td>`;
-    });
-    html += '</tr>';
-  }
-  html += '</tbody></table></div>';
-  holder.innerHTML = html;
-}
-
 const metricLabel = () => metric==='area' ? '연면적(㎡)' : '동수(건)';
 const metricName  = () => metric==='area' ? '연면적' : '동수';
-const today = () => new Date().toISOString().slice(0,10);
 
 // ── EXCEL 공용: 제목행 + 네이비 헤더행 + 데이터(+합계행) ──
 async function downloadXlsx({ title, hdr, rows, footer, sheetName, fileName }){
@@ -669,23 +642,6 @@ async function downloadXlsx({ title, hdr, rows, footer, sheetName, fileName }){
   a.click();
   document.body.removeChild(a);
 }
-
-// ── 월별 상세표 EXCEL (현재 지표·표 그대로) ──
-function exportExcelTrend(){
-  const hdr = ['월'];
-  DATA.regions.forEach(r => hdr.push(`${r} 착공`, `${r} 인허가`));
-  const rows = [];
-  for (let i = DATA.months.length - 1; i >= 0; i--) {
-    rows.push([DATA.months[i], ...DATA.regions.flatMap(r => [DATA.series[r][fieldStart()][i], DATA.series[r][fieldPermit()][i]])]);
-  }
-  return downloadXlsx({
-    title: `영남권 착공·인허가 통계 — ${metricLabel()} 기준 (${DATA.months[0]} ~ ${DATA.months[DATA.months.length-1]})`,
-    hdr, rows,
-    sheetName: `착공인허가_${metricLabel()}`,
-    fileName: `영남권_착공인허가_통계_${metricName()}_${today()}.xlsx`
-  });
-}
-document.getElementById('tableExport').addEventListener('click', exportExcelTrend);
 
 // ── 조회 범위: 영남권(DATA·SUB) / 전국(NAT·NAT_SUB, 영남 5개 시도는 DATA·SUB 그대로) ──
 const SCOPE_YN = { name: '영남권', regions: DATA.regions, series: DATA.series, sub: SUB, valid: SUB_VALID,
@@ -907,16 +863,34 @@ function fileNameTag(cols){
 
 const NAT_SUB_NOTE = ' · 시도 16곳(광주·전남은 2026.7 통합 기준 「전남광주」로 합산, 군위군은 대구)';
 
-// 기간 조회 카드 (영남권 조회·전국 조회 공용). ids: sub·sido·from·to·toggle·holder·summary·note·cardSub·export
+// 기간 조회 카드 (영남권 조회·전국 조회 공용). ids: sub·sido·from·to·toggle·holder·summary·note·cardSub·export·chart·chartCap
 function queryCard(state, ids){
   const s = state.scope;
   const table = () => { const sel = selectCols(state); return { ...sel, ...buildQuery(sel.cols, state) }; };
+
+  // 선택지역 합계(1개 지역이면 그 지역)의 월별 착공·인허가 추이(과거 → 최근)
+  function renderChart(t){
+    const box = document.getElementById(ids.chart);
+    const cap = document.getElementById(ids.chartCap);
+    box.innerHTML = '';
+    if (!t.cols.length) { cap.textContent = ''; return; }
+    const asc = [...t.rows].reverse();
+    const k = t.cols.length > 1 ? asc[0].length - 2 : 1; // 착공 열 위치 (다중선택이면 선택지역 합계 열)
+    cap.textContent = `그래프: ${t.cols.length > 1 ? '선택지역 합계' : t.cols[0].label}의 월별 추이 — 파란선 착공, 주황선 인허가`;
+    const w = boxWidth(box);
+    buildChart(box, asc.map(r => r[k]), asc.map(r => r[k + 1]), {
+      w, h: Math.round(Math.min(300, Math.max(200, w * 0.25))), padL: 56, gridN: 4,
+      showYLabels: true, showXLabels: true, hover: true,
+      months: asc.map(r => r[0]), unit: t.unit
+    });
+  }
 
   function render(){
     const t = table();
     const holder = document.getElementById(ids.holder);
     const summary = document.getElementById(ids.summary);
     const note = document.getElementById(ids.note);
+    renderChart(t);
     if (!t.cols.length) {
       summary.textContent = '시도를 1개 이상 선택하세요.';
       note.hidden = true;
@@ -948,7 +922,7 @@ function queryCard(state, ids){
       });
     });
   }
-  return { render, init };
+  return { render, renderChart: () => renderChart(table()), init };
 }
 
 // ── 영남권 누적 조회 / 전국 누적 조회: 기준월 포함 직전 CUM_WIN개월 합계 (예: 2026-08 → 2025-03~2026-08) ──
@@ -960,7 +934,7 @@ const ncq = { scope: SCOPE_NAT, regions: new Set(SCOPE_NAT.regions), subs: new S
 const windowLabel = i => `${DATA.months[i - CUM_WIN + 1]}~${DATA.months[i]}`;
 const windowSum = (arr, i) => { let s = 0; for (let k = i - CUM_WIN + 1; k <= i; k++) s += arr[k]; return s; };
 
-// 누적 조회 카드. ids는 queryCard와 같고 chart·chartCap 추가
+// 누적 조회 카드. ids는 queryCard와 같음
 function cumCard(state, ids){
   const s = state.scope;
 
@@ -1044,9 +1018,9 @@ function cumCard(state, ids){
 const ids = (p, extra) => ({ sido: `dd${p}Sido`, sub: `dd${p}Sub`, from: `${p}From`, to: `${p}To`, toggle: `${p}Toggle`, holder: `${p}Holder`,
   summary: `${p}Summary`, note: `${p}Note`, cardSub: `${p}CardSub`, export: `${p}Export`, ...extra });
 const CARDS = [
-  queryCard(q, ids('yq')),
+  queryCard(q, ids('yq', { chart: 'yqChart', chartCap: 'yqChartCap' })),
   cumCard(cq, ids('yc', { chart: 'ycChart', chartCap: 'ycChartCap' })),
-  queryCard(nq, ids('nq')),
+  queryCard(nq, ids('nq', { chart: 'nqChart', chartCap: 'nqChartCap' })),
   cumCard(ncq, ids('nc', { chart: 'ncChart', chartCap: 'ncChartCap' })),
 ];
 
@@ -1054,7 +1028,6 @@ function renderAll(){
   renderStats();
   renderHeadline();
   renderRegions();
-  if (!document.getElementById('tableHolder').hidden) renderTable();
   CARDS.forEach(c => c.render());
 }
 
@@ -1070,12 +1043,6 @@ document.getElementById('btnCount').addEventListener('click', ()=>{
   document.getElementById('btnArea').setAttribute('aria-pressed','false');
   renderAll();
 });
-document.getElementById('tableToggle').addEventListener('click', (e)=>{
-  const holder = document.getElementById('tableHolder');
-  holder.hidden = !holder.hidden;
-  e.target.textContent = holder.hidden ? '표 펼치기' : '표 접기';
-  if (!holder.hidden) renderTable();
-});
 
 let lastWidth = window.innerWidth;
 let resizeTimer;
@@ -1083,7 +1050,7 @@ window.addEventListener('resize', () => {
   if (window.innerWidth === lastWidth) return;
   lastWidth = window.innerWidth;
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => { renderHeadline(); renderRegions(); CARDS.forEach(c => c.renderChart && c.renderChart()); }, 150);
+  resizeTimer = setTimeout(() => { renderHeadline(); renderRegions(); CARDS.forEach(c => c.renderChart()); }, 150);
 });
 
 CARDS.forEach(c => c.init());
