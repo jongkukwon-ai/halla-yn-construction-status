@@ -24,19 +24,25 @@
     }
     #install-btn:hover{background:rgba(78,214,144,0.25)}
 
-    /* ── 첫 화면: CI 로고 + 큰 제목 + 지사 칸(아래 3개 카드와 같은 폭) ── */
+    /* ── 첫 화면: CI 로고 + 큰 제목 + 영업소 칸(위), 바로가기 카드 3개(화면 아래 가운데) ── */
+    .page-wrap{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-bottom:max(40px,env(safe-area-inset-bottom))}
     .hero{padding:44px 0 8px}
-    .hero-ci{display:block;width:clamp(150px,22vw,210px);height:auto}
-    .hero-title{font-size:clamp(30px,7.5vw,48px);margin-top:22px;line-height:1.2;word-break:keep-all}
+    .hero-ci{display:block;width:clamp(150px,22vw,210px);height:auto;opacity:.78}
+    .hero-title{font-size:clamp(30px,7.5vw,48px);margin-top:22px;line-height:1.2;word-break:keep-all;color:rgba(255,255,255,0.74)}
     .office-chips{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:26px}
     .office-chip{
-      text-align:center;padding:12px 6px;border-radius:var(--radius-sm);
-      font-size:16px;font-weight:600;color:var(--text);white-space:nowrap;
+      display:flex;flex-direction:column;align-items:center;gap:2px;
+      padding:11px 6px;border-radius:var(--radius-sm);
+      font-size:16px;font-weight:600;color:rgba(255,255,255,0.7);white-space:nowrap;
     }
-    .nav-card-title{margin-top:12px}
+    .office-chip small{font-size:12px;font-weight:400;color:rgba(255,255,255,0.42)}
+    .nav-grid{margin-top:auto;padding-top:32px}
+    .nav-card{text-align:center}
+    .nav-card-title{margin-top:12px;color:rgba(255,255,255,0.74)}
+    .nav-card-icon{opacity:.85}
     @media(max-width:640px){
       .office-chips{grid-template-columns:repeat(3,1fr);gap:10px}
-      .office-chip{font-size:15px;padding:11px 4px}
+      .office-chip{font-size:15px;padding:10px 4px}
     }
   </style>
 </head>
@@ -54,12 +60,12 @@
     <img class="hero-ci" src="./assets/halla_ci.png" alt="HALLA CEMENT">
     <div class="hero-title">영남지사 정보 조회 시스템</div>
     <div class="office-chips">
-      <span class="office-chip">부산</span>
-      <span class="office-chip">울산</span>
-      <span class="office-chip">경남동부</span>
-      <span class="office-chip">경남서부</span>
-      <span class="office-chip">경북동부</span>
-      <span class="office-chip">경북서부</span>
+      <span class="office-chip">부산<small>영업소</small></span>
+      <span class="office-chip">울산<small>영업소</small></span>
+      <span class="office-chip">경남동부<small>영업소</small></span>
+      <span class="office-chip">경남서부<small>영업소</small></span>
+      <span class="office-chip">경북동부<small>영업소</small></span>
+      <span class="office-chip">경북서부<small>영업소</small></span>
     </div>
   </div>
 
