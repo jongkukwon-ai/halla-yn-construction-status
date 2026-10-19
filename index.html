@@ -24,7 +24,7 @@
     }
     #install-btn:hover{background:rgba(78,214,144,0.25)}
 
-    /* ── 첫 화면 (2026-10 시안): 왼쪽 위 CI·제목, 화면 폭 가득 영업소 알약 6개, 가운데 유리 느낌 카드 3개 ── */
+    /* ── 첫 화면 (2026-10 시안): 왼쪽 위 CI·제목, 가운데 유리 느낌 카드 3개, 맨 아래 화면 폭 가득 영업소 알약 6개 ── */
     body{background:#0a0d0c}
     .page-wrap{
       max-width:none;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
@@ -37,7 +37,7 @@
       margin-top:clamp(18px,3.5vh,30px);color:rgba(255,255,255,0.86);word-break:keep-all;
     }
 
-    .office-chips{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(10px,1.4vw,20px);margin-top:clamp(22px,4vh,36px)}
+    .office-chips{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(10px,1.4vw,20px);margin-top:clamp(28px,5vh,44px)}   /* 화면 맨 아래 */
     .office-chip{
       display:flex;align-items:center;justify-content:center;
       height:clamp(52px,8.5vh,68px);padding:0 10px;border-radius:22px;
@@ -89,14 +89,6 @@
   <div class="hero">
     <img class="hero-ci" src="./assets/halla_ci.png" alt="HALLA CEMENT">
     <div class="hero-title">영남지사 정보 조회 시스템</div>
-    <div class="office-chips">
-      <span class="office-chip">부산 영업소</span>
-      <span class="office-chip">울산 영업소</span>
-      <span class="office-chip">경남동부 영업소</span>
-      <span class="office-chip">경남서부 영업소</span>
-      <span class="office-chip">경북동부 영업소</span>
-      <span class="office-chip">경북서부 영업소</span>
-    </div>
   </div>
 
   <div class="nav-grid">
@@ -115,6 +107,15 @@
       <div class="nav-card-title">영남권 착공·인허가 통계</div>
       <span class="nav-card-badge">국토부 통계</span>
     </a>
+  </div>
+
+  <div class="office-chips">
+    <span class="office-chip">부산 영업소</span>
+    <span class="office-chip">울산 영업소</span>
+    <span class="office-chip">경남동부 영업소</span>
+    <span class="office-chip">경남서부 영업소</span>
+    <span class="office-chip">경북동부 영업소</span>
+    <span class="office-chip">경북서부 영업소</span>
   </div>
 
 </div>
