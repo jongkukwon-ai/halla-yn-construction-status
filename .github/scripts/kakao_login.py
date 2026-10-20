@@ -4,11 +4,13 @@
 보여 준 값은 GitHub 저장소 Settings → Secrets and variables → Actions → KAKAO_REFRESH_TOKEN 에 직접 붙여 넣으세요.
 (이 값은 파일로 저장하지 않으며, 채팅·메일로 보내지 마세요.)
 
-사전 준비: 카카오 앱 → 카카오 로그인 → Redirect URI에 http://localhost:8790/callback 등록
+사전 준비: 카카오 앱 → 앱 → 플랫폼 키 → REST API 키 → 카카오 로그인 리다이렉트 URI에 http://localhost:8790/callback 등록
 
-  python .github/scripts/kakao_login.py
+  py .github/scripts/kakao_login.py             # 친구목록까지 (카카오 심사 승인 후)
+  py .github/scripts/kakao_login.py --only-me   # 심사 전: 나에게 보내기만
 """
 import getpass
+import sys
 import http.server
 import json
 import urllib.parse
@@ -21,6 +23,10 @@ SCOPES = 'talk_message,friends'
 
 
 def main():
+    only_me = '--only-me' in sys.argv
+    scopes = 'talk_message' if only_me else SCOPES
+    if only_me:
+        print('「나에게만」 모드: 메시지 전송 권한만 받습니다(친구목록은 카카오 심사 승인 후 이 명령을 --only-me 없이 다시 실행).')
     key = getpass.getpass('카카오 앱 REST API 키(입력해도 화면에 안 보임): ').strip()
     secret = getpass.getpass('Client Secret(사용 안 하면 그냥 Enter): ').strip()
     got = {}
@@ -40,7 +46,7 @@ def main():
 
     srv = http.server.HTTPServer(('localhost', PORT), H)
     url = 'https://kauth.kakao.com/oauth/authorize?' + urllib.parse.urlencode(
-        {'client_id': key, 'redirect_uri': REDIRECT, 'response_type': 'code', 'scope': SCOPES})
+        {'client_id': key, 'redirect_uri': REDIRECT, 'response_type': 'code', 'scope': scopes})
     print('브라우저에서 카카오 로그인·동의를 진행하세요. 안 열리면 아래 주소를 직접 여세요.\n' + url)
     webbrowser.open(url)
     srv.timeout = 300
