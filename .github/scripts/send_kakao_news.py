@@ -6,7 +6,7 @@ news-data.js(매일 07:05 자동 갱신)에서 어제·오늘 날짜 기사를 �
 필요한 GitHub Secrets (값은 저장소 Settings → Secrets and variables → Actions에 직접 입력, 파일에 쓰지 않음)
   KAKAO_REST_API_KEY      카카오 앱 REST API 키
   KAKAO_REFRESH_TOKEN     보내는 사람(담당자) 계정의 리프레시 토큰 — kakao_login.py로 발급
-  KAKAO_CLIENT_SECRET     (앱에서 Client Secret을 켠 경우만)
+  KAKAO_CLIENT_SECRET     클라이언트 시크릿(카카오 앱 → 플랫폼 키 → REST API 키, 새 앱은 기본으로 켜져 있음)
   KAKAO_RECIPIENTS        (선택) 받을 사람 카톡 닉네임 쉼표 목록. 비우면 앱에 동의한 친구 전원
   GH_PAT                  (선택) 리프레시 토큰이 새로 발급될 때 KAKAO_REFRESH_TOKEN을 자동 교체할 GitHub 토큰
                           (없으면 약 2개월마다 kakao_login.py로 다시 발급해 넣어야 함)
