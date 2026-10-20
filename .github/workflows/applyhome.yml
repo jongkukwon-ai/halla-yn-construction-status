@@ -1,0 +1,77 @@
+name: 착공현황 누락 점검 (청약홈 분양공고)
+
+on:
+  schedule:
+    - cron: '30 23 * * 0'    # 매주 월요일 08:30 KST (UTC 일요일 23:30)
+  workflow_dispatch: {}       # Actions 탭에서 수동 실행
+  push:                       # 이 설정이나 점검 스크립트를 고치면 접속·대조만 한 번 돌림(이슈는 안 건드림)
+    branches: [main]
+    paths:
+      - '.github/workflows/applyhome.yml'
+      - 'construction/tools/applyhome_check.py'
+      - 'construction/tools/applyhome_alias.json'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: applyhome-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 청약홈 공고 ↔ 사이트 목록 대조
+        id: check
+        run: |
+          set +e
+          python construction/tools/applyhome_check.py --out report.md --json candidates.json
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          [ -f report.md ] && cat report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" = "1" ]; then exit 1; fi   # 청약홈 접속·화면 구조 문제 → 실패로 알림
+
+      - name: 결과를 이슈로 알림 (누락 있으면 열기·갱신, 없으면 닫기)
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CODE: ${{ steps.check.outputs.code }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          TITLE="[주간 점검] 청약홈 분양공고 중 착공현황에 없는 단지"
+          num=$(gh issue list --state open --limit 50 --json number,title \
+                -q ".[] | select(.title == \"$TITLE\") | .number" | head -n1)
+          if [ "$CODE" = "10" ]; then
+            { echo "@$OWNER"; echo; cat report.md; } > body.md
+            if [ -n "$num" ]; then
+              gh issue edit "$num" --body-file body.md
+              gh issue comment "$num" --body "$(TZ=Asia/Seoul date +%F) 점검: 누락 후보가 아직 남아 있습니다(본문 갱신)."
+            else
+              gh issue create --title "$TITLE" --body-file body.md
+            fi
+          elif [ -n "$num" ]; then
+            gh issue comment "$num" --body "$(TZ=Asia/Seoul date +%F) 점검: 누락 후보가 없어 닫습니다."
+            gh issue close "$num"
+          else
+            echo "누락 없음"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: applyhome-check
+          path: |
+            report.md
+            candidates.json
+          if-no-files-found: ignore
+          retention-days: 30
