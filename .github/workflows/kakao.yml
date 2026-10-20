@@ -1,0 +1,37 @@
+name: 업종 뉴스 카카오톡 아침 발송
+
+on:
+  schedule:
+    - cron: '30 22 * * *'    # 매일 07:30 KST (UTC 22:30) — 뉴스 갱신(07:05) 뒤. GitHub 예약 실행은 몇~십여 분 늦어질 수 있음
+  workflow_dispatch: {}       # Actions 탭에서 바로 발송(시험용)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kakao-news
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main              # 07:05에 갱신된 최신 뉴스
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install pynacl   # 리프레시 토큰 자동 교체(GH_PAT 있을 때)용
+
+      - name: 카카오톡 발송
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          KAKAO_RECIPIENTS: ${{ secrets.KAKAO_RECIPIENTS }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: python .github/scripts/send_kakao_news.py
