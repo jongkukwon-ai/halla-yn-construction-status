@@ -1,4 +1,4 @@
-"""영업소 권역 날씨(weather-data.js) 갱신 — GitHub Actions(weather.yml)에서 하루 4번 실행.
+"""영업소 권역 날씨(weather-data.js) 갱신 — GitHub Actions(weather.yml)에서 매시간 실행(예보 내용이 바뀔 때만 커밋).
 
 기상청 단기예보(공공데이터포털 「기상청_단기예보 ((구)_동네예보) 조회서비스」 getVilageFcst)에서
 영업소별 대표 도시의 오늘~글피(최대 4일) 최저·최고기온, 하늘상태, 비·눈(강수형태), 강수확률을 하루 단위로 요약한다.
@@ -130,7 +130,7 @@ def main():
     data = {'updated': now.strftime('%Y-%m-%d %H:%M'),
             'base': f'{base_date[4:6]}/{base_date[6:]} {base_time[:2]}:{base_time[2:]}',
             'source': '기상청 단기예보', 'regions': out}
-    OUT.write_text('// 영업소 권역 날씨 — .github/scripts/update_weather.py가 하루 4번 자동 갱신 (기상청 단기예보)\n'
+    OUT.write_text('// 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)\n'
                    'const WEATHER = ' + json.dumps(data, ensure_ascii=False, indent=1) + ';\n', encoding='utf-8', newline='\n')
     print(f'날씨 갱신: {data["base"]} 발표, {len(out)}개 권역 × {len(out[0]["days"])}일')
 
