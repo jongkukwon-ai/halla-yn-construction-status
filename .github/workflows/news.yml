@@ -2,7 +2,9 @@ name: 업종 관련 뉴스 자동 갱신
 
 on:
   schedule:
-    - cron: '5 22 * * *'   # 매일 07:05 KST (UTC 22:05)
+    - cron: '17 18 * * *'  # 03:17 KST — GitHub 예약 실행이 2~3시간씩 늦게 시작되는 일이 잦아 이른 시각에도 돌림
+    - cron: '17 20 * * *'  # 05:17 KST
+    - cron: '5 22 * * *'   # 07:05 KST (UTC 22:05)
   workflow_dispatch: {}      # Actions 탭에서 수동 실행
 
 permissions:
