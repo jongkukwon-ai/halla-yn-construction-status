@@ -176,7 +176,8 @@
 
 </main>
 
-<script src="../news-data.js"></script>
+<!-- 자동 갱신되는 자료 파일은 브라우저가 옛 파일을 계속 쓰지 않도록 10분 단위 주소로 받음 -->
+<script>document.write('<script src="../news-data.js?t=' + Math.floor(Date.now() / 600000) + '"><\/script>');</script>
 <script>
 const DAYS_WINDOW = 30;
 
