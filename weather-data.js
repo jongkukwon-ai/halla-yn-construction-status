@@ -1,6 +1,6 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 하루 4번 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-10-22 08:26",
+ "updated": "2026-10-22 08:42",
  "base": "10/22 08:00",
  "source": "기상청 단기예보",
  "regions": [
@@ -236,14 +236,14 @@ const WEATHER = {
   },
   {
    "office": "경북서부",
-   "city": "구미",
+   "city": "대구",
    "days": [
     {
      "date": "2026-10-22",
      "label": "오늘",
      "dow": "목",
      "tmin": 5,
-     "tmax": 17,
+     "tmax": 16,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -252,7 +252,7 @@ const WEATHER = {
      "date": "2026-10-23",
      "label": "내일",
      "dow": "금",
-     "tmin": 5,
+     "tmin": 7,
      "tmax": 20,
      "pop": 30,
      "wx": "구름많음",
@@ -262,8 +262,8 @@ const WEATHER = {
      "date": "2026-10-24",
      "label": "모레",
      "dow": "토",
-     "tmin": 11,
-     "tmax": 18,
+     "tmin": 12,
+     "tmax": 17,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -272,8 +272,8 @@ const WEATHER = {
      "date": "2026-10-25",
      "label": "글피",
      "dow": "일",
-     "tmin": 13,
-     "tmax": 21,
+     "tmin": 14,
+     "tmax": 20,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
