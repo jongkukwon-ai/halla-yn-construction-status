@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '35 20,2,8,14 * * *'   # 하루 4번 05:35·11:35·17:35·23:35 KST (기상청 05·11·17·23시 발표 뒤)
   workflow_dispatch: {}             # Actions 탭에서 바로 실행
+  push:                             # 날씨 스크립트·설정을 고치면 바로 한 번 갱신
+    branches: [main]
+    paths:
+      - '.github/scripts/update_weather.py'
+      - '.github/workflows/weather.yml'
 
 permissions:
   contents: write
