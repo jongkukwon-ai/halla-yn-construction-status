@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="영남지사">
   <meta name="theme-color" content="#06100c">
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="./manifest.json" crossorigin="use-credentials">
   <link rel="apple-touch-icon" href="./assets/icon-192.png">
   <link rel="icon" href="./assets/icon-192.png">
   <title>영남지사</title>
@@ -194,8 +194,9 @@ fetch('./api/me', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(
   chip.textContent = `${me.title} ${me.name}님`; chip.hidden = false;
   document.getElementById('admin-link').hidden = !me.admin;
   const out = document.getElementById('logout-btn'); out.hidden = false;
+  // 로그아웃 후 갈 곳은 서버가 알려줌(로컬: 로그인 화면, Cloudflare: 메일 인증 로그아웃)
   out.onclick = () => fetch('./api/logout', { method: 'POST', headers: { 'X-Requested-With': 'yn' } })
-    .finally(() => location.replace('./login.html'));
+    .then(r => r.json()).catch(() => ({})).then(d => location.replace(d.redirect || './login.html'));
 }).catch(() => {});
 
 /* ═══════════════════════════════════════════════════════════════

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#06100c">
+  <link rel="icon" href="/assets/icon-192.png">
+  <title>영남지사 · 계정관리</title>
+  <link rel="stylesheet" href="/assets/brand.css">
+  <style>
+    body{background:#0a0d0c}
+    .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+    .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+    .head h1{font-size:22px;font-weight:500;flex:1}
+    a.pill,button{font:inherit;font-size:13px;padding:7px 14px;border-radius:50px;cursor:pointer;text-decoration:none;
+      background:transparent;border:1px solid var(--border);color:var(--text2)}
+    button.pri{border-color:rgba(120,205,90,0.55);background:rgba(120,205,90,0.12);color:#A6DD62}
+    button.del{border-color:rgba(230,95,90,0.4);color:var(--danger)}
+    button:hover,a.pill:hover{border-color:var(--border2);color:var(--text)}
+    section{margin-top:26px}
+    h2{font-size:16px;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+    h2 span{flex:1}
+    .note{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:10px}
+    .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,0.025)}
+    table{width:100%;border-collapse:collapse;font-size:14px;min-width:900px}
+    th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+    th{font-weight:500;font-size:12px;color:var(--text2);background:rgba(255,255,255,0.03)}
+    tr:last-child td{border-bottom:0}
+    tr.off td{opacity:.45}
+    .tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:50px;border:1px solid var(--border2);color:var(--accent)}
+    .tag.adm{border-color:rgba(240,180,80,0.6);color:var(--amber)}
+    .roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+    .role{border:1px solid var(--border);border-radius:14px;padding:14px;background:rgba(255,255,255,0.025)}
+    .role-h{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .role-h input[type=text]{flex:1}
+    .role-h input[type=number]{width:70px}
+    .perm{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:4px 0}
+    .perm small{display:block;color:var(--text3);font-size:11.5px}
+    .role-f{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+    input,select{height:36px;padding:0 10px;border-radius:9px;font:inherit;font-size:14px;
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:var(--text);outline:none;min-width:0}
+    select option{background:#0f1a15}
+    input[type=checkbox]{height:auto;width:16px;margin-top:2px;accent-color:#4ED690}
+    dialog{margin:auto;width:min(440px,calc(100% - 32px));border:1px solid rgba(205,225,215,0.26);border-radius:18px;
+      background:#101a16;color:var(--text);padding:22px}
+    dialog::backdrop{background:rgba(0,0,0,0.6)}
+    dialog h3{font-size:17px;font-weight:500;margin-bottom:16px}
+    .row{display:grid;grid-template-columns:90px 1fr;gap:10px;align-items:center;margin-bottom:10px;font-size:13px;color:var(--text2)}
+    .row input,.row select{width:100%}
+    .chk{display:flex;gap:18px;margin:6px 0 4px 100px;font-size:13px}
+    .chk label{display:flex;gap:6px;align-items:center}
+    .d-err{min-height:18px;font-size:12.5px;color:var(--danger);margin-top:8px}
+    .d-f{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:9px 18px;border-radius:50px;font-size:13px;
+      background:rgba(78,214,144,0.16);border:1px solid var(--border2);color:var(--accent);display:none;z-index:9}
+  </style>
+</head>
+<body>
+<div class="brand-bg"><img class="brand-logo" src="/assets/halla_logo.png" alt=""></div>
+<div class="page">
+  <div class="head">
+    <a class="pill" href="/">← 영남지사</a>
+    <h1>계정관리</h1>
+  </div>
+
+  <section>
+    <h2><span>구성원 계정</span><button class="pri" id="add">+ 계정 추가</button></h2>
+    <div class="note">인사이동 때는 그 직책 줄의 <b>수정</b>을 눌러 이름·사번·이메일을 바꾸면 됩니다. 사번이나 이메일이 바뀌면 이전 담당자의 로그인은 바로 끊깁니다.
+      <b>관리자</b> 표시를 다른 사람에게 옮기면 관리자가 바뀝니다(최소 1명 필요).</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>직책</th><th>이름</th><th>사번</th><th>이메일</th><th>연락처</th><th>권한등급</th><th>구분</th><th></th></tr></thead>
+      <tbody id="acc"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span>권한등급</span><button id="add-role">+ 등급 추가</button></h2>
+    <div class="note">직책과 별개로 계정마다 권한등급을 붙입니다. 주간리뷰·월간 대면리뷰 화면이 생기면 아래 체크된 권한대로 열립니다.
+      <b>레벨</b>은 숫자가 클수록 상위 등급입니다.</div>
+    <div class="roles" id="roles"></div>
+  </section>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="df">
+    <h3 id="d-title">계정</h3>
+    <div class="row">직책<input id="f-title" placeholder="예: 부산 영업소장"></div>
+    <div class="row">이름<input id="f-name"></div>
+    <div class="row">사번<input id="f-emp" placeholder="예: P13187" autocapitalize="characters"></div>
+    <div class="row">이메일<input id="f-email" type="email" placeholder="이름@hallacement.co.kr"></div>
+    <div class="row">연락처<input id="f-phone" placeholder="010-0000-0000"></div>
+    <div class="row">권한등급<select id="f-role"></select></div>
+    <div class="chk">
+      <label><input type="checkbox" id="f-admin">관리자</label>
+      <label><input type="checkbox" id="f-active">사용</label>
+    </div>
+    <div class="d-err" id="d-err"></div>
+    <div class="d-f">
+      <button type="button" class="del" id="d-del">삭제</button>
+      <span style="flex:1"></span>
+      <button type="button" id="d-cancel">취소</button>
+      <button type="submit" class="pri">저장</button>
+    </div>
+  </form>
+</dialog>
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let D = null, editing = null;
+
+async function api(method, url, body) {
+  const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'yn' },
+    body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { location.href = '/login.html?next=/admin.html'; throw new Error(''); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || '저장하지 못했습니다.');
+  return d;
+}
+function toast(t) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 2200); }
+
+async function load() {
+  D = await api('GET', '/api/admin/data');
+  const roleName = id => (D.roles.find(r => r.id === id) || {}).name || '(없음)';
+  const acc = [...D.accounts].sort((a, b) => (b.active - a.active) || (a.order - b.order));
+  $('acc').innerHTML = acc.map(a => `<tr class="${a.active ? '' : 'off'}">
+    <td>${esc(a.title)}</td><td>${esc(a.name)}</td><td>${esc(a.emp_no)}</td><td>${esc(a.email)}</td><td>${esc(a.phone)}</td>
+    <td>${esc(roleName(a.role))}</td>
+    <td>${a.admin ? '<span class="tag adm">관리자</span> ' : ''}${a.active ? '' : '<span class="tag">사용중지</span>'}${a.id === D.me ? ' <span class="tag">나</span>' : ''}</td>
+    <td style="text-align:right"><button data-edit="${a.id}">수정</button></td></tr>`).join('');
+  $('f-role').innerHTML = [...D.roles].sort((a, b) => b.level - a.level).map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+  $('roles').innerHTML = [...D.roles].sort((a, b) => b.level - a.level).map(r => `<div class="role" data-role="${r.id}">
+    <div class="role-h"><input type="text" value="${esc(r.name)}" data-k="name"><input type="number" value="${r.level}" data-k="level" title="레벨"></div>
+    ${D.permissions.map(p => `<label class="perm"><input type="checkbox" value="${p.key}" ${r.perms.includes(p.key) ? 'checked' : ''}>
+      <span>${esc(p.label)}<small>${esc(p.desc)}</small></span></label>`).join('')}
+    <div class="role-f"><button class="del" data-rdel>삭제</button><button class="pri" data-rsave>저장</button></div></div>`).join('');
+}
+
+function openDlg(a) {
+  editing = a;
+  $('d-title').textContent = a ? `${a.title} 수정` : '계정 추가';
+  $('f-title').value = a?.title || ''; $('f-name').value = a?.name || ''; $('f-emp').value = a?.emp_no || '';
+  $('f-email').value = a?.email || ''; $('f-phone').value = a?.phone || ''; $('f-role').value = a?.role || 'office_head';
+  $('f-admin').checked = !!a?.admin; $('f-active').checked = a ? a.active : true;
+  $('d-del').style.display = a ? '' : 'none'; $('d-err').textContent = '';
+  $('dlg').showModal();
+}
+
+$('acc').addEventListener('click', e => { const id = e.target.dataset.edit; if (id) openDlg(D.accounts.find(a => a.id === id)); });
+$('add').onclick = () => openDlg(null);
+$('d-cancel').onclick = () => $('dlg').close();
+$('df').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = { title: $('f-title').value, name: $('f-name').value, emp_no: $('f-emp').value, email: $('f-email').value, phone: $('f-phone').value,
+    role: $('f-role').value, admin: $('f-admin').checked, active: $('f-active').checked };
+  try {
+    if (editing) await api('PUT', '/api/admin/accounts/' + editing.id, body); else await api('POST', '/api/admin/accounts', body);
+    $('dlg').close(); toast('저장했습니다'); await load();
+    if (editing && editing.id === D.me && !body.admin) location.href = '/';
+  } catch (err) { $('d-err').textContent = err.message; }
+});
+$('d-del').onclick = async () => {
+  if (!confirm(`${editing.title} (${editing.name}) 계정을 삭제할까요?\n잠시 쉬게 하려면 '사용' 체크를 끄는 편이 낫습니다.`)) return;
+  try { await api('DELETE', '/api/admin/accounts/' + editing.id); $('dlg').close(); toast('삭제했습니다'); load(); }
+  catch (err) { $('d-err').textContent = err.message; }
+};
+
+$('roles').addEventListener('click', async e => {
+  const box = e.target.closest('.role'); if (!box) return;
+  const id = box.dataset.role;
+  try {
+    if ('rsave' in e.target.dataset) {
+      await api('PUT', '/api/admin/roles/' + id, { name: box.querySelector('[data-k=name]').value,
+        level: +box.querySelector('[data-k=level]').value, perms: [...box.querySelectorAll('.perm input:checked')].map(i => i.value) });
+      toast('권한등급을 저장했습니다'); load();
+    } else if ('rdel' in e.target.dataset) {
+      if (!confirm('이 권한등급을 삭제할까요?')) return;
+      await api('DELETE', '/api/admin/roles/' + id); toast('삭제했습니다'); load();
+    }
+  } catch (err) { alert(err.message); }
+});
+$('add-role').onclick = async () => {
+  const name = prompt('새 권한등급 이름 (예: 팀장)'); if (!name) return;
+  try { await api('POST', '/api/admin/roles', { name, level: 15, perms: ['view'] }); load(); } catch (err) { alert(err.message); }
+};
+
+load().catch(err => err.message && alert(err.message));
+</script>
+</body>
+</html>
