@@ -15,12 +15,21 @@
   <link rel="stylesheet" href="./assets/brand.css">
   <style>
     /* ── 설치 버튼 (브랜드 카드 스타일 위에 얹는 유틸리티) ── */
+    .top-actions{
+      position:fixed;top:max(16px,env(safe-area-inset-top));right:16px;z-index:20;
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end
+    }
+    .user-chip{font-size:12px;color:rgba(255,255,255,0.7);padding:6px 4px}
+    .top-link{
+      background:transparent;border:.5px solid var(--border);color:var(--text2);
+      padding:6px 12px;border-radius:50px;font-size:12px;cursor:pointer;font-family:var(--font);text-decoration:none
+    }
+    .top-link:hover{border-color:var(--border2);color:var(--text)}
     #install-btn{
-      position:fixed;top:max(16px,env(safe-area-inset-top));right:16px;
       background:var(--accent-bg);border:.5px solid var(--border2);
       color:var(--accent);padding:6px 14px;border-radius:50px;
       font-size:12px;cursor:pointer;font-family:var(--font);
-      z-index:20;display:none;transition:background .2s
+      display:none;transition:background .2s
     }
     #install-btn:hover{background:rgba(78,214,144,0.25)}
 
@@ -101,7 +110,12 @@
   <img class="brand-logo" src="./assets/halla_logo.png" alt="HALLA CEMENT">
 </div>
 
-<button id="install-btn">⬇ 앱 설치</button>
+<div class="top-actions">
+  <span class="user-chip" id="user-chip" hidden></span>
+  <a class="top-link" id="admin-link" href="./admin.html" hidden>계정관리</a>
+  <button class="top-link" id="logout-btn" hidden>로그아웃</button>
+  <button id="install-btn">⬇ 앱 설치</button>
+</div>
 
 <div class="page-wrap">
 
@@ -171,6 +185,19 @@
 })();
 </script>
 <script>
+/* ═══════════════════════════════════════════════════════════════
+   로그인 사용자 표시 (로그인 서버가 없는 곳에서는 아무것도 표시하지 않음)
+═══════════════════════════════════════════════════════════════ */
+fetch('./api/me', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(me => {
+  if (!me || !me.name) return;
+  const chip = document.getElementById('user-chip');
+  chip.textContent = `${me.title} ${me.name}님`; chip.hidden = false;
+  document.getElementById('admin-link').hidden = !me.admin;
+  const out = document.getElementById('logout-btn'); out.hidden = false;
+  out.onclick = () => fetch('./api/logout', { method: 'POST', headers: { 'X-Requested-With': 'yn' } })
+    .finally(() => location.replace('./login.html'));
+}).catch(() => {});
+
 /* ═══════════════════════════════════════════════════════════════
    서비스워커 등록
 ═══════════════════════════════════════════════════════════════ */

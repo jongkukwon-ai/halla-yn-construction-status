@@ -1,4 +1,4 @@
-const CACHE = 'yn-ai-v9';
+const CACHE = 'yn-ai-v10';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -12,7 +12,8 @@ const ASSETS = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
+    // 로그인 전에는 일부 파일이 막혀 있으므로 받을 수 있는 것만 저장
+    caches.open(CACHE).then(c => Promise.all(ASSETS.map(u => c.add(u).catch(() => {}))))
   );
   self.skipWaiting();
 });
@@ -31,6 +32,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('api.anthropic.com')) return;
   if (e.request.url.includes('cdn.jsdelivr.net')) return;
+  if (new URL(e.request.url).pathname.includes('/api/')) return;   // 로그인·계정 요청은 저장하지 않음
 
   const req = e.request;
   const own = req.method === 'GET' && new URL(req.url).origin === self.location.origin;
