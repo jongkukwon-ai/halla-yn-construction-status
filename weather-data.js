@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-10-23 04:18",
- "base": "10/23 02:00",
+ "updated": "2026-10-23 07:28",
+ "base": "10/23 05:00",
  "source": "기상청 단기예보",
  "regions": [
   {
@@ -14,9 +14,9 @@ const WEATHER = {
      "dow": "금",
      "tmin": 13,
      "tmax": 22,
-     "pop": 30,
-     "wx": "흐림",
-     "icon": "☁️"
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-10-24",
@@ -59,7 +59,7 @@ const WEATHER = {
      "label": "오늘",
      "dow": "금",
      "tmin": 12,
-     "tmax": 22,
+     "tmax": 21,
      "pop": 30,
      "wx": "흐림",
      "icon": "☁️"
@@ -106,9 +106,9 @@ const WEATHER = {
      "dow": "금",
      "tmin": 9,
      "tmax": 22,
-     "pop": 30,
-     "wx": "흐림",
-     "icon": "☁️"
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-10-24",
@@ -152,9 +152,9 @@ const WEATHER = {
      "dow": "금",
      "tmin": 8,
      "tmax": 21,
-     "pop": 30,
-     "wx": "흐림",
-     "icon": "☁️"
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-10-24",
