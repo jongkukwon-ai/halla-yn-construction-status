@@ -112,6 +112,7 @@
 
 <div class="top-actions">
   <span class="user-chip" id="user-chip" hidden></span>
+  <a class="top-link" id="review-link" href="./review/index.html" hidden>리뷰 작성</a>
   <a class="top-link" id="admin-link" href="./admin.html" hidden>계정관리</a>
   <button class="top-link" id="logout-btn" hidden>로그아웃</button>
   <button id="install-btn">⬇ 앱 설치</button>
@@ -193,6 +194,7 @@ fetch('./api/me', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(
   const chip = document.getElementById('user-chip');
   chip.textContent = `${me.title} ${me.name}님`; chip.hidden = false;
   document.getElementById('admin-link').hidden = !me.admin;
+  document.getElementById('review-link').hidden = !(me.admin || me.perms.some(p => /review/.test(p)));
   const out = document.getElementById('logout-btn'); out.hidden = false;
   // 로그아웃 후 갈 곳은 서버가 알려줌(로컬: 로그인 화면, Cloudflare: 메일 인증 로그아웃)
   out.onclick = () => fetch('./api/logout', { method: 'POST', headers: { 'X-Requested-With': 'yn' } })

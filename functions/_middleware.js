@@ -15,6 +15,7 @@ const PERMISSIONS = [
   { key: 'weekly_review_read_all', label: '주간리뷰 전체 열람', desc: '모든 영업소 주간리뷰 열람' },
   { key: 'monthly_review_attend',  label: '월간 대면리뷰 참석', desc: '월간 대면리뷰 자료 제출·열람' },
   { key: 'monthly_review_host',    label: '월간 대면리뷰 주관', desc: '대면리뷰 일정·안건 관리, 전체 자료 열람' },
+  { key: 'review_confirm',         label: '리뷰 확인요청 받기', desc: '영업소장이 확인요청한 주간·월간 리뷰를 받아 봄(관리자는 항상)' },
 ];
 const PERM_KEYS = new Set(PERMISSIONS.map(p => p.key));
 
@@ -79,7 +80,7 @@ function publicAccount(a, roles) {
   return {
     id: a.id, name: a.name, title: a.title, email: a.email,
     role: a.role, role_name: role ? role.name : '', level: role ? role.level : 0,
-    perms: role ? role.perms : [], admin: !!a.admin,
+    perms: role ? role.perms : [], admin: !!a.admin, office: officeOf(a),
   };
 }
 
@@ -91,6 +92,7 @@ function cleanAccount(body, roles) {
     email: String(body.email ?? '').trim().toLowerCase(),
     phone: String(body.phone ?? '').trim(),
     role: String(body.role ?? '').trim(),
+    office: String(body.office ?? '').trim(),
     admin: !!body.admin,
     active: body.active === undefined ? true : !!body.active,
   };
@@ -98,6 +100,7 @@ function cleanAccount(body, roles) {
   if (!/^[A-Z0-9-]{3,20}$/.test(a.emp_no)) throw new UserError('사번은 영문·숫자로 3~20자입니다. (예: P13187)');
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a.email)) throw new UserError('이메일을 확인해 주세요. (회사 메일로 로그인합니다)');
   if (!roles.some(r => r.id === a.role)) throw new UserError('권한등급을 골라 주세요.');
+  if (a.office && !OFFICES.includes(a.office)) throw new UserError('담당 영업소가 올바르지 않습니다.');
   return a;
 }
 
@@ -136,11 +139,126 @@ h1{font-size:20px;font-weight:500}p{color:#999;line-height:1.7}a{color:#4ED690}<
 <body><div><h1>${title}</h1><p>${msg}</p><p><a href="/cdn-cgi/access/logout">다른 메일로 로그인</a></p></div></body></html>`,
   { status: code, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 
+/* ── 주간·월간 리뷰 (serve.py 와 같은 규칙) ───────────────────── */
+const OFFICES = ['부산', '울산', '경남동부', '경남서부', '경북동부', '경북서부'];
+const REVIEW_TYPES = {
+  // 주간: 기간 = 그 주 월요일(YYYY-MM-DD) / 월간: 기간 = 실적 월(YYYY-MM)
+  weekly:  { period: /^\d{4}-\d{2}-\d{2}$/, write: 'weekly_review_write', readAll: 'weekly_review_read_all',
+             notes: ['this_week', 'this_etc', 'next_week', 'next_etc'] },
+  monthly: { period: /^\d{4}-\d{2}$/, write: 'monthly_review_attend', readAll: 'monthly_review_host',
+             notes: ['pov', 'analysis', 'issues'] },
+};
+
+function officeOf(a) {
+  if (a.office) return a.office;
+  const m = String(a.title || '').match(/^(\S+) 영업소장$/);
+  return m && OFFICES.includes(m[1]) ? m[1] : '';
+}
+
+function reviewRights(acc, roles, rtype) {
+  const role = roles.find(r => r.id === acc.role);
+  const perms = new Set(role ? role.perms : []);
+  const t = REVIEW_TYPES[rtype];
+  const confirm = !!acc.admin || perms.has('review_confirm');
+  return { perf: !!acc.admin, confirm, view_all: confirm || perms.has(t.readAll), write_office: perms.has(t.write) ? officeOf(acc) : '' };
+}
+
+function reviewKey(rtype, period, office) {
+  if (!REVIEW_TYPES[rtype]) throw new UserError('리뷰 종류가 올바르지 않습니다.');
+  if (!REVIEW_TYPES[rtype].period.test(period || '')) throw new UserError('기간이 올바르지 않습니다.');
+  if (!OFFICES.includes(office)) throw new UserError('영업소가 올바르지 않습니다.');
+  return `${rtype}|${period}|${office}`;
+}
+
+function cleanPerf(perf) {
+  const out = {};
+  for (const [k, v] of Object.entries(perf || {})) {
+    if (!/^[a-z0-9]+(\.[a-z0-9]+){1,2}$/.test(k) || Object.keys(out).length >= 100) continue;
+    if (v === null || v === '') continue;
+    const n = Number(v);
+    if (!Number.isFinite(n)) throw new UserError('실적 표에는 숫자만 입력할 수 있습니다.');
+    out[k] = n;
+  }
+  return out;
+}
+
+function cleanNotes(rtype, notes) {
+  const out = {};
+  for (const k of REVIEW_TYPES[rtype].notes) {
+    const v = String((notes || {})[k] ?? '').trim();
+    if (v.length > 5000) throw new UserError('한 칸에 5,000자까지 입력할 수 있습니다.');
+    out[k] = v;
+  }
+  return out;
+}
+
+const nowStr = () => new Date(Date.now() + 9 * 3600_000).toISOString().replace('T', ' ').slice(0, 16); // 한국시간
+
+async function reviewsGet(env, url, acc, roles) {
+  const rtype = url.searchParams.get('type') || '', period = url.searchParams.get('period') || '';
+  reviewKey(rtype, period, OFFICES[0]); // 종류·기간 확인
+  const rt = reviewRights(acc, roles, rtype);
+  const offices = rt.view_all ? OFFICES : OFFICES.filter(o => o === rt.write_office);
+  const reviews = {};
+  for (const o of offices) {
+    const row = await env.DB.prepare('SELECT value FROM reviews WHERE key = ?').bind(reviewKey(rtype, period, o)).first();
+    reviews[o] = row ? JSON.parse(row.value) : null;
+  }
+  return json(200, { rights: rt, offices, reviews });
+}
+
+async function reviewsInbox(env, acc, roles) {
+  if (!reviewRights(acc, roles, 'weekly').confirm) return json(200, { items: [] });
+  const { results } = await env.DB.prepare("SELECT value FROM reviews WHERE status = 'requested'").all();
+  const items = results.map(r => JSON.parse(r.value)).sort((a, b) => (b.requested_at || '').localeCompare(a.requested_at || ''));
+  return json(200, { items: items.map(r => ({ type: r.type, period: r.period, office: r.office, requested_at: r.requested_at, requested_by: r.requested_by })) });
+}
+
+async function reviewsWrite(request, env, path, acc, roles) {
+  const m = path.match(/^\/api\/reviews\/(\w+)\/([\d-]+)\/([^/]+)\/(perf|notes|request|cancel)$/);
+  if (!m || !['PUT', 'POST'].includes(request.method)) return json(404, { error: '없는 주소입니다.' });
+  const [, rtype, period, office, action] = m;
+  const key = reviewKey(rtype, period, office);
+  const rt = reviewRights(acc, roles, rtype);
+  const body = await request.json().catch(() => ({}));
+  const row = await env.DB.prepare('SELECT value FROM reviews WHERE key = ?').bind(key).first();
+  const r = row ? JSON.parse(row.value) : { type: rtype, period, office, perf: {}, notes: {}, status: 'draft' };
+  const who = `${acc.title} ${acc.name}`;
+  if (action === 'perf') {
+    if (!rt.perf) return json(403, { error: '상단 실적은 관리자만 입력할 수 있습니다.' });
+    r.perf = cleanPerf(body.perf);
+    r.perf_updated_at = nowStr(); r.perf_updated_by = who;
+  } else {
+    if (rt.write_office !== office) return json(403, { error: '자기 영업소 리뷰만 작성할 수 있습니다.' });
+    if (action === 'notes') {
+      if (r.status === 'requested') throw new UserError('확인요청한 리뷰는 고칠 수 없습니다. 먼저 요청을 취소해 주세요.');
+      r.notes = cleanNotes(rtype, body.notes);
+      r.updated_at = nowStr(); r.updated_by = who;
+    } else if (action === 'request') {
+      if (body.notes != null && r.status !== 'requested') {
+        r.notes = cleanNotes(rtype, body.notes);
+        r.updated_at = nowStr(); r.updated_by = who;
+      }
+      if (!Object.values(r.notes).some(Boolean)) throw new UserError('주요 사항을 입력한 뒤 확인요청해 주세요.');
+      r.status = 'requested'; r.requested_at = nowStr(); r.requested_by = who;
+    } else {
+      r.status = 'draft';
+      delete r.requested_at;
+    }
+  }
+  await env.DB.prepare('INSERT INTO reviews (key, value, status) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, status = excluded.status')
+    .bind(key, JSON.stringify(r), r.status).run();
+  if (action === 'request' || action === 'cancel') await audit(env, who, action === 'request' ? '리뷰 확인요청' : '리뷰 요청취소', { key });
+  return json(200, { ok: true, review: r });
+}
+
 /* ── API ──────────────────────────────────────────────────────── */
 async function api(request, env, path, acc, doc) {
   const method = request.method;
   if (method === 'GET') {
     if (path === '/api/me') return json(200, publicAccount(acc, doc.roles));
+    if (path === '/api/reviews') return reviewsGet(env, new URL(request.url), acc, doc.roles);
+    if (path === '/api/reviews/inbox') return reviewsInbox(env, acc, doc.roles);
     if (path === '/api/admin/data') {
       if (!acc.admin) return json(403, { error: '관리자만 볼 수 있습니다.' });
       return json(200, { roles: doc.roles, accounts: doc.accounts, permissions: PERMISSIONS, me: acc.id });
@@ -150,6 +268,7 @@ async function api(request, env, path, acc, doc) {
   // 다른 사이트에서 몰래 보내는 요청 차단
   if (request.headers.get('X-Requested-With') !== 'yn') return json(403, { error: '잘못된 요청입니다.' });
   if (path === '/api/logout' && method === 'POST') return json(200, { ok: true, redirect: '/cdn-cgi/access/logout' });
+  if (path.startsWith('/api/reviews/')) return reviewsWrite(request, env, path, acc, doc.roles);
   if (!acc.admin) return json(403, { error: '관리자만 바꿀 수 있습니다.' });
 
   const m = path.match(/^\/api\/admin\/(accounts|roles)(?:\/([\w-]+))?$/);
