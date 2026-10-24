@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-10-24 07:20",
- "base": "10/24 05:00",
+ "updated": "2026-10-24 09:49",
+ "base": "10/24 08:00",
  "source": "기상청 단기예보",
  "regions": [
   {
