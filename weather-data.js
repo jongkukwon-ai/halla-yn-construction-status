@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-10-24 23:38",
- "base": "10/24 23:00",
+ "updated": "2026-10-25 03:14",
+ "base": "10/25 02:00",
  "source": "기상청 단기예보",
  "regions": [
   {
@@ -9,18 +9,8 @@ const WEATHER = {
    "city": "부산",
    "days": [
     {
-     "date": "2026-10-24",
-     "label": "오늘",
-     "dow": "토",
-     "tmin": 17,
-     "tmax": 20,
-     "pop": 80,
-     "wx": "비",
-     "icon": "🌧️"
-    },
-    {
      "date": "2026-10-25",
-     "label": "내일",
+     "label": "오늘",
      "dow": "일",
      "tmin": 17,
      "tmax": 21,
@@ -30,7 +20,7 @@ const WEATHER = {
     },
     {
      "date": "2026-10-26",
-     "label": "모레",
+     "label": "내일",
      "dow": "월",
      "tmin": 18,
      "tmax": 23,
@@ -40,11 +30,21 @@ const WEATHER = {
     },
     {
      "date": "2026-10-27",
-     "label": "글피",
+     "label": "모레",
      "dow": "화",
      "tmin": 14,
      "tmax": 21,
      "pop": 20,
+     "wx": "맑음",
+     "icon": "☀️"
+    },
+    {
+     "date": "2026-10-28",
+     "label": "글피",
+     "dow": "수",
+     "tmin": 6,
+     "tmax": 17,
+     "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -55,18 +55,8 @@ const WEATHER = {
    "city": "울산",
    "days": [
     {
-     "date": "2026-10-24",
-     "label": "오늘",
-     "dow": "토",
-     "tmin": 15,
-     "tmax": 19,
-     "pop": 70,
-     "wx": "비",
-     "icon": "🌧️"
-    },
-    {
      "date": "2026-10-25",
-     "label": "내일",
+     "label": "오늘",
      "dow": "일",
      "tmin": 17,
      "tmax": 21,
@@ -76,7 +66,7 @@ const WEATHER = {
     },
     {
      "date": "2026-10-26",
-     "label": "모레",
+     "label": "내일",
      "dow": "월",
      "tmin": 17,
      "tmax": 22,
@@ -86,11 +76,21 @@ const WEATHER = {
     },
     {
      "date": "2026-10-27",
-     "label": "글피",
+     "label": "모레",
      "dow": "화",
      "tmin": 13,
      "tmax": 21,
      "pop": 20,
+     "wx": "맑음",
+     "icon": "☀️"
+    },
+    {
+     "date": "2026-10-28",
+     "label": "글피",
+     "dow": "수",
+     "tmin": 5,
+     "tmax": 17,
+     "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -101,28 +101,18 @@ const WEATHER = {
    "city": "창원",
    "days": [
     {
-     "date": "2026-10-24",
-     "label": "오늘",
-     "dow": "토",
-     "tmin": 15,
-     "tmax": 19,
-     "pop": 70,
-     "wx": "비",
-     "icon": "🌧️"
-    },
-    {
      "date": "2026-10-25",
-     "label": "내일",
+     "label": "오늘",
      "dow": "일",
      "tmin": 16,
      "tmax": 21,
-     "pop": 70,
+     "pop": 60,
      "wx": "비",
      "icon": "🌧️"
     },
     {
      "date": "2026-10-26",
-     "label": "모레",
+     "label": "내일",
      "dow": "월",
      "tmin": 16,
      "tmax": 23,
@@ -132,11 +122,21 @@ const WEATHER = {
     },
     {
      "date": "2026-10-27",
-     "label": "글피",
+     "label": "모레",
      "dow": "화",
      "tmin": 13,
      "tmax": 21,
      "pop": 30,
+     "wx": "맑음",
+     "icon": "☀️"
+    },
+    {
+     "date": "2026-10-28",
+     "label": "글피",
+     "dow": "수",
+     "tmin": 5,
+     "tmax": 16,
+     "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -147,18 +147,8 @@ const WEATHER = {
    "city": "진주",
    "days": [
     {
-     "date": "2026-10-24",
-     "label": "오늘",
-     "dow": "토",
-     "tmin": 13,
-     "tmax": 18,
-     "pop": 60,
-     "wx": "비",
-     "icon": "🌧️"
-    },
-    {
      "date": "2026-10-25",
-     "label": "내일",
+     "label": "오늘",
      "dow": "일",
      "tmin": 16,
      "tmax": 19,
@@ -168,7 +158,7 @@ const WEATHER = {
     },
     {
      "date": "2026-10-26",
-     "label": "모레",
+     "label": "내일",
      "dow": "월",
      "tmin": 16,
      "tmax": 23,
@@ -178,11 +168,21 @@ const WEATHER = {
     },
     {
      "date": "2026-10-27",
-     "label": "글피",
+     "label": "모레",
      "dow": "화",
      "tmin": 12,
      "tmax": 20,
      "pop": 30,
+     "wx": "맑음",
+     "icon": "☀️"
+    },
+    {
+     "date": "2026-10-28",
+     "label": "글피",
+     "dow": "수",
+     "tmin": 4,
+     "tmax": 16,
+     "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -193,18 +193,8 @@ const WEATHER = {
    "city": "포항",
    "days": [
     {
-     "date": "2026-10-24",
-     "label": "오늘",
-     "dow": "토",
-     "tmin": 14,
-     "tmax": 20,
-     "pop": 60,
-     "wx": "비",
-     "icon": "🌧️"
-    },
-    {
      "date": "2026-10-25",
-     "label": "내일",
+     "label": "오늘",
      "dow": "일",
      "tmin": 17,
      "tmax": 21,
@@ -214,7 +204,7 @@ const WEATHER = {
     },
     {
      "date": "2026-10-26",
-     "label": "모레",
+     "label": "내일",
      "dow": "월",
      "tmin": 17,
      "tmax": 21,
@@ -224,11 +214,21 @@ const WEATHER = {
     },
     {
      "date": "2026-10-27",
-     "label": "글피",
+     "label": "모레",
      "dow": "화",
      "tmin": 12,
      "tmax": 21,
      "pop": 30,
+     "wx": "맑음",
+     "icon": "☀️"
+    },
+    {
+     "date": "2026-10-28",
+     "label": "글피",
+     "dow": "수",
+     "tmin": 3,
+     "tmax": 16,
+     "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -239,18 +239,8 @@ const WEATHER = {
    "city": "대구",
    "days": [
     {
-     "date": "2026-10-24",
-     "label": "오늘",
-     "dow": "토",
-     "tmin": 13,
-     "tmax": 18,
-     "pop": 60,
-     "wx": "비",
-     "icon": "🌧️"
-    },
-    {
      "date": "2026-10-25",
-     "label": "내일",
+     "label": "오늘",
      "dow": "일",
      "tmin": 15,
      "tmax": 20,
@@ -260,7 +250,7 @@ const WEATHER = {
     },
     {
      "date": "2026-10-26",
-     "label": "모레",
+     "label": "내일",
      "dow": "월",
      "tmin": 15,
      "tmax": 22,
@@ -270,11 +260,21 @@ const WEATHER = {
     },
     {
      "date": "2026-10-27",
-     "label": "글피",
+     "label": "모레",
      "dow": "화",
      "tmin": 12,
      "tmax": 19,
      "pop": 30,
+     "wx": "맑음",
+     "icon": "☀️"
+    },
+    {
+     "date": "2026-10-28",
+     "label": "글피",
+     "dow": "수",
+     "tmin": 3,
+     "tmax": 15,
+     "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
     }
