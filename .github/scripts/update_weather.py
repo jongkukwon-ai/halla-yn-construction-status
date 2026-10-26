@@ -66,7 +66,14 @@ def fetch(key, nx, ny, base_date, base_time):
             raise
         except (urllib.error.URLError, OSError, ValueError, KeyError, RuntimeError) as e:
             # 오류 문구에 인증키가 섞이지 않게 원인만 남김(실행 기록이 공개됨)
-            last = e.reason if isinstance(e, urllib.error.URLError) else e
+            if isinstance(e, urllib.error.HTTPError):
+                last = f'HTTP {e.code}'
+            elif isinstance(e, urllib.error.URLError):
+                last = f'{type(e.reason).__name__}: {e.reason}'
+            elif isinstance(e, OSError):
+                last = f'{type(e).__name__}: {e}'
+            else:
+                last = e
             if isinstance(e, ValueError):
                 last = '응답이 JSON이 아님(인증키 미등록·활용신청 전일 수 있음)'
             time.sleep(4 * (k + 1))
@@ -165,7 +172,7 @@ def main():
             out.append({'office': name, 'city': city, 'days': days})
             streak = 0
         except RuntimeError as e:
-            print(f'{name}: {e}')
+            print(f'::warning::{name}: {e}')       # GitHub 주석(로그인 없이 확인 가능)으로 원인 남김
             if name not in prev:
                 raise SystemExit(f'{name}: 예보를 받지 못했고 오늘 자 직전 자료도 없어 갱신하지 않음')
             out.append(prev[name])              # 이 권역만 직전 예보 유지
