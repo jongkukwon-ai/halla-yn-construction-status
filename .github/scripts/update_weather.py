@@ -44,25 +44,53 @@ def latest_base(now):
     return (t - timedelta(days=1)).strftime('%Y%m%d'), '2300'
 
 
+class NoData(RuntimeError):
+    """해당 발표 자료가 아직 없음(기상청 resultCode 03)"""
+
+
 def fetch(key, nx, ny, base_date, base_time):
     q = urllib.parse.urlencode({'serviceKey': key, 'pageNo': 1, 'numOfRows': 1500, 'dataType': 'JSON',
                                 'base_date': base_date, 'base_time': base_time, 'nx': nx, 'ny': ny})
     last = None
-    for k in range(3):
+    for k in range(4):                          # GitHub 서버(해외)에서 기상청 응답이 가끔 끊겨 넉넉히 재시도
         try:
-            raw = urllib.request.urlopen(f'{API}?{q}', timeout=30).read()
+            raw = urllib.request.urlopen(f'{API}?{q}', timeout=20).read()
             d = json.loads(raw)
             hdr = d['response']['header']
+            if hdr.get('resultCode') == '03':
+                raise NoData(f'{base_date} {base_time} 발표 자료 없음')
             if hdr.get('resultCode') != '00':
                 raise RuntimeError(f"기상청 응답 {hdr.get('resultCode')} {hdr.get('resultMsg')}")
             return d['response']['body']['items']['item']
-        except (urllib.error.URLError, ValueError, KeyError, RuntimeError) as e:
+        except NoData:
+            raise
+        except (urllib.error.URLError, OSError, ValueError, KeyError, RuntimeError) as e:
             # 오류 문구에 인증키가 섞이지 않게 원인만 남김(실행 기록이 공개됨)
             last = e.reason if isinstance(e, urllib.error.URLError) else e
             if isinstance(e, ValueError):
                 last = '응답이 JSON이 아님(인증키 미등록·활용신청 전일 수 있음)'
-            time.sleep(3 * (k + 1))
+            time.sleep(4 * (k + 1))
     raise RuntimeError(f'기상청 예보를 받지 못함: {last}')
+
+
+def prev_base(base_date, base_time):
+    """바로 앞 발표 시각(최신 발표가 아직 안 올라왔을 때 대신 사용)"""
+    i = BASE_TIMES.index(base_time)
+    if i:
+        return base_date, BASE_TIMES[i - 1]
+    d = datetime.strptime(base_date, '%Y%m%d') - timedelta(days=1)
+    return d.strftime('%Y%m%d'), BASE_TIMES[-1]
+
+
+def previous_regions(today):
+    """지난번 weather-data.js의 권역 자료(오늘 날짜로 시작하는 것만) — 한 권역만 실패했을 때 그 권역은 직전 예보 유지"""
+    try:
+        t = OUT.read_text(encoding='utf-8')
+        d = json.loads(t[t.index('{'):t.rindex('}') + 1])
+        return {r['office']: r for r in d.get('regions', [])
+                if r.get('days') and r['days'][0].get('date') == today.isoformat()}
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
 
 
 def summarize(items, today):
@@ -115,24 +143,46 @@ def main():
     today = now.date()
     base_date, base_time = latest_base(now)
     first = (today.strftime('%Y%m%d'), '0200') if now.strftime('%H%M') >= '0215' else None   # 오늘 0시~ 자료·최저기온용
-    out = []
+    prev = previous_regions(today)
+    out, failed, streak = [], [], 0
     for name, city, nx, ny in REGIONS:
-        items = fetch(key, nx, ny, base_date, base_time)
-        if first and first != (base_date, base_time):
-            early = fetch(key, nx, ny, *first)
-            seen = {(i['fcstDate'], i['fcstTime'], i['category']) for i in items}
-            items = items + [i for i in early if (i['fcstDate'], i['fcstTime'], i['category']) not in seen]
-        days = summarize(items, today)
-        if not days:
-            raise SystemExit(f'{name}: 예보 자료가 비어 있음')
-        out.append({'office': name, 'city': city, 'days': days})
+        try:
+            try:
+                items = fetch(key, nx, ny, base_date, base_time)
+            except NoData:                      # 최신 발표가 아직 안 올라옴 → 바로 앞 발표로
+                base_date, base_time = prev_base(base_date, base_time)
+                items = fetch(key, nx, ny, base_date, base_time)
+            if first and first != (base_date, base_time):
+                try:                            # 오늘 새벽 자료는 최저기온 보강용 — 못 받아도 진행
+                    early = fetch(key, nx, ny, *first)
+                    seen = {(i['fcstDate'], i['fcstTime'], i['category']) for i in items}
+                    items = items + [i for i in early if (i['fcstDate'], i['fcstTime'], i['category']) not in seen]
+                except RuntimeError as e:
+                    print(f'{name}: 새벽 자료 생략 ({e})')
+            days = summarize(items, today)
+            if not days:
+                raise RuntimeError('예보 자료가 비어 있음')
+            out.append({'office': name, 'city': city, 'days': days})
+            streak = 0
+        except RuntimeError as e:
+            print(f'{name}: {e}')
+            if name not in prev:
+                raise SystemExit(f'{name}: 예보를 받지 못했고 오늘 자 직전 자료도 없어 갱신하지 않음')
+            out.append(prev[name])              # 이 권역만 직전 예보 유지
+            failed.append(name)
+            streak += 1
+            if streak >= 2 and len(failed) == len(out):
+                raise SystemExit('기상청 응답이 계속 끊겨 이번 회차는 갱신하지 않음(다음 회차에 재시도)')
         time.sleep(0.5)
+    if len(failed) == len(REGIONS):
+        raise SystemExit('모든 권역 실패 — 갱신하지 않음')
     data = {'updated': now.strftime('%Y-%m-%d %H:%M'),
             'base': f'{base_date[4:6]}/{base_date[6:]} {base_time[:2]}:{base_time[2:]}',
             'source': '기상청 단기예보', 'regions': out}
     OUT.write_text('// 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)\n'
                    'const WEATHER = ' + json.dumps(data, ensure_ascii=False, indent=1) + ';\n', encoding='utf-8', newline='\n')
-    print(f'날씨 갱신: {data["base"]} 발표, {len(out)}개 권역 × {len(out[0]["days"])}일')
+    print(f'날씨 갱신: {data["base"]} 발표, {len(out)}개 권역 × {len(out[0]["days"])}일'
+          + (f' (직전 예보 유지: {", ".join(failed)})' if failed else ''))
 
 
 if __name__ == '__main__':
