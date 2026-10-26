@@ -1,6 +1,6 @@
 """업종 관련 뉴스 카카오톡 아침 발송 — GitHub Actions(kakao.yml)에서 매일 07:30 KST 실행.
 
-news-data.js(매일 07:05 자동 갱신)에서 어제·오늘 날짜 기사를 골라
+news-data.js(발송 작업이 07:00에 먼저 갱신)에서 어제·오늘 날짜 기사를 골라
 카카오 메시지 API 「친구에게 보내기」로 지정된 직원들에게 보냅니다(목록형 메시지: 패널별 대표 기사 3건 + 「뉴스 전체 보기」 버튼).
 
 필요한 GitHub Secrets (값은 저장소 Settings → Secrets and variables → Actions에 직접 입력, 파일에 쓰지 않음)

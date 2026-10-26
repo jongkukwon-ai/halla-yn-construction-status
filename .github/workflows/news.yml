@@ -6,6 +6,7 @@ on:
     - cron: '17 20 * * *'  # 05:17 KST
     - cron: '5 22 * * *'   # 07:05 KST (UTC 22:05)
   workflow_dispatch: {}      # Actions 탭에서 수동 실행
+  # 아침 뉴스는 카카오 발송 작업(kakao.yml)이 07:00 외부 예약으로 먼저 갱신함 — 위 예약은 웹 화면용 예비 갱신
 
 permissions:
   contents: write
