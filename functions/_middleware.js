@@ -144,10 +144,13 @@ const OFFICES = ['부산', '울산', '경남동부', '경남서부', '경북동�
 const REVIEW_TYPES = {
   // 주간: 기간 = 그 주 월요일(YYYY-MM-DD) / 월간: 기간 = 실적 월(YYYY-MM)
   weekly:  { period: /^\d{4}-\d{2}-\d{2}$/, write: 'weekly_review_write', readAll: 'weekly_review_read_all',
-             notes: ['this_week', 'this_etc', 'next_week', 'next_etc'] },
+             // 현황·계획은 번호별 항목(추가·삭제 가능) 목록, 기타는 한 칸
+             lists: ['this_items', 'next_items'], notes: ['this_etc', 'next_etc'],
+             legacy: { this_items: 'this_week', next_items: 'next_week' } },
   monthly: { period: /^\d{4}-\d{2}$/, write: 'monthly_review_attend', readAll: 'monthly_review_host',
-             notes: ['pov', 'analysis', 'issues'] },
+             lists: [], notes: ['pov', 'analysis', 'issues'], legacy: {} },
 };
+const MAX_ITEMS = 30, MAX_TEXT = 5000;
 
 function officeOf(a) {
   if (a.office) return a.office;
@@ -183,14 +186,34 @@ function cleanPerf(perf) {
 }
 
 function cleanNotes(rtype, notes) {
-  const out = {};
-  for (const k of REVIEW_TYPES[rtype].notes) {
-    const v = String((notes || {})[k] ?? '').trim();
-    if (v.length > 5000) throw new UserError('한 칸에 5,000자까지 입력할 수 있습니다.');
+  const t = REVIEW_TYPES[rtype], src0 = notes || {}, out = {};
+  for (const k of t.notes) {
+    const v = String(src0[k] ?? '').trim();
+    if (v.length > MAX_TEXT) throw new UserError('한 칸에 5,000자까지 입력할 수 있습니다.');
     out[k] = v;
+  }
+  for (const k of t.lists) {
+    let src = src0[k];
+    if (src == null && t.legacy[k]) src = [String(src0[t.legacy[k]] ?? '')]; // 예전 한 칸 입력은 1번 항목으로 옮김
+    const items = [];
+    for (const it of (Array.isArray(src) ? src : [])) {
+      const text = String(it && typeof it === 'object' ? it.text ?? '' : it ?? '').trim();
+      if (!text) continue;
+      if (text.length > MAX_TEXT) throw new UserError('항목 하나에 5,000자까지 입력할 수 있습니다.');
+      let id = it && typeof it === 'object' ? String(it.id ?? '') : '';
+      if (!/^[a-z0-9]{1,16}$/.test(id) || items.some(x => x.id === id)) {
+        id = 'i' + items.length;
+        while (items.some(x => x.id === id)) id += 'x';
+      }
+      items.push({ id, text });
+    }
+    if (items.length > MAX_ITEMS) throw new UserError(`항목은 ${MAX_ITEMS}개까지 넣을 수 있습니다.`);
+    out[k] = items;
   }
   return out;
 }
+
+const hasContent = notes => Object.values(notes).some(v => typeof v === 'string' ? v : v.some(i => i.text));
 
 const nowStr = () => new Date(Date.now() + 9 * 3600_000).toISOString().replace('T', ' ').slice(0, 16); // 한국시간
 
@@ -202,7 +225,12 @@ async function reviewsGet(env, url, acc, roles) {
   const reviews = {};
   for (const o of offices) {
     const row = await env.DB.prepare('SELECT value FROM reviews WHERE key = ?').bind(reviewKey(rtype, period, o)).first();
-    reviews[o] = row ? JSON.parse(row.value) : null;
+    const r = row ? JSON.parse(row.value) : null;
+    if (r) {
+      r.notes = cleanNotes(rtype, r.notes); // 예전 한 칸 입력은 항목 목록으로 바꿔서 내려줌
+      if (rtype === 'weekly' && !rt.confirm) r.perf = {}; // 주간 판매계획은 지사장·관리자만 봄
+    }
+    reviews[o] = r;
   }
   return json(200, { rights: rt, offices, reviews });
 }
@@ -239,7 +267,7 @@ async function reviewsWrite(request, env, path, acc, roles) {
         r.notes = cleanNotes(rtype, body.notes);
         r.updated_at = nowStr(); r.updated_by = who;
       }
-      if (!Object.values(r.notes).some(Boolean)) throw new UserError('주요 사항을 입력한 뒤 확인요청해 주세요.');
+      if (!hasContent(r.notes)) throw new UserError('주요 사항을 입력한 뒤 확인요청해 주세요.');
       r.status = 'requested'; r.requested_at = nowStr(); r.requested_by = who;
     } else {
       r.status = 'draft';

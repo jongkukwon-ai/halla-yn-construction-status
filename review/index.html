@@ -17,6 +17,7 @@
   button.on{border-color:var(--border2);background:var(--accent-bg);color:var(--accent)}
   button.pri{border-color:rgba(120,205,90,.55);background:rgba(120,205,90,.12);color:#A6DD62}
   button.del{border-color:rgba(230,95,90,.4);color:var(--danger)}
+  button.sm{padding:3px 10px;font-size:12px}
   button:disabled{opacity:.45;cursor:default}
   .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
   .bar .sp{flex:1}
@@ -29,6 +30,7 @@
   .inbox b{color:var(--amber)} .inbox button{margin:6px 6px 0 0}
   .card{border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025);padding:14px;margin-bottom:14px}
   .card h2{font-size:15px;font-weight:500;margin-bottom:4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .card h3{font-size:13.5px;font-weight:500;margin:14px 0 8px;color:var(--text)}
   .card .sub{font-size:12px;color:var(--text3);margin-bottom:10px}
   .tag{font-size:11.5px;padding:2px 9px;border-radius:50px;border:1px solid var(--border2);color:var(--accent)}
   .tag.req{border-color:rgba(240,180,80,.6);color:var(--amber)}
@@ -43,6 +45,33 @@
   .msg{font-size:13px;min-height:18px;margin:6px 0;color:var(--accent)} .msg.err{color:var(--danger)}
   .empty{padding:30px 0;text-align:center;color:var(--text3);font-size:14px}
   .meta{font-size:12px;color:var(--text3);margin-top:6px}
+  /* 번호별 항목 */
+  .irow{display:grid;grid-template-columns:28px 1fr 64px;gap:8px;align-items:start;margin-bottom:8px}
+  .irow .num{padding-top:9px;color:var(--text2);font-size:14px;text-align:right}
+  .irow textarea{min-height:76px}
+  .irow .side{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+  .irow .side label.chk{display:flex;gap:6px;align-items:center;justify-content:center;font-size:12.5px;color:var(--accent);cursor:pointer;
+    border:1px solid var(--border2);border-radius:9px;padding:6px 4px;background:var(--accent-bg)}
+  .irow .side input[type=checkbox]{height:auto;width:15px;accent-color:#4ED690}
+  .add-row{margin:2px 0 0 36px}
+  .selbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--text2);margin:6px 0 4px}
+  .hint{font-size:12px;color:var(--text3);margin:2px 0 8px;line-height:1.6}
+  /* 취합 미리보기(슬라이드 모양) */
+  .opts{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--text2);margin-bottom:12px}
+  .opts label{display:flex;gap:6px;align-items:center}
+  .opts input[type=checkbox]{height:auto;width:15px;accent-color:#4ED690}
+  .slide{background:#fff;color:#111;border-radius:6px;padding:18px 16px 14px;font-family:"맑은 고딕","Malgun Gothic",system-ui,sans-serif;font-size:12.5px;line-height:1.45;overflow-x:auto}
+  .slide .s-title{font-size:20px;font-weight:700;margin-bottom:10px}
+  .slide .s-sub{display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;margin-bottom:4px}
+  .slide .s-sub b{background:#dbe9d3;border:1px solid #333;padding:2px 10px}
+  .slide table{min-width:0;font-size:12px;margin-bottom:12px;table-layout:fixed}
+  .slide th,.slide td{border:1px solid #222;color:#111;background:#fff;white-space:normal;text-align:center;padding:3px 6px}
+  .slide th{background:#d9d9d9;font-weight:600}
+  .slide td.t,.slide td.k{text-align:left;vertical-align:top}
+  .slide td.k{text-align:center;font-weight:700;width:34px;background:#fff}
+  .slide .it{font-weight:700;margin-top:6px} .slide .it:first-child{margin-top:0}
+  .slide .dt{white-space:pre-wrap}
+  .slide .hd{font-weight:700;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -67,14 +96,15 @@
   <div id="body"></div>
 </div>
 
+<script src="./jszip.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const NOTES = {
-  weekly: [['this_week', 'This Week · 현황 & 영업활동'], ['this_etc', 'This Week · 기타'], ['next_week', 'Next Week · 계획 & 영업활동'], ['next_etc', 'Next Week · 기타']],
-  monthly: [['pov', '◎ POV 및 동행방문'], ['analysis', '◎ 판매실적 분석 및 시장상황'], ['issues', '◎ 현안 및 달성방안']],
-};
+const MONTHLY_NOTES = [['pov', '◎ POV 및 동행방문'], ['analysis', '◎ 판매실적 분석 및 시장상황'], ['issues', '◎ 현안 및 달성방안']];
+const MERGE = '__merge';
 let type = 'weekly', period = '', office = '', data = null;
+let draft = null, drafts = {};             // 내 영업소 주간 입력 중인 내용(영업소·주 별로 보관)
+let sel = {};                              // 지사장·관리자가 취합용으로 고른 항목 {영업소: {항목id: true}}
 
 async function api(method, url, body) {
   const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'yn' }, body: body ? JSON.stringify(body) : undefined });
@@ -83,6 +113,7 @@ async function api(method, url, body) {
   if (!r.ok) throw new Error(d.error || '처리하지 못했습니다.');
   return d;
 }
+const rid = () => Math.random().toString(36).slice(2, 10);
 
 /* ── 기간 ── */
 const pad = n => String(n).padStart(2, '0');
@@ -93,9 +124,7 @@ function defaultPeriod() {
   if (type === 'weekly') return ymd(monday(ymd(t)));
   t.setMonth(t.getMonth() - 1); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}`; // 월간은 지난달 실적
 }
-function setPeriodInput() {
-  const el = $('period'); el.type = type === 'weekly' ? 'date' : 'month'; el.value = period;
-}
+function setPeriodInput() { const el = $('period'); el.type = type === 'weekly' ? 'date' : 'month'; el.value = period; }
 function shift(n) {
   if (type === 'weekly') { const d = monday(period); d.setDate(d.getDate() + 7 * n); period = ymd(d); }
   else { const [y, m] = period.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); period = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
@@ -104,31 +133,31 @@ function shift(n) {
 const monthOf = s => Number(s.split('-')[1]);
 function months() { // [당월, 익월] 숫자
   if (type === 'monthly') { const m = monthOf(period); return [m, m % 12 + 1]; }
-  const d = monday(period); const m = d.getMonth() + 1; return [m, m % 12 + 1];
+  const m = monday(period).getMonth() + 1; return [m, m % 12 + 1];
 }
 
 /* ── 상단 실적 표 ── */
 const num = v => (v === '' || v == null || isNaN(Number(v))) ? null : Number(v);
 const fmt = v => v == null ? '' : Math.round(v * 10) / 10 + '';
 const pct = (a, b) => (a == null || b == null || b === 0) ? '' : (Math.round((a / b - 1) * 1000) / 10) + '%';
+const ratio = (a, b) => (a == null || b == null || b === 0) ? '' : Math.round(a / b * 100) + '%';   // 주간 판매계획은 PPT 양식처럼 비율(%)
 const diff = (a, b) => (a == null || b == null) ? '' : fmt(a - b);
 function inp(key, v, edit) { return `<td><input data-k="${key}" inputmode="decimal" value="${esc(v ?? '')}" ${edit ? '' : 'disabled'}></td>`; }
 function cls(a, b) { return a == null || b == null ? '' : (a - b < 0 ? 'neg' : 'pos'); }
 
-function perfTable(p, edit) {
+function weeklyPerfTable(p, edit) {
+  const g = k => p[k] ?? '', ly = num(g('w.cur.ly')), plan = num(g('w.cur.plan')), mi = num(g('w.cur.mi'));
+  return `<div class="tw"><table><thead><tr><th>월</th><th>전년실적</th><th>사업계획</th><th>MI</th><th>vs 전년(%)</th><th>vs 계획(%)</th></tr></thead>
+    <tbody><tr><td>${months()[0]}월</td>${inp('w.cur.ly', g('w.cur.ly'), edit)}${inp('w.cur.plan', g('w.cur.plan'), edit)}${inp('w.cur.mi', g('w.cur.mi'), edit)}
+    <td class="calc" id="vs-ly">${ratio(mi, ly)}</td><td class="calc" id="vs-plan">${ratio(mi, plan)}</td></tr></tbody></table></div>`;
+}
+
+function monthlyPerfTable(p, edit) {
   const [m1, m2] = months();
   const g = k => p[k] ?? '';
-  if (type === 'weekly') {
-    const rows = [['cur', m1], ['next', m2]].map(([k, m]) => {
-      const ly = num(g(`w.${k}.ly`)), plan = num(g(`w.${k}.plan`)), mi = num(g(`w.${k}.mi`));
-      return `<tr><td>${m}월</td>${inp(`w.${k}.ly`, g(`w.${k}.ly`), edit)}${inp(`w.${k}.plan`, g(`w.${k}.plan`), edit)}${inp(`w.${k}.mi`, g(`w.${k}.mi`), edit)}
-        <td class="calc ${cls(mi, ly)}">${pct(mi, ly)}</td><td class="calc ${cls(mi, plan)}">${pct(mi, plan)}</td></tr>`;
-    }).join('');
-    return `<div class="tw"><table><thead><tr><th>월</th><th>전년실적</th><th>사업계획</th><th>MI</th><th>vs 전년 %</th><th>vs 계획 %</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  }
   const grp = (pre, cols) => ['pc', 'sc'].map(s => cols.map(c => num(g(`${pre}.${s}.${c}`))));
   const sum = (a, b) => a == null && b == null ? null : (a || 0) + (b || 0);
-  const block = (pre, label, third, thirdName) => {
+  const block = (pre, label, third) => {
     const [pc, sc] = grp(pre, ['ly', 'plan', third]);
     const tot = [0, 1, 2].map(i => sum(pc[i], sc[i]));
     const row = (name, k, v, editable) => {
@@ -144,29 +173,52 @@ function perfTable(p, edit) {
     ${block('a', `${m1}월 실적`, 'act')}${block('c', `${m1}월 누계`, 'act')}${block('f', `${m2}월 예상 (MI)`, 'mi')}</tbody></table></div>`;
 }
 
+/* ── 선택(지사장·관리자) ── */
+const selKey = () => `yn_sel_${type}_${period}`;
+function loadSel() { try { sel = JSON.parse(localStorage.getItem(selKey()) || '{}') || {}; } catch (e) { sel = {}; } }
+function saveSel() { try { localStorage.setItem(selKey(), JSON.stringify(sel)); } catch (e) {} }
+const isSel = (o, id) => !!(sel[o] && sel[o][id]);
+function setSel(o, id, on) { sel[o] = sel[o] || {}; if (on) sel[o][id] = true; else delete sel[o][id]; saveSel(); }
+function selectableIds(o) { // 이 영업소에서 고를 수 있는 항목(내용이 있는 것)
+  const rv = data.reviews[o]; if (!rv) return [];
+  const n = rv.notes, ids = [];
+  ['this_items', 'next_items'].forEach(k => (n[k] || []).forEach(i => i.text.trim() && ids.push(i.id)));
+  ['this_etc', 'next_etc'].forEach(k => (n[k] || '').trim() && ids.push(k));
+  return ids;
+}
+
 /* ── 화면 ── */
 async function load() {
-  setPeriodInput();
+  setPeriodInput(); drafts = {}; loadSel();
   $('body').innerHTML = '<div class="empty">불러오는 중…</div>';
   try { data = await api('GET', `/api/reviews?type=${type}&period=${period}`); } catch (e) { $('body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
   if (!data.offices.length) { $('offices').innerHTML = ''; $('body').innerHTML = '<div class="empty">이 리뷰를 볼 수 있는 권한이 없습니다.</div>'; return; }
-  if (!data.offices.includes(office)) office = data.rights.write_office || data.offices[0];
-  $('offices').innerHTML = data.offices.map(o => `<button class="${o === office ? 'on' : ''}" data-o="${esc(o)}">${esc(o)}</button>`).join('');
-  render();
+  drawTabs(); render();
+}
+function canMerge() { return type === 'weekly' && data.rights.confirm; }
+function drawTabs() {
+  if (office === MERGE && !canMerge()) office = '';
+  if (office !== MERGE && !data.offices.includes(office)) office = data.rights.write_office || data.offices[0];
+  $('offices').innerHTML = data.offices.map(o => `<button class="${o === office ? 'on' : ''}" data-o="${esc(o)}">${esc(o)}</button>`).join('')
+    + (canMerge() ? `<span class="sp"></span><button class="pri ${office === MERGE ? 'on' : ''}" data-o="${MERGE}">취합 · PPT 보내기</button>` : '');
 }
 
 function render() {
+  if (office === MERGE) return renderMerge();
+  return type === 'weekly' ? renderWeekly() : renderMonthly();
+}
+
+/* 월간 (기존) */
+function renderMonthly() {
   const rt = data.rights, rv = data.reviews[office] || { perf: {}, notes: {}, status: 'draft' };
-  const mine = rt.write_office === office, locked = rv.status === 'requested';
-  const canNotes = mine && !locked;
-  const title = type === 'weekly' ? `${period} 주 주간리뷰` : `${period.replace('-', '년 ')}월 월간 대면리뷰`;
-  const notes = NOTES[type].map(([k, label]) => `<div class="field"><label>${label}</label>
+  const mine = rt.write_office === office, locked = rv.status === 'requested', canNotes = mine && !locked;
+  const notes = MONTHLY_NOTES.map(([k, label]) => `<div class="field"><label>${label}</label>
     <textarea data-n="${k}" ${canNotes ? '' : 'disabled'}>${esc(rv.notes[k] || '')}</textarea></div>`).join('');
   $('body').innerHTML = `
     <div class="card"><h2>${esc(office)} 영업소 ${rv.status === 'requested' ? '<span class="tag req">확인요청됨</span>' : ''}</h2>
-      <div class="sub">${esc(title)}${rv.requested_at ? ` · 요청 ${esc(rv.requested_at)} ${esc(rv.requested_by)}` : ''}</div>
-      <h2 style="font-size:14px">${type === 'weekly' ? '판매계획' : '판매 실적'} <span class="sub" style="margin:0">${rt.perf ? '관리자가 입력합니다 (단위: 톤)' : '관리자가 입력한 값입니다'}</span></h2>
-      ${perfTable(rv.perf || {}, rt.perf)}
+      <div class="sub">${esc(period.replace('-', '년 '))}월 월간 대면리뷰${rv.requested_at ? ` · 요청 ${esc(rv.requested_at)} ${esc(rv.requested_by)}` : ''}</div>
+      <h2 style="font-size:14px">판매 실적 <span class="sub" style="margin:0">${rt.perf ? '관리자가 입력합니다 (단위: 톤)' : '관리자가 입력한 값입니다'}</span></h2>
+      ${monthlyPerfTable(rv.perf || {}, rt.perf)}
       <div class="msg" id="msg-perf"></div>
       ${rt.perf ? '<button class="pri" id="save-perf">상단 실적 저장</button>' : ''}
       ${rv.perf_updated_at ? `<div class="meta">실적 입력 ${esc(rv.perf_updated_at)} ${esc(rv.perf_updated_by)}</div>` : ''}
@@ -180,25 +232,253 @@ function render() {
     </div>`;
   if (rt.perf) $('body').querySelectorAll('[data-k]').forEach(i => i.addEventListener('input', () => livePerf()));
 }
-function collect() {
-  const perf = {}; document.querySelectorAll('[data-k]').forEach(i => { if (i.value.trim() !== '') perf[i.dataset.k] = i.value.trim().replace(/,/g, ''); }); return perf;
-}
-function livePerf() { // 입력 중에도 차이·% 계산 갱신(저장 전)
+function livePerf() { // 월간: 입력 중에도 차이·% 계산 갱신(저장 전)
   const rv = data.reviews[office] || { perf: {}, notes: {}, status: 'draft' };
   const keep = document.activeElement && document.activeElement.dataset.k, pos = document.activeElement && document.activeElement.selectionStart;
-  const tmp = { ...rv, perf: collect() }; data.reviews[office] = tmp;
+  data.reviews[office] = { ...rv, perf: collect() };
   const msgs = [...document.querySelectorAll('.msg')].map(e => e.textContent);
   render(); document.querySelectorAll('.msg').forEach((e, i) => e.textContent = msgs[i] || '');
   const el = keep && document.querySelector(`[data-k="${keep}"]`); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
 }
-function notesNow() { const n = {}; document.querySelectorAll('[data-n]').forEach(t => n[t.dataset.n] = t.value); return n; }
+function collect() {
+  const perf = {}; document.querySelectorAll('[data-k]').forEach(i => { if (i.value.trim() !== '') perf[i.dataset.k] = i.value.trim().replace(/,/g, ''); }); return perf;
+}
+
+/* 주간 */
+function ensureDraft(rv) {
+  const key = `${type}|${period}|${office}`;
+  if (!drafts[key]) {
+    const n = rv.notes || {}, d = { this_items: (n.this_items || []).map(i => ({ ...i })), next_items: (n.next_items || []).map(i => ({ ...i })), this_etc: n.this_etc || '', next_etc: n.next_etc || '' };
+    ['this_items', 'next_items'].forEach(k => { while (d[k].length < 3) d[k].push({ id: rid(), text: '' }); }); // 1~3번 칸은 항상 보이게
+    drafts[key] = d;
+  }
+  draft = drafts[key];
+}
+function syncDraft() { // 화면에 입력 중인 값을 draft 로 옮김
+  if (!draft) return;
+  document.querySelectorAll('textarea[data-list]:not(:disabled)').forEach(t => { const it = draft[t.dataset.list].find(i => i.id === t.dataset.id); if (it) it.text = t.value; });
+  document.querySelectorAll('textarea[data-n]:not(:disabled)').forEach(t => { draft[t.dataset.n] = t.value; });
+}
+function itemRows(listKey, rv, editable, conf) {
+  const items = editable ? draft[listKey] : (rv.notes[listKey] || []).filter(i => i.text.trim());
+  if (!items.length) return '<div class="hint">입력된 항목이 없습니다.</div>';
+  return items.map((it, i) => `<div class="irow"><span class="num">${i + 1}.</span>
+    <textarea data-list="${listKey}" data-id="${esc(it.id)}" ${editable ? '' : 'disabled'} placeholder="${editable ? '첫 줄은 제목, 다음 줄부터 세부 내용 (예: - 12개사 中 폐업추진)' : ''}">${esc(it.text)}</textarea>
+    <div class="side">${editable ? `<button class="del sm" data-del="${listKey}:${esc(it.id)}">삭제</button>` : ''}
+    ${conf ? `<label class="chk"><input type="checkbox" data-sel="${esc(it.id)}" ${isSel(office, it.id) ? 'checked' : ''}>선택</label>` : ''}</div></div>`).join('');
+}
+function etcBlock(key, label, rv, editable, conf) {
+  const v = editable ? draft[key] : (rv.notes[key] || '');
+  return `<div class="irow" style="grid-template-columns:1fr 64px"><div class="field" style="margin:0"><label>${label}</label>
+    <textarea data-n="${key}" style="min-height:70px" ${editable ? '' : 'disabled'}>${esc(v)}</textarea></div>
+    <div class="side" style="padding-top:26px">${conf ? `<label class="chk"><input type="checkbox" data-sel="${key}" ${isSel(office, key) ? 'checked' : ''}>선택</label>` : ''}</div></div>`;
+}
+
+function renderWeekly() {
+  const rt = data.rights, rv = data.reviews[office] || { perf: {}, notes: {}, status: 'draft' };
+  const mine = rt.write_office === office, locked = rv.status === 'requested', editable = mine && !locked, conf = rt.confirm;
+  if (editable) ensureDraft(rv);
+  const [m1] = months(), wk = `${period} 주 주간리뷰`;
+  $('body').innerHTML = `
+    ${conf ? `<div class="card"><h2>${esc(office)} 영업소 ${rv.status === 'requested' ? '<span class="tag req">확인요청됨</span>' : ''}</h2>
+      <div class="sub">${esc(wk)}${rv.requested_at ? ` · 요청 ${esc(rv.requested_at)} ${esc(rv.requested_by)}` : ''}</div>
+      <h2 style="font-size:14px">* 판매계획 <span class="sub" style="margin:0">${rt.perf ? '관리자가 입력합니다 (단위: 천톤, %)' : '관리자가 입력한 값입니다 (단위: 천톤, %)'}</span></h2>
+      ${weeklyPerfTable(rv.perf || {}, rt.perf)}
+      <div class="msg" id="msg-perf"></div>
+      ${rt.perf ? '<button class="pri" id="save-perf">판매계획 저장</button>' : ''}
+      ${rv.perf_updated_at ? `<div class="meta">입력 ${esc(rv.perf_updated_at)} ${esc(rv.perf_updated_by)}</div>` : ''}</div>` : ''}
+    <div class="card">
+      ${conf ? '' : `<h2>${esc(office)} 영업소 ${rv.status === 'requested' ? '<span class="tag req">확인요청됨</span>' : ''}</h2><div class="sub">${esc(wk)}</div>`}
+      <h2>주요 사항 ${mine ? '' : '<span class="sub" style="margin:0">해당 영업소장이 작성합니다</span>'}</h2>
+      ${conf ? `<div class="selbar"><span>오른쪽 <b>선택</b> 칸에 체크한 항목이 「취합 · PPT 보내기」에 모입니다.</span>
+        <button class="sm" data-all="1">이 영업소 전체 선택</button><button class="sm" data-all="0">전체 해제</button><span id="sel-cnt"></span></div>` : ''}
+      <h3>This Week · 현황 &amp; 영업활동</h3>
+      ${itemRows('this_items', rv, editable, conf)}
+      ${editable ? '<div class="add-row"><button class="sm" data-add="this_items">+ 항목 추가</button></div>' : ''}
+      <h3>This Week · 기타</h3>
+      ${etcBlock('this_etc', '기타 (한 줄에 하나씩)', rv, editable, conf)}
+      <h3>Next Week · 계획 &amp; 영업활동</h3>
+      ${itemRows('next_items', rv, editable, conf)}
+      ${editable ? '<div class="add-row"><button class="sm" data-add="next_items">+ 항목 추가</button></div>' : ''}
+      <h3>Next Week · 기타</h3>
+      ${etcBlock('next_etc', '기타 (한 줄에 하나씩)', rv, editable, conf)}
+      <div class="msg" id="msg-n"></div>
+      ${mine ? (locked ? '<button class="del" id="cancel">요청 취소하고 수정</button>'
+        : '<button id="save-n">임시저장</button> <button class="pri" id="request">확인요청 (지사장·관리자에게 전달)</button>') : ''}
+      ${rv.updated_at ? `<div class="meta">작성 ${esc(rv.updated_at)} ${esc(rv.updated_by)}</div>` : ''}
+    </div>`;
+  if (rt.perf) $('body').querySelectorAll('[data-k]').forEach(i => i.addEventListener('input', updateVs));
+  updateSelCount();
+}
+function updateVs() {
+  const v = k => num(document.querySelector(`[data-k="${k}"]`).value.replace(/,/g, ''));
+  const ly = v('w.cur.ly'), plan = v('w.cur.plan'), mi = v('w.cur.mi');
+  $('vs-ly').textContent = ratio(mi, ly); $('vs-plan').textContent = ratio(mi, plan);
+}
+function updateSelCount() {
+  const el = $('sel-cnt'); if (!el) return;
+  const ids = selectableIds(office), n = ids.filter(id => isSel(office, id)).length;
+  el.textContent = `선택 ${n} / ${ids.length}`;
+}
+
+/* ── 취합 · 미리보기 · PPT ── */
+function parseItem(text, tag) { // 첫 줄 = 제목, 나머지 = 세부(없으면 '- ' 붙임)
+  const lines = String(text).split('\n').map(s => s.replace(/\s+$/, '')).filter(s => s.trim());
+  const title = (tag ? `[${tag}] ` : '') + lines[0].trim().replace(/^\d+\s*[.)]\s*/, '');
+  const details = lines.slice(1).map(l => /^\s*([-→•·]|\d+\))/.test(l) ? (/^\s/.test(l) ? l : ' ' + l) : ' - ' + l.trim());
+  return { title, details };
+}
+function etcLines(text, tag) {
+  return String(text).split('\n').map(s => s.trim().replace(/^\d+\s*[.)]\s*/, '')).filter(Boolean).map(s => (tag ? `[${tag}] ` : '') + s);
+}
+function buildModel() {
+  const tag = $('opt-tag') && $('opt-tag').checked, m = { month: months()[0], this: [], next: [], thisEtc: [], nextEtc: [] };
+  const sum = { ly: null, plan: null, mi: null };
+  data.offices.forEach(o => {
+    const rv = data.reviews[o]; if (!rv) return;
+    const t = tag ? o : '';
+    ['this', 'next'].forEach(w => (rv.notes[w + '_items'] || []).forEach(it => { if (it.text.trim() && isSel(o, it.id)) m[w].push(parseItem(it.text, t)); }));
+    [['this_etc', 'thisEtc'], ['next_etc', 'nextEtc']].forEach(([k, mk]) => { if (isSel(o, k)) m[mk].push(...etcLines(rv.notes[k] || '', t)); });
+    [['ly', 'w.cur.ly'], ['plan', 'w.cur.plan'], ['mi', 'w.cur.mi']].forEach(([k, pk]) => { const v = num((rv.perf || {})[pk]); if (v != null) sum[k] = (sum[k] || 0) + v; });
+  });
+  m.perf = sum; return m;
+}
+const fmtN = v => v == null ? '-' : (Math.round(v * 10) / 10).toLocaleString('en-US');
+const nth = n => `${n}. `;
+
+function previewHtml(m) {
+  const items = list => list.length ? list.map((it, i) => `<div class="it">${nth(i + 1)}${esc(it.title)}</div>${it.details.length ? `<div class="dt">${esc(it.details.join('\n'))}</div>` : ''}`).join('') : '<div style="color:#999">(선택된 항목 없음)</div>';
+  const etc = list => list.length ? list.map((s, i) => `<div>${nth(i + 1)}${esc(s)}</div>`).join('') : '&nbsp;';
+  const p = m.perf;
+  return `<div class="slide"><div class="s-title">6. 영남지사</div>
+    <div class="s-sub"><b>* 판매계획</b><span>(단위: 천톤, %)</span></div>
+    <table><thead><tr><th>월</th><th>전년실적</th><th>사업계획</th><th>MI</th><th>vs 전년(%)</th><th>vs 계획(%)</th></tr></thead>
+      <tbody><tr><td>${m.month}월</td><td>${fmtN(p.ly)}</td><td>${fmtN(p.plan)}</td><td>${fmtN(p.mi)}</td><td>${ratio(p.mi, p.ly) || '-'}</td><td>${ratio(p.mi, p.plan) || '-'}</td></tr></tbody></table>
+    <table><thead><tr><th colspan="2">This Week</th><th colspan="2">Next Week</th></tr></thead><tbody>
+      <tr><td class="k">현황<br>&amp;<br>영업<br>활동</td><td class="t" style="width:41%"><div class="hd">* 거래처별 영업활동 진행 사항 및 시장 동향</div>${items(m.this)}</td>
+          <td class="k">계획<br>&amp;<br>영업<br>활동</td><td class="t" style="width:41%">${items(m.next)}</td></tr>
+      <tr><td class="k">기타</td><td class="t">${etc(m.thisEtc)}</td><td class="k">기타</td><td class="t">${etc(m.nextEtc)}</td></tr></tbody></table></div>`;
+}
+function tuesdayOf(mon) { const d = monday(mon); d.setDate(d.getDate() + 1); return ymd(d); }
+
+function renderMerge() {
+  const offs = data.offices, missing = offs.filter(o => !data.reviews[o] || !selectableIds(o).length);
+  const total = offs.reduce((n, o) => n + selectableIds(o).filter(id => isSel(o, id)).length, 0);
+  const keepTag = $('opt-tag') ? $('opt-tag').checked : false, keepDate = $('opt-date') ? $('opt-date').value : tuesdayOf(period);
+  $('body').innerHTML = `<div class="card"><h2>취합 · 미리보기 <span class="tag">선택 ${total}건</span></h2>
+    <div class="sub">${esc(period)} 주 · 각 영업소 화면에서 오른쪽 <b>선택</b> 칸에 체크한 항목이 아래 양식에 모입니다.${missing.length ? ` (입력 내용이 없는 영업소: ${esc(missing.join(', '))})` : ''}</div>
+    <div class="opts"><label><input type="checkbox" id="opt-tag" ${keepTag ? 'checked' : ''}> 항목 앞에 영업소 이름 표시</label>
+      <label>파일 날짜 <input type="date" id="opt-date" value="${esc(keepDate)}"></label>
+      <span class="sp" style="flex:1"></span><button class="pri" id="export-ppt">PPT 보내기</button></div>
+    <div class="msg" id="msg-m"></div>
+    <div id="preview">${previewHtml(buildModel())}</div>
+    <div class="hint">PPT 보내기를 누르면 브라우저의 다운로드 폴더에 「Weekly Report 날짜영남지사.pptx」로 저장됩니다. 항목이 많으면 글자 크기가 자동으로 줄어듭니다.</div></div>`;
+}
+
+/* PPT 만들기: 양식 파일(weekly_template.pptx)의 표에 내용만 채워 넣음 */
+const NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main', NS_P = 'http://schemas.openxmlformats.org/presentationml/2006/main';
+const xe = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const SIZES = [[900, 1300], [800, 1150], [700, 1000], [600, 860]];   // [글자크기, 줄간격] 1/100pt
+function rpr(sz, b) {
+  return `<a:rPr kumimoji="0" lang="ko-KR" altLang="en-US" sz="${sz}" b="${b ? 1 : 0}" i="0" u="none" strike="noStrike" kern="1200" cap="none" normalizeH="0" baseline="0" dirty="0"><a:ln><a:noFill/></a:ln><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:effectLst/><a:latin typeface="맑은 고딕" pitchFamily="50" charset="-127"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:rPr>`;
+}
+const ppr = ln => `<a:pPr marL="0" marR="0" lvl="0" indent="0" algn="l" defTabSz="914400" rtl="0" eaLnBrk="1" fontAlgn="base" latinLnBrk="1" hangingPunct="1"><a:lnSpc><a:spcPts val="${ln}"/></a:lnSpc><a:spcBef><a:spcPct val="0"/></a:spcBef><a:spcAft><a:spcPct val="0"/></a:spcAft><a:buClrTx/><a:buSzTx/><a:buFontTx/><a:buNone/><a:tabLst/><a:defRPr/></a:pPr>`;
+const para = (text, b, sz, ln) => `<a:p>${ppr(ln)}<a:r>${rpr(sz, b)}<a:t>${xe(text)}</a:t></a:r></a:p>`;
+const blank = (sz, ln) => `<a:p>${ppr(ln)}<a:endParaRPr lang="ko-KR" altLang="en-US" sz="${sz}" b="0"/></a:p>`;
+function est(text, sz) { // 한 문단이 차지하는 줄 수 추정 (칸 폭 약 320pt)
+  let w = 0; for (const ch of text) w += ch.charCodeAt(0) >= 0x1100 ? 1 : 0.55;
+  return Math.max(1, Math.ceil(w / (320 / (sz / 100))));
+}
+function cellParas(m, which, sz, ln) { // 'this' | 'next'
+  const p = []; let lines = 0;
+  const add = (x, text, ln2) => { p.push(x); lines += est(text, sz); };
+  if (which === 'this') { add(para('* 거래처별 영업활동 진행 사항 및 시장 동향', true, sz, ln + 200), '* 거래처별 영업활동 진행 사항 및 시장 동향', ln); p.push(blank(sz, ln)); lines++; }
+  m[which].forEach((it, i) => {
+    add(para(`${i + 1}. ${it.title}`, true, sz, ln), `${i + 1}. ${it.title}`);
+    it.details.forEach(d => add(para(d, false, sz, ln), d));
+    p.push(blank(sz, ln)); lines++;
+  });
+  return { xml: p.join(''), lines };
+}
+function fitSize(m) {
+  for (const [sz, ln] of SIZES) {
+    const a = cellParas(m, 'this', sz, ln).lines, b = cellParas(m, 'next', sz, ln).lines;
+    if (Math.max(a, b) * (ln / 100) <= 350) return [sz, ln];
+  }
+  return SIZES[SIZES.length - 1];
+}
+function setCell(doc, tc, parasXml) {
+  const tb = tc.getElementsByTagNameNS(NS_A, 'txBody')[0];
+  [...tb.children].filter(c => c.localName === 'p').forEach(c => tb.removeChild(c));
+  const frag = new DOMParser().parseFromString(`<r xmlns:a="${NS_A}">${parasXml}</r>`, 'application/xml');
+  [...frag.documentElement.children].forEach(c => tb.appendChild(doc.importNode(c, true)));
+}
+function setSimple(tc, text) { // 판매계획 표: 첫 글자 서식을 살려 글자만 바꿈
+  const p = tc.getElementsByTagNameNS(NS_A, 'p')[0], runs = [...p.getElementsByTagNameNS(NS_A, 'r')];
+  runs[0].getElementsByTagNameNS(NS_A, 't')[0].textContent = text;
+  runs.slice(1).forEach(r => p.removeChild(r));
+}
+async function makePptx(m) {
+  const res = await fetch('./weekly_template.pptx', { cache: 'no-store' });
+  if (!res.ok) throw new Error('PPT 양식 파일을 찾을 수 없습니다.');
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  const xml = await zip.file('ppt/slides/slide1.xml').async('string');
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const frames = [...doc.getElementsByTagNameNS(NS_P, 'graphicFrame')];
+  const byName = n => frames.find(f => f.getElementsByTagNameNS(NS_P, 'cNvPr')[0].getAttribute('name') === n);
+  const big = byName('표 9'), sales = byName('표 10');
+  if (!big || !sales) throw new Error('PPT 양식 구조가 달라 채울 수 없습니다.');
+  const [sz, ln] = fitSize(m);
+  const bigRows = [...big.getElementsByTagNameNS(NS_A, 'tr')].map(tr => [...tr.childNodes].filter(c => c.localName === 'tc'));
+  setCell(doc, bigRows[1][1], cellParas(m, 'this', sz, ln).xml);
+  setCell(doc, bigRows[1][3], cellParas(m, 'next', sz, ln).xml);
+  const etc = list => list.length ? list.map((s, i) => para(`${i + 1}. ${s}`, false, 900, 1200)).join('') : blank(900, 1200);
+  setCell(doc, bigRows[2][1], etc(m.thisEtc));
+  setCell(doc, bigRows[2][3], etc(m.nextEtc));
+  const srow = [...sales.getElementsByTagNameNS(NS_A, 'tr')][1], sc = [...srow.childNodes].filter(c => c.localName === 'tc'), p = m.perf;
+  [`${m.month}월`, fmtN(p.ly), fmtN(p.plan), fmtN(p.mi), ratio(p.mi, p.ly) || '-', ratio(p.mi, p.plan) || '-'].forEach((t, i) => setSimple(sc[i], t));
+  const out = new XMLSerializer().serializeToString(doc);
+  zip.file('ppt/slides/slide1.xml', out.startsWith('<?xml') ? out : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + out);
+  return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+}
+async function exportPpt() {
+  const m = buildModel(), say2 = (t, err) => { const el = $('msg-m'); el.textContent = t; el.className = 'msg' + (err ? ' err' : ''); };
+  if (!m.this.length && !m.next.length && !m.thisEtc.length && !m.nextEtc.length) return say2('선택된 항목이 없습니다. 영업소 화면에서 항목을 먼저 선택해 주세요.', true);
+  try {
+    const blob = await makePptx(m), d = ($('opt-date').value || tuesdayOf(period)).replace(/-/g, '');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Weekly Report ${d}영남지사.pptx`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    say2(`「${a.download}」을 다운로드 폴더로 보냈습니다.`);
+  } catch (err) { say2(err.message || 'PPT를 만들지 못했습니다.', true); }
+}
+
+/* ── 저장·요청 ── */
 const base = () => `/api/reviews/${type}/${period}/${encodeURIComponent(office)}`;
 function say(id, t, err) { const el = $(id); if (el) { el.textContent = t; el.className = 'msg' + (err ? ' err' : ''); } }
+function notesNow() {
+  if (type === 'weekly') { syncDraft(); return { this_items: draft.this_items, next_items: draft.next_items, this_etc: draft.this_etc, next_etc: draft.next_etc }; }
+  const n = {}; document.querySelectorAll('[data-n]').forEach(t => n[t.dataset.n] = t.value); return n;
+}
+async function reload(msgId, text) {
+  data = await api('GET', `/api/reviews?type=${type}&period=${period}`); drafts = {}; render(); say(msgId, text);
+}
 
 $('body').addEventListener('click', async e => {
-  const id = e.target.id; if (!id) return;
+  const t = e.target;
+  if (t.id === 'export-ppt') return exportPpt();
+  if (t.dataset.add) { syncDraft(); draft[t.dataset.add].push({ id: rid(), text: '' }); return renderWeekly(); }
+  if (t.dataset.del) {
+    syncDraft(); const [k, id] = t.dataset.del.split(':'), it = draft[k].find(i => i.id === id);
+    if (it && it.text.trim() && !confirm('이 항목을 삭제할까요?')) return;
+    draft[k] = draft[k].filter(i => i.id !== id); while (draft[k].length < 3) draft[k].push({ id: rid(), text: '' }); return renderWeekly();
+  }
+  if (t.dataset.all != null) {
+    selectableIds(office).forEach(id => setSel(office, id, t.dataset.all === '1'));
+    return renderWeekly();
+  }
+  const id = t.id; if (!id) return;
   try {
-    if (id === 'save-perf') { await api('PUT', base() + '/perf', { perf: collect() }); await reload('msg-perf', '상단 실적을 저장했습니다.'); }
+    if (id === 'save-perf') { await api('PUT', base() + '/perf', { perf: collect() }); await reload('msg-perf', type === 'weekly' ? '판매계획을 저장했습니다.' : '상단 실적을 저장했습니다.'); }
     if (id === 'save-n') { await api('PUT', base() + '/notes', { notes: notesNow() }); await reload('msg-n', '임시저장했습니다.'); }
     if (id === 'request') {
       if (!confirm('지사장과 관리자에게 확인요청을 보낼까요?\n요청 후에는 취소해야 고칠 수 있습니다.')) return;
@@ -207,9 +487,17 @@ $('body').addEventListener('click', async e => {
     if (id === 'cancel') { await api('POST', base() + '/cancel', {}); await reload('msg-n', '요청을 취소했습니다. 수정 후 다시 요청해 주세요.'); inbox(); }
   } catch (err) { if (err.message) say(id === 'save-perf' ? 'msg-perf' : 'msg-n', err.message, true); }
 });
-async function reload(msgId, text) { data = await api('GET', `/api/reviews?type=${type}&period=${period}`); render(); say(msgId, text); }
+$('body').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.sel) { setSel(office, t.dataset.sel, t.checked); updateSelCount(); }
+  if (t.id === 'opt-tag' || t.id === 'opt-date') $('preview') && ($('preview').innerHTML = previewHtml(buildModel()));
+});
 
-$('offices').addEventListener('click', e => { if (e.target.dataset.o) { office = e.target.dataset.o; load(); } });
+$('offices').addEventListener('click', e => {
+  const o = e.target.dataset.o; if (!o) return;
+  if (type === 'weekly' && office !== MERGE) syncDraft();
+  office = o; drawTabs(); render();
+});
 $('prev').onclick = () => shift(-1); $('next').onclick = () => shift(1);
 $('period').onchange = e => { if (!e.target.value) return; period = type === 'weekly' ? ymd(monday(e.target.value)) : e.target.value; load(); };
 function setType(t) { type = t; $('t-weekly').classList.toggle('on', t === 'weekly'); $('t-monthly').classList.toggle('on', t === 'monthly'); period = defaultPeriod(); load(); }
