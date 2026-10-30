@@ -170,14 +170,14 @@ def main():
         uuids = recipients(token)
     except RuntimeError as e:                         # 심사 전·친구목록 동의 전이면 친구 발송만 건너뜀
         print(f'::warning::친구에게 보내기를 아직 쓸 수 없어 나에게만 보냄 — 카카오 심사 승인·친구목록 동의 후 kakao_login.py를 다시 실행하세요. ({str(e)[:120]})')
-        print(f'발송 완료: 나에게 1건 (새 기사 {total}건)')
+        print(f'::notice::발송 완료: 나에게 1건 (새 기사 {total}건)')
         return
     sent = 0
     for i in range(0, len(uuids), 5):                 # 한 번에 최대 5명
         r = call('https://kapi.kakao.com/v1/api/talk/friends/message/default/send',
                  {'receiver_uuids': json.dumps(uuids[i:i + 5]), 'template_object': payload}, token=token)
         sent += len(r.get('successful_receiver_uuids', []))
-    print(f'발송 완료: 친구 {sent}/{len(uuids)}명 + 나에게 1건 (새 기사 {total}건)')
+    print(f'::notice::발송 완료: 친구 {sent}/{len(uuids)}명 + 나에게 1건 (새 기사 {total}건)')
     if uuids and sent < len(uuids):
         sys.exit(f'일부 발송 실패: {len(uuids) - sent}명')
 
