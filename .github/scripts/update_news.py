@@ -25,6 +25,7 @@ KEEP_DAYS = 30      # 화면이 최근 30일만 보여줌
 FRESH_DAYS = 14     # 새로 받을 기사 범위
 PER_PANEL = 20
 PER_SOURCE = 2      # 한 패널에 같은 언론사 최대 건수(새 기사 기준)
+STALE_DAYS = 2      # 못 받았을 때 화면 최신 기사가 이보다 오래되면 실패로 알림(그 전엔 경고만)
 
 QUERIES = {
     'C': ['부산 재개발', '부산 재건축', '부산 분양', '부산 착공', '부산 시공사 선정', '울산 분양', '울산 재개발',
@@ -140,7 +141,12 @@ def main():
         if attempt == 0:
             time.sleep(90)
     if ok == 0:
-        sys.exit('Google 뉴스 RSS를 하나도 받지 못했습니다 — news-data.js는 그대로 둡니다.')
+        # 잠깐 막힌 것이면 경고만(실패 알림 메일 안 감) — 화면 뉴스가 STALE_DAYS일 넘게 멈췄을 때만 실패로 알림
+        newest = max((x['date'] for v in old.values() for x in v), default='')
+        if newest >= (TODAY - timedelta(days=STALE_DAYS)).isoformat():
+            print(f'::warning::Google 뉴스 RSS를 받지 못해 기존 뉴스 유지(최신 기사 {newest}) — 다음 회차에 재시도')
+            return
+        sys.exit(f'Google 뉴스 RSS를 하나도 받지 못했고 화면 뉴스가 오래됨(최신 기사 {newest or "없음"}) — news-data.js는 그대로 둡니다.')
 
     cutoff = (TODAY - timedelta(days=KEEP_DAYS)).isoformat()
     result = {}

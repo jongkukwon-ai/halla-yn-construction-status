@@ -28,6 +28,7 @@ REGIONS = [('부산', '부산', 98, 76), ('울산', '울산', 102, 84), ('경남
            ('경남서부', '진주', 81, 75), ('경북동부', '포항', 102, 94), ('경북서부', '대구', 89, 90)]   # 경북서부는 대구 날씨(사용자 지정)
 BASE_TIMES = ['0200', '0500', '0800', '1100', '1400', '1700', '2000', '2300']   # 발표 시각(약 10분 뒤 제공)
 DAYS = '월화수목금토일'
+STALE_HOURS = 9     # 못 받았을 때 화면 예보가 발표된 지 이보다 오래면 실패로 알림(그 전엔 경고만)
 
 
 def service_key():
@@ -192,5 +193,34 @@ def main():
           + (f' (직전 예보 유지: {", ".join(failed)})' if failed else ''))
 
 
+def data_age_hours(now):
+    """화면에 걸린 weather-data.js 예보가 발표된 지 몇 시간 지났는지(읽을 수 없으면 None)"""
+    try:
+        t = OUT.read_text(encoding='utf-8')
+        d = json.loads(t[t.index('{'):t.rindex('}') + 1])
+        year = int(d['updated'][:4])
+        base = datetime.strptime(f"{year} {d['base']}", '%Y %m/%d %H:%M').replace(tzinfo=KST)
+        if base > now + timedelta(days=1):              # 연말·연초 경계
+            base = base.replace(year=year - 1)
+        return (now - base).total_seconds() / 3600
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def soft_fail(msg):
+    """기상청이 GitHub 서버에 잠깐 응답하지 않는 일은 흔함 — 화면 예보가 아직 최근이면 경고만 남기고 성공으로 끝냄
+    (실패 알림 메일 안 감). STALE_HOURS를 넘게 멈췄을 때만 실패로 알림."""
+    age = data_age_hours(datetime.now(KST))
+    if age is not None and age <= STALE_HOURS:
+        print(f'::warning::{msg} — 화면은 {age:.0f}시간 전 발표 예보 유지(다음 회차에 재시도)')
+        return
+    sys.exit(f'{msg} — 화면 날씨가 ' + ('오래' if age is None else f'{age:.0f}시간째') + ' 갱신되지 않음')
+
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        if e.code in (None, 0):
+            raise
+        soft_fail(str(e.code))
