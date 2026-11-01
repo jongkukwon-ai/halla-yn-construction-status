@@ -97,23 +97,48 @@ def read_existing(text, name):
              'date': m[3], 'url': json.loads('"' + m[4] + '"')} for m in ITEM.finditer(blk)]
 
 
+def collect():
+    """검색어별로 받아 패널에 분류 → (패널별 기사, 성공 수, 실패 수, 첫 오류)"""
+    fetched = {k: [] for k in QUERIES}
+    ok = fail = 0
+    first_err = ''
+    for panel, queries in QUERIES.items():
+        for q in queries:
+            items = None
+            for k in range(2):                       # 검색어마다 한 번 더 시도
+                try:
+                    items = list(fetch(q))
+                    break
+                except Exception as e:
+                    err = f'{type(e).__name__}: {e}'[:150]
+                    time.sleep(3)
+            if items is None:                        # 한 검색어 실패는 건너뜀
+                print(f'  검색 실패 "{q}": {err}')
+                fail += 1
+                first_err = first_err or err
+                if ok == 0 and fail >= 5:            # 처음부터 연달아 실패 = 막힘, 나머지는 시도하지 않음
+                    return fetched, ok, fail, first_err
+                continue
+            ok += 1
+            fetched[panel] += [x for x in items if belongs(panel, x)]
+            time.sleep(1)
+    return fetched, ok, fail, first_err
+
+
 def main():
     text = DATA.read_text(encoding='utf-8')
     names = {'C': 'NEWS_CONSTRUCTION', 'M': 'NEWS_CEMENT', 'O': 'NEWS_OTHER'}
     old = {k: read_existing(text, v) for k, v in names.items()}
 
-    fetched = {k: [] for k in QUERIES}
-    ok = 0
-    for panel, queries in QUERIES.items():
-        for q in queries:
-            try:
-                items = list(fetch(q))
-                ok += 1
-            except Exception as e:   # 한 검색어 실패는 건너뜀
-                print(f'  검색 실패 "{q}": {e}')
-                continue
-            fetched[panel] += [x for x in items if belongs(panel, x)]
-            time.sleep(1)
+    # Google이 GitHub 서버를 잠깐 막는 일이 있어(검색어 전부 실패) — 처음 5개가 연달아 실패하면 막힘으로 보고
+    # 1분 반 기다렸다가 처음부터 한 번 더. 그래도 안 되면 news-data.js는 그대로 두고 실패로 끝냄.
+    for attempt in range(2):
+        fetched, ok, fail, first_err = collect()
+        if ok:
+            break
+        print(f'::warning::Google 뉴스 RSS 받기 실패({fail}건) — {first_err}' + (' / 90초 뒤 다시 시도' if attempt == 0 else ''))
+        if attempt == 0:
+            time.sleep(90)
     if ok == 0:
         sys.exit('Google 뉴스 RSS를 하나도 받지 못했습니다 — news-data.js는 그대로 둡니다.')
 

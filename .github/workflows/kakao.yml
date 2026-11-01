@@ -51,6 +51,7 @@ jobs:
 
       - name: 뉴스 갱신(발송 직전 최신 기사)
         if: steps.dup.outputs.skip != 'true'
+        continue-on-error: true    # Google이 잠깐 막아 갱신에 실패해도 기존 뉴스로 07:30 발송은 진행
         run: |
           python .github/scripts/update_news.py
           if git diff --quiet -- news-data.js; then
