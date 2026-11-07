@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-11-07 14:20",
- "base": "11/07 14:00",
+ "updated": "2026-11-07 17:20",
+ "base": "11/07 17:00",
  "source": "기상청 단기예보",
  "regions": [
   {
@@ -23,7 +23,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "일",
      "tmin": 4,
-     "tmax": 15,
+     "tmax": 14,
      "pop": 30,
      "wx": "흐림",
      "icon": "☁️"
@@ -33,18 +33,18 @@ const WEATHER = {
      "label": "모레",
      "dow": "월",
      "tmin": 10,
-     "tmax": 14,
-     "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "tmax": 13,
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-11-10",
      "label": "글피",
      "dow": "화",
-     "tmin": 6,
-     "tmax": 16,
-     "pop": 0,
+     "tmin": 8,
+     "tmax": 15,
+     "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -78,19 +78,19 @@ const WEATHER = {
      "date": "2026-11-09",
      "label": "모레",
      "dow": "월",
-     "tmin": 8,
-     "tmax": 15,
-     "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "tmin": 9,
+     "tmax": 14,
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-11-10",
      "label": "글피",
      "dow": "화",
-     "tmin": 5,
+     "tmin": 9,
      "tmax": 15,
-     "pop": 0,
+     "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -115,7 +115,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "일",
      "tmin": 1,
-     "tmax": 14,
+     "tmax": 13,
      "pop": 30,
      "wx": "흐림",
      "icon": "☁️"
@@ -126,17 +126,17 @@ const WEATHER = {
      "dow": "월",
      "tmin": 8,
      "tmax": 13,
-     "pop": 30,
-     "wx": "흐림",
-     "icon": "☁️"
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-11-10",
      "label": "글피",
      "dow": "화",
-     "tmin": 3,
+     "tmin": 5,
      "tmax": 15,
-     "pop": 0,
+     "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -160,8 +160,8 @@ const WEATHER = {
      "date": "2026-11-08",
      "label": "내일",
      "dow": "일",
-     "tmin": 1,
-     "tmax": 14,
+     "tmin": 3,
+     "tmax": 13,
      "pop": 30,
      "wx": "흐림",
      "icon": "☁️"
@@ -172,17 +172,17 @@ const WEATHER = {
      "dow": "월",
      "tmin": 9,
      "tmax": 13,
-     "pop": 30,
-     "wx": "흐림",
-     "icon": "☁️"
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-11-10",
      "label": "글피",
      "dow": "화",
-     "tmin": 1,
+     "tmin": 5,
      "tmax": 15,
-     "pop": 0,
+     "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -216,19 +216,19 @@ const WEATHER = {
      "date": "2026-11-09",
      "label": "모레",
      "dow": "월",
-     "tmin": 6,
+     "tmin": 7,
      "tmax": 15,
      "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "wx": "흐림",
+     "icon": "☁️"
     },
     {
      "date": "2026-11-10",
      "label": "글피",
      "dow": "화",
-     "tmin": 4,
+     "tmin": 9,
      "tmax": 15,
-     "pop": 0,
+     "pop": 20,
      "wx": "맑음",
      "icon": "☀️"
     }
@@ -253,7 +253,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "일",
      "tmin": 1,
-     "tmax": 14,
+     "tmax": 12,
      "pop": 30,
      "wx": "흐림",
      "icon": "☁️"
@@ -262,19 +262,19 @@ const WEATHER = {
      "date": "2026-11-09",
      "label": "모레",
      "dow": "월",
-     "tmin": 6,
+     "tmin": 7,
      "tmax": 13,
      "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "wx": "흐림",
+     "icon": "☁️"
     },
     {
      "date": "2026-11-10",
      "label": "글피",
      "dow": "화",
-     "tmin": 0,
-     "tmax": 13,
-     "pop": 0,
+     "tmin": 4,
+     "tmax": 15,
+     "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
     }
