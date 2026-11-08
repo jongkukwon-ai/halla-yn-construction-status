@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-11-08 14:20",
- "base": "11/08 14:00",
+ "updated": "2026-11-08 17:20",
+ "base": "11/08 17:00",
  "source": "기상청 단기예보",
  "regions": [
   {
@@ -23,7 +23,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "월",
      "tmin": 10,
-     "tmax": 14,
+     "tmax": 15,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -32,18 +32,18 @@ const WEATHER = {
      "date": "2026-11-10",
      "label": "모레",
      "dow": "화",
-     "tmin": 8,
-     "tmax": 16,
-     "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "tmin": 9,
+     "tmax": 17,
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-11-11",
      "label": "글피",
      "dow": "수",
-     "tmin": 3,
-     "tmax": 16,
+     "tmin": 5,
+     "tmax": 18,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -69,7 +69,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "월",
      "tmin": 9,
-     "tmax": 15,
+     "tmax": 14,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -79,17 +79,17 @@ const WEATHER = {
      "label": "모레",
      "dow": "화",
      "tmin": 8,
-     "tmax": 15,
-     "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "tmax": 17,
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-11-11",
      "label": "글피",
      "dow": "수",
-     "tmin": 3,
-     "tmax": 16,
+     "tmin": 4,
+     "tmax": 18,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -115,7 +115,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "월",
      "tmin": 8,
-     "tmax": 13,
+     "tmax": 14,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -124,8 +124,8 @@ const WEATHER = {
      "date": "2026-11-10",
      "label": "모레",
      "dow": "화",
-     "tmin": 5,
-     "tmax": 15,
+     "tmin": 6,
+     "tmax": 17,
      "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
@@ -134,8 +134,8 @@ const WEATHER = {
      "date": "2026-11-11",
      "label": "글피",
      "dow": "수",
-     "tmin": 2,
-     "tmax": 16,
+     "tmin": 3,
+     "tmax": 18,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -160,8 +160,8 @@ const WEATHER = {
      "date": "2026-11-09",
      "label": "내일",
      "dow": "월",
-     "tmin": 9,
-     "tmax": 13,
+     "tmin": 8,
+     "tmax": 12,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -170,8 +170,8 @@ const WEATHER = {
      "date": "2026-11-10",
      "label": "모레",
      "dow": "화",
-     "tmin": 5,
-     "tmax": 15,
+     "tmin": 3,
+     "tmax": 17,
      "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
@@ -180,8 +180,8 @@ const WEATHER = {
      "date": "2026-11-11",
      "label": "글피",
      "dow": "수",
-     "tmin": 2,
-     "tmax": 16,
+     "tmin": 1,
+     "tmax": 17,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -207,7 +207,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "월",
      "tmin": 7,
-     "tmax": 16,
+     "tmax": 14,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -216,8 +216,8 @@ const WEATHER = {
      "date": "2026-11-10",
      "label": "모레",
      "dow": "화",
-     "tmin": 9,
-     "tmax": 16,
+     "tmin": 6,
+     "tmax": 17,
      "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
@@ -226,8 +226,8 @@ const WEATHER = {
      "date": "2026-11-11",
      "label": "글피",
      "dow": "수",
-     "tmin": 4,
-     "tmax": 17,
+     "tmin": 3,
+     "tmax": 18,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -253,17 +253,17 @@ const WEATHER = {
      "label": "내일",
      "dow": "월",
      "tmin": 6,
-     "tmax": 13,
-     "pop": 30,
-     "wx": "흐림",
-     "icon": "☁️"
+     "tmax": 12,
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     },
     {
      "date": "2026-11-10",
      "label": "모레",
      "dow": "화",
-     "tmin": 4,
-     "tmax": 14,
+     "tmin": 3,
+     "tmax": 15,
      "pop": 30,
      "wx": "맑음",
      "icon": "☀️"
@@ -272,7 +272,7 @@ const WEATHER = {
      "date": "2026-11-11",
      "label": "글피",
      "dow": "수",
-     "tmin": 3,
+     "tmin": 2,
      "tmax": 16,
      "pop": 0,
      "wx": "맑음",
