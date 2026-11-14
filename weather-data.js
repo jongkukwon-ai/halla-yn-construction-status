@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-11-15 02:20",
- "base": "11/15 02:00",
+ "updated": "2026-11-15 05:20",
+ "base": "11/15 05:00",
  "source": "기상청 단기예보",
  "regions": [
   {
@@ -13,7 +13,7 @@ const WEATHER = {
      "label": "오늘",
      "dow": "일",
      "tmin": 13,
-     "tmax": 20,
+     "tmax": 21,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -22,7 +22,7 @@ const WEATHER = {
      "date": "2026-11-16",
      "label": "내일",
      "dow": "월",
-     "tmin": 11,
+     "tmin": 10,
      "tmax": 18,
      "pop": 60,
      "wx": "비",
@@ -33,7 +33,7 @@ const WEATHER = {
      "label": "모레",
      "dow": "화",
      "tmin": 12,
-     "tmax": 19,
+     "tmax": 18,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -43,7 +43,7 @@ const WEATHER = {
      "label": "글피",
      "dow": "수",
      "tmin": 10,
-     "tmax": 16,
+     "tmax": 15,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -59,7 +59,7 @@ const WEATHER = {
      "label": "오늘",
      "dow": "일",
      "tmin": 13,
-     "tmax": 20,
+     "tmax": 19,
      "pop": 30,
      "wx": "흐림",
      "icon": "☁️"
@@ -125,7 +125,7 @@ const WEATHER = {
      "label": "모레",
      "dow": "화",
      "tmin": 10,
-     "tmax": 18,
+     "tmax": 19,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -161,7 +161,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "월",
      "tmin": 6,
-     "tmax": 18,
+     "tmax": 19,
      "pop": 30,
      "wx": "흐림",
      "icon": "☁️"
@@ -197,7 +197,7 @@ const WEATHER = {
      "label": "오늘",
      "dow": "일",
      "tmin": 11,
-     "tmax": 19,
+     "tmax": 20,
      "pop": 30,
      "wx": "구름많음",
      "icon": "⛅"
@@ -217,7 +217,7 @@ const WEATHER = {
      "label": "모레",
      "dow": "화",
      "tmin": 10,
-     "tmax": 17,
+     "tmax": 18,
      "pop": 60,
      "wx": "비",
      "icon": "🌧️"
@@ -262,7 +262,7 @@ const WEATHER = {
      "date": "2026-11-17",
      "label": "모레",
      "dow": "화",
-     "tmin": 8,
+     "tmin": 9,
      "tmax": 17,
      "pop": 60,
      "wx": "비",
