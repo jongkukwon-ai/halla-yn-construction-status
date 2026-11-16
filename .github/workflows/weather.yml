@@ -38,12 +38,17 @@ jobs:
       - name: 변경 시 커밋·푸시
         run: |
           # 확인 시각(updated)만 바뀐 경우는 커밋하지 않음 — 예보 내용이 바뀔 때만 저장
-          if ! git diff -U0 -- weather-data.js | grep "^[-+]" | grep -Ev "^(---|\+\+\+) " | grep -qv "\"updated\""; then
+          # 날씨 화면 자료(weather/data: 시간대별 예보·관측·지난 날씨)는 바뀌면 함께 저장
+          main_changed=0; data_changed=0
+          if git diff -U0 -- weather-data.js | grep "^[-+]" | grep -Ev "^(---|\+\+\+) " | grep -qv "\"updated\""; then main_changed=1; fi
+          if [ -n "$(git status --porcelain -- weather/data)" ]; then data_changed=1; fi
+          if [ "$main_changed$data_changed" = "00" ]; then
             echo "변경 없음"; exit 0
           fi
+          if [ "$main_changed" = "0" ]; then git checkout -- weather-data.js; fi   # 확인 시각만 바뀐 건 저장 안 함
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add weather-data.js
+          git add weather-data.js weather/data
           git commit -m "영업소 권역 날씨 갱신 $(TZ=Asia/Seoul date '+%F %H:%M')"
           for i in 1 2 3; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0

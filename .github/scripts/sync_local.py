@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ['weather-data.js', 'news-data.js', 'construction/trend.html']     # GitHub Actions가 자동 갱신하는 파일
+DATA = ['weather-data.js', 'weather/data', 'news-data.js', 'construction/trend.html']     # GitHub Actions가 자동 갱신하는 파일(weather/data는 폴더)
 GIT = shutil.which('git') or r'C:\Program Files\Git\cmd\git.exe'
 LOG = ROOT / '.git' / 'sync_local.log'
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
