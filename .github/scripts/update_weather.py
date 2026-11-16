@@ -278,7 +278,7 @@ def hourly_rows(items, now):
 def update_obs(key, now):
     """매시간 관측(초단기실황) 쌓기"""
     latest = (now - timedelta(minutes=45)).replace(minute=0, second=0, microsecond=0)   # 정시 관측은 약 40분 뒤 제공
-    window = [latest - timedelta(hours=h) for h in range(23, -1, -1)]                   # 지난 24시간까지 받을 수 있음
+    window = [latest - timedelta(hours=h) for h in range(21, -1, -1)]                   # 기상청은 지금부터 24시간 안 자료만 줌(여유 두고 22시간)
     files = {}
     for h in window:
         ym = h.strftime('%Y-%m')
@@ -345,7 +345,8 @@ def update_daily(key, now):
                 break
             except RuntimeError as e:
                 print(f'::warning::지난 날씨(ASOS 일자료) {name}: {e} — 공공데이터포털에서 「기상청_지상(종관, ASOS) 일자료 조회서비스」 활용신청이 필요할 수 있음')
-                if 'JSON' in str(e):
+                if 'JSON' in str(e) or 'HTTP 403' in str(e) or 'HTTP 401' in str(e):
+                    print('지난 날씨(ASOS): 활용신청 전으로 보여 이번엔 건너뜀')
                     return                      # 활용신청 전 — 다른 권역도 같은 결과라 바로 끝냄
                 break
             for it in items:
