@@ -90,12 +90,28 @@
       .hero-head{min-height:0}
       .office-chips{grid-template-columns:repeat(3,1fr)}
       .weather-row{grid-template-columns:repeat(3,1fr)}
+      /* 좁은 화면: 영업소 칸 바로 아래에 그 영업소 날씨(3칸씩 — 영업소 줄, 날씨 줄 번갈아) */
+      .office-wx{display:grid;grid-template-columns:repeat(3,1fr);column-gap:clamp(10px,1.4vw,20px);row-gap:6px;margin-top:clamp(22px,4vh,36px)}
+      .office-wx>.office-chips,.office-wx>.weather-row{display:contents}
+      .office-wx>.weather-row[hidden]{display:none}
+      .office-wx:not(:has(.office-chip)){display:none}   /* 고객사용(영업소 칸 없음)에선 빈 칸 안 남게 */
+      .office-wx .office-chip:nth-child(-n+3){order:1}
+      .office-wx .weather-row>:nth-child(-n+3){order:2}
+      .office-wx .office-chip:nth-child(n+4){order:3;margin-top:8px}
+      .office-wx .weather-row>:nth-child(n+4){order:4}
       .nav-grid{grid-template-columns:1fr;max-width:520px}
       .nav-card{min-height:0;padding:26px 20px}
     }
     @media(max-width:420px){
       .office-chips{grid-template-columns:repeat(2,1fr)}
       .weather-row{grid-template-columns:repeat(2,1fr)}
+      .office-wx{grid-template-columns:repeat(2,1fr)}   /* 2칸씩: 영업소 2개 → 날씨 2개 → … */
+      .office-wx .office-chip:nth-child(n){order:1;margin-top:0}
+      .office-wx .weather-row>:nth-child(n){order:2}
+      .office-wx .office-chip:nth-child(n+3){order:3;margin-top:8px}
+      .office-wx .weather-row>:nth-child(n+3){order:4}
+      .office-wx .office-chip:nth-child(n+5){order:5}
+      .office-wx .weather-row>:nth-child(n+5){order:6}
     }
   </style>
 </head>
@@ -114,6 +130,7 @@
       <img class="hero-ci" src="./assets/halla_ci.png" alt="HALLA CEMENT">
       <div class="hero-title">영남지사 정보 조회 시스템</div>
     </div>
+    <div class="office-wx">
     <div class="office-chips">
       <span class="office-chip">부산 영업소</span>
       <span class="office-chip">울산 영업소</span>
@@ -123,6 +140,7 @@
       <span class="office-chip">경북서부 영업소</span>
     </div>
     <div class="weather-row" id="weather-row" hidden></div>
+    </div>
     <div class="weather-note" id="weather-note" hidden></div>
   </div>
 
