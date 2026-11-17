@@ -459,7 +459,7 @@ async function renderMonth(o, box) {
     <div><small>비 온 날(1mm↑)</small><b>${rn.filter(v => v >= 1).length}일</b></div>
     <div><small>영하 날</small><b>${mn.filter(v => v < 0).length}일</b></div></div>`;
   // 차트: 최고·최저 기온(한 축) + 아래에 강수량(따로)
-  const Wv = 900, H1 = 190, H2 = 70, L = 34, RM = 10, T = 14, B = 22, cw = (Wv - L - RM) / n, cx = i => L + (i - .5) * cw;
+  const Wv = 900, H1 = 190, H2 = 70, L = 44, RM = 10, T = 14, B = 22, cw = (Wv - L - RM) / n, cx = i => L + (i - .5) * cw;
   const all = [...mx, ...mn]; const lo = Math.floor(Math.min(...all) / 5) * 5 - (Math.min(...all) % 5 === 0 ? 5 : 0), hi = Math.ceil(Math.max(...all) / 5) * 5 + (Math.max(...all) % 5 === 0 ? 5 : 0);
   const y = v => T + (hi - v) / (hi - lo || 1) * (H1 - T - B);
   let g = '';
@@ -474,7 +474,7 @@ async function renderMonth(o, box) {
   if (lastD.s.min != null) g += svgEl('text', { x: Math.min(cx(lastD.i) + 6, Wv - RM - 24), y: y(lastD.s.min) + 14, 'font-size': 11, fill: '#4A5568' }, '최저');
   g += svgEl('line', { id: 'm-cross', x1: 0, x2: 0, y1: T, y2: H1 - B, stroke: '#4A5568', opacity: 0 });
   g += svgEl('rect', { id: 'm-hit', x: L, y: 0, width: Wv - L - RM, height: H1, fill: 'transparent' });
-  const rmax = Math.max(10, ...rn), yr = v => 6 + (1 - v / rmax) * (H2 - 22);
+  const rmax = Math.max(10, ...rn), yr = v => 16 + (1 - v / rmax) * (H2 - 32);   // 위 16px: 막대 위 숫자 자리
   let g2 = svgEl('line', { x1: L, x2: Wv - RM, y1: yr(0), y2: yr(0), stroke: '#DDE3EC' }) + svgEl('text', { x: L - 6, y: yr(rmax) + 8, 'text-anchor': 'end', 'font-size': 11, fill: '#8898AA' }, Math.round(rmax) + 'mm');
   days.forEach(d => { const v = d.s && d.s.rain; if (!v) return; const bw = Math.max(3, cw - 4);
     g2 += svgEl('rect', { x: (cx(d.i) - bw / 2).toFixed(1), y: yr(v).toFixed(1), width: bw.toFixed(1), height: Math.max(1, yr(0) - yr(v)).toFixed(1), rx: Math.min(3, bw / 2), fill: 'var(--s-rain)' });
