@@ -86,6 +86,10 @@
   .controls input { border:1px solid var(--border-strong); border-radius:8px; padding:6px 10px; font-size:13px; font-family:inherit; color:var(--ink); }
   .btn { border:1px solid var(--border-strong); background:var(--card); border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; font-family:inherit; }
   .range-note { font-size:12px; color:var(--ink-faint); }
+  .range-pick { display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; font-size:13px; color:var(--ink-muted); }
+  .range-pick[hidden] { display:none; }
+  .presets { display:inline-flex; gap:4px; flex-wrap:wrap; }
+  .btn.sm { padding:4px 9px; font-size:12px; }
   .sum { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
   .sum div { border:1px solid var(--border); border-radius:8px; padding:8px 12px; background:var(--surface); min-width:104px; }
   .sum small { display:block; font-size:11px; color:var(--ink-faint); }
@@ -152,9 +156,12 @@
       <div class="seg" role="group" aria-label="조회 방식">
         <button id="m-day" aria-pressed="false">하루 보기</button>
         <button id="m-month" aria-pressed="true">한 달 보기</button>
+        <button id="m-range" aria-pressed="false">기간 보기</button>
       </div>
       <input type="date" id="q-day" aria-label="날짜" hidden>
       <input type="month" id="q-month" aria-label="달">
+      <span class="range-pick" id="q-range" hidden><input type="month" id="q-from" aria-label="시작 달"> ~ <input type="month" id="q-to" aria-label="끝 달">
+        <span class="presets"><button class="btn sm" data-p="12">최근 12개월</button><button class="btn sm" data-p="this">올해</button><button class="btn sm" data-p="last">작년</button><button class="btn sm" data-p="all">전체</button></span></span>
       <button class="btn" id="q-prev" aria-label="이전">◀</button>
       <button class="btn" id="q-next" aria-label="다음">▶</button>
       <span class="range-note" id="range-note"></span>
@@ -358,20 +365,48 @@ const qDay = document.getElementById('q-day'), qMonth = document.getElementById(
 const today = new Date(), yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
 qDay.value = ymd(yesterday); qDay.max = ymd(today); qDay.min = '2021-01-01';
 qMonth.value = ymd(today).slice(0, 7); qMonth.max = ymd(today).slice(0, 7); qMonth.min = '2021-01';
+const qFrom = document.getElementById('q-from'), qTo = document.getElementById('q-to'), qRange = document.getElementById('q-range');
+const MIN_M = '2021-01', MAX_M = ymd(today).slice(0, 7);
+const addM = (ym, k) => { const [y, m] = ym.split('-').map(Number); return ymd(new Date(y, m - 1 + k, 1)).slice(0, 7); };
+const clampM = ym => ym < MIN_M ? MIN_M : ym > MAX_M ? MAX_M : ym;
+const monthsBetween = (a, b) => { const out = []; for (let m = a; m <= b; m = addM(m, 1)) out.push(m); return out; };
+[qFrom, qTo].forEach(q => { q.min = MIN_M; q.max = MAX_M; });
+qTo.value = MAX_M; qFrom.value = addM(MAX_M, -11);
 document.getElementById('m-day').onclick = () => setMode('day');
 document.getElementById('m-month').onclick = () => setMode('month');
+document.getElementById('m-range').onclick = () => setMode('range');
 qDay.onchange = qMonth.onchange = () => renderHist();
+qFrom.onchange = qTo.onchange = () => {
+  qFrom.value = clampM(qFrom.value || MIN_M); qTo.value = clampM(qTo.value || MAX_M);
+  if (qFrom.value > qTo.value) [qFrom.value, qTo.value] = [qTo.value, qFrom.value];
+  renderHist();
+};
+qRange.querySelector('.presets').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const y = today.getFullYear(), p = b.dataset.p;
+  if (p === '12') { qTo.value = MAX_M; qFrom.value = addM(MAX_M, -11); }
+  else if (p === 'this') { qFrom.value = `${y}-01`; qTo.value = MAX_M; }
+  else if (p === 'last') { qFrom.value = `${y - 1}-01`; qTo.value = `${y - 1}-12`; }
+  else { qFrom.value = MIN_M; qTo.value = MAX_M; }
+  renderHist();
+});
 document.getElementById('q-prev').onclick = () => step(-1);
 document.getElementById('q-next').onclick = () => step(1);
 function setMode(m) {
   mode = m;
   document.getElementById('m-day').setAttribute('aria-pressed', m === 'day');
   document.getElementById('m-month').setAttribute('aria-pressed', m === 'month');
-  qDay.hidden = m !== 'day'; qMonth.hidden = m !== 'month';
+  document.getElementById('m-range').setAttribute('aria-pressed', m === 'range');
+  qDay.hidden = m !== 'day'; qMonth.hidden = m !== 'month'; qRange.hidden = m !== 'range';
   renderHist();
 }
 function step(k) {
   if (mode === 'day') { const d = new Date(qDay.value || ymd(yesterday)); d.setDate(d.getDate() + k); if (ymd(d) <= qDay.max && ymd(d) >= qDay.min) qDay.value = ymd(d); }
+  else if (mode === 'range') {        // 같은 길이만큼 앞뒤 기간으로
+    const n = monthsBetween(qFrom.value, qTo.value).length, f = addM(qFrom.value, k * n), t = addM(qTo.value, k * n);
+    if (t < MIN_M || f > MAX_M) return;
+    qFrom.value = clampM(f); qTo.value = clampM(t);
+  }
   else { const [yy, mm] = (qMonth.value || ymd(today).slice(0, 7)).split('-').map(Number); const d = new Date(yy, mm - 1 + k, 1); const v = ymd(d).slice(0, 7); if (v <= qMonth.max && v >= qMonth.min) qMonth.value = v; }
   renderHist();
 }
@@ -410,6 +445,7 @@ async function renderHist() {
     `자료: 기상청 종관기상관측(ASOS) 일자료 — ${esc(REG.stations[R().stn] || R().stn)} 관측소(지점 ${R().stn}, ${esc(shortName())}에서 가장 가까운 관측소${R().km ? `, 약 ${R().km}km` : ''} · 공식 기록). 시간별 값과 ASOS가 없는 날은 기상청 초단기실황(${esc(shortName())} 격자 ${R().g}, 매시 정시) 집계 <span class="src">*</span>.
      강수량 「–」는 강수 없음 또는 자료 없음. 「영하」는 최저기온 0°C 미만, 「비 5mm↑」는 하루 강수량 5mm 이상(타설·양생 일정 참고용).`;
   if (mode === 'day') return renderDay(o, box);
+  if (mode === 'range') return renderRange(o, box);
   return renderMonth(o, box);
 }
 
@@ -500,6 +536,86 @@ async function renderMonth(o, box) {
     tip.innerHTML = s ? `<b>${mm}/${d.i}(${DOW[dt.getDay()]})</b>${d.est ? ' <span class="src">관측 집계*</span>' : ''}<br>최고 <b>${fmt(s.max, '°')}</b> · 최저 <b>${fmt(s.min, '°')}</b><br>강수 ${s.rain ? fmt(s.rain, 'mm') : '없음'} · 습도 ${fmt(s.rh, '%', 0)}` : `<b>${mm}/${d.i}</b><br>자료 없음`;
     tip.style.display = 'block';
     const bx = mbox.getBoundingClientRect(), px = cx(d.i) * k + 12;
+    tip.style.left = (px + tip.offsetWidth > bx.width ? px - tip.offsetWidth - 24 : px) + 'px'; tip.style.top = '6px';
+  };
+  hit.addEventListener('pointermove', show); hit.addEventListener('pointerdown', show);
+  hit.addEventListener('pointerleave', () => { tip.style.display = 'none'; cross.setAttribute('opacity', 0); });
+}
+
+const ymText = ym => `${ym.slice(0, 4)}년 ${+ym.slice(5, 7)}월`;
+async function renderRange(o, box) {   // 월 단위 기간 조회(공식 일자료 ASOS를 달마다 집계)
+  const from = qFrom.value, to = qTo.value; if (!from || !to) return;
+  const days = await dailyStn(R());
+  if (o !== office || from !== qFrom.value || to !== qTo.value || mode !== 'range') return;
+  const months = monthsBetween(from, to).map(ym => {
+    const [yy, mm] = ym.split('-').map(Number), total = new Date(yy, mm, 0).getDate();
+    const rows = Object.entries(days).filter(([d]) => d.startsWith(ym)).map(([, r]) => fromDaily(r));
+    const pick = k => rows.map(r => r[k]).filter(v => v != null), avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+    const mx = pick('max'), mn = pick('min'), rn = rows.map(r => r.rain || 0);
+    return { ym, yy, mm, n: rows.length, total, avgMax: avg(mx), avgMin: avg(mn), avg: avg(pick('avg')), hi: mx.length ? Math.max(...mx) : null, lo: mn.length ? Math.min(...mn) : null,
+             rain: rows.length ? rn.reduce((a, b) => a + b, 0) : null, wet: rn.filter(v => v >= 1).length, heavy: rn.filter(v => v >= 5).length, frost: mn.filter(v => v < 0).length };
+  });
+  const have = months.filter(m => m.n);
+  const label = m => `${String(m.yy).slice(2)}.${m.mm}`;
+  if (!have.length) { box.innerHTML = `<div class="empty">${from} ~ ${to} ${esc(shortName())} 자료가 없습니다.</div>`; return; }
+  const his = have.map(m => m.hi).filter(v => v != null), los = have.map(m => m.lo).filter(v => v != null);
+  const hiM = have.find(m => m.hi === Math.max(...his)), loM = have.find(m => m.lo === Math.min(...los));
+  const sumRain = have.reduce((a, m) => a + (m.rain || 0), 0), wetM = have.reduce((a, m) => a.rain >= (m.rain || 0) ? a : m);
+  const sum = `<div class="sum">
+    <div><small>기간 최고</small><b style="color:#C4320A">${fmt(hiM.hi, '°')}</b> <span class="src">${ymText(hiM.ym)}</span></div>
+    <div><small>기간 최저</small><b style="color:var(--cold)">${fmt(loM.lo, '°')}</b> <span class="src">${ymText(loM.ym)}</span></div>
+    <div><small>강수 합계</small><b>${fmt(sumRain, 'mm', 0)}</b></div>
+    <div><small>비가 가장 많은 달</small><b>${ymText(wetM.ym)}</b> <span class="src">${fmt(wetM.rain, 'mm', 0)}</span></div>
+    <div><small>비 온 날(1mm↑)</small><b>${have.reduce((a, m) => a + m.wet, 0)}일</b></div>
+    <div><small>영하 날</small><b>${have.reduce((a, m) => a + m.frost, 0)}일</b></div></div>`;
+  // 차트: 월평균 최고·최저(한 축) + 아래에 월 강수량(따로)
+  const n = months.length, Wv = 900, H1 = 190, H2 = 80, L = 44, RM = 10, T = 14, B = 22, cw = (Wv - L - RM) / n, cx = i => L + (i + .5) * cw;
+  const all = [...have.map(m => m.avgMax), ...have.map(m => m.avgMin)].filter(v => v != null);
+  const lo = Math.floor(Math.min(...all) / 5) * 5 - 5, hi = Math.ceil(Math.max(...all) / 5) * 5 + 5;
+  const y = v => T + (hi - v) / (hi - lo || 1) * (H1 - T - B);
+  let g = '';
+  for (let v = lo; v <= hi; v += 5) g += svgEl('line', { x1: L, x2: Wv - RM, y1: y(v), y2: y(v), stroke: v === 0 ? '#9AA9BF' : '#EEF2F7', 'stroke-dasharray': v === 0 ? '4 3' : '' })
+    + svgEl('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#8898AA' }, v + '°');
+  const every = Math.max(1, Math.ceil(n / 12));
+  months.forEach((m, i) => { if (i % every === 0 || m.mm === 1) g += svgEl('text', { x: cx(i), y: H1 - 6, 'text-anchor': 'middle', 'font-size': 11, fill: m.mm === 1 ? '#4A5568' : '#8898AA' }, m.mm === 1 || i === 0 ? label(m) : m.mm + '월'); });
+  const line = (k, col) => { let p = '', pen = false; months.forEach((m, i) => { const v = m[k]; if (v == null) { pen = false; return; } p += `${pen ? 'L' : 'M'}${cx(i).toFixed(1)},${y(v).toFixed(1)}`; pen = true; });
+    return svgEl('path', { d: p, fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }); };
+  g += line('avgMax', 'var(--s-max)') + line('avgMin', 'var(--s-min)');
+  if (n <= 36) months.forEach((m, i) => { if (m.avgMax == null) return;
+    g += svgEl('circle', { cx: cx(i).toFixed(1), cy: y(m.avgMax).toFixed(1), r: 3, fill: 'var(--s-max)', stroke: '#fff', 'stroke-width': 1.5 })
+       + svgEl('circle', { cx: cx(i).toFixed(1), cy: y(m.avgMin).toFixed(1), r: 3, fill: 'var(--s-min)', stroke: '#fff', 'stroke-width': 1.5 }); });
+  const li = months.map((m, i) => [m, i]).filter(([m]) => m.n).pop()[1];
+  g += svgEl('text', { x: cx(li) - 6, y: y(months[li].avgMax) - 8, 'text-anchor': 'end', 'font-size': 11, fill: '#4A5568' }, '평균 최고')
+     + svgEl('text', { x: cx(li) - 6, y: y(months[li].avgMin) + 16, 'text-anchor': 'end', 'font-size': 11, fill: '#4A5568' }, '평균 최저');
+  g += svgEl('line', { id: 'r-cross', x1: 0, x2: 0, y1: T, y2: H1 - B, stroke: '#4A5568', opacity: 0 });
+  g += svgEl('rect', { id: 'r-hit', x: L, y: 0, width: Wv - L - RM, height: H1, fill: 'transparent' });
+  const rmax = Math.max(50, ...have.map(m => m.rain || 0)), yr = v => 16 + (1 - v / rmax) * (H2 - 32);
+  let g2 = svgEl('line', { x1: L, x2: Wv - RM, y1: yr(0), y2: yr(0), stroke: '#DDE3EC' }) + svgEl('text', { x: L - 6, y: yr(rmax) + 8, 'text-anchor': 'end', 'font-size': 11, fill: '#8898AA' }, Math.round(rmax) + 'mm');
+  const top = new Set([...have].sort((a, b) => (b.rain || 0) - (a.rain || 0)).slice(0, 3).map(m => m.ym));   // 많이 온 3달만 숫자
+  months.forEach((m, i) => { if (!m.rain) return; const bw = Math.max(2, cw - Math.min(6, cw * .3));
+    g2 += svgEl('rect', { x: (cx(i) - bw / 2).toFixed(1), y: yr(m.rain).toFixed(1), width: bw.toFixed(1), height: Math.max(1, yr(0) - yr(m.rain)).toFixed(1), rx: Math.min(3, bw / 2), fill: 'var(--s-rain)' });
+    if (top.has(m.ym)) g2 += svgEl('text', { x: cx(i), y: yr(m.rain) - 3, 'text-anchor': 'middle', 'font-size': 10, fill: '#4A5568' }, Math.round(m.rain)); });
+  const rowsHtml = months.map(m => !m.n
+    ? `<tr><td>${m.yy}년 ${m.mm}월</td><td colspan="9" style="text-align:left;color:#8898AA">자료 없음</td></tr>`
+    : `<tr class="click" data-ym="${m.ym}"><td>${m.yy}년 ${m.mm}월${m.n < m.total && m.ym !== MAX_M ? ` <span class="src">(${m.n}/${m.total}일)</span>` : m.ym === MAX_M ? ` <span class="src">(${m.n}일까지)</span>` : ''}</td>
+       <td>${fmt(m.avgMax, '°')}</td><td>${fmt(m.avgMin, '°')}</td><td>${fmt(m.avg, '°')}</td><td>${fmt(m.hi, '°')}</td><td>${fmt(m.lo, '°')}</td>
+       <td>${m.rain ? fmt(m.rain, 'mm') : '–'}</td><td>${m.wet}일</td><td>${m.heavy}일</td><td>${m.frost ? `<span class="tag cold" style="margin:0">${m.frost}일</span>` : '0일'}</td></tr>`).join('');
+  box.innerHTML = `<div style="font-weight:600;margin-bottom:8px">${ymText(from)} ~ ${ymText(to)} · ${esc(shortName())} (${months.length}개월)</div>${sum}
+    <div class="legend"><span><i style="background:var(--s-max)"></i>월평균 최고기온</span><span><i style="background:var(--s-min)"></i>월평균 최저기온</span><span><i style="background:var(--s-rain);height:8px"></i>월 강수량(아래)</span></div>
+    <div class="chart-box" id="r-box"><svg viewBox="0 0 ${Wv} ${H1}" width="100%" role="img" aria-label="${from}~${to} ${esc(shortName())} 월평균 최고·최저기온">${g}</svg>
+      <svg viewBox="0 0 ${Wv} ${H2}" width="100%" role="img" aria-label="${from}~${to} ${esc(shortName())} 월 강수량">${g2}</svg><div class="tip" id="r-tip"></div></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>달</th><th>평균 최고</th><th>평균 최저</th><th>평균</th><th>최고</th><th>최저</th><th>강수량</th><th>비 온 날<br><small>1mm↑</small></th><th>비 5mm↑</th><th>영하 날</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+    <div class="range-note" style="margin-top:6px">달 줄을 누르면 그달의 날짜별 날씨(한 달 보기)로 이동합니다. 평균 최고·최저는 그달 매일 최고·최저기온의 평균, 최고·최저는 그달 가장 높은·낮은 기온입니다.</div>`;
+  box.querySelector('tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-ym]'); if (!tr) return; qMonth.value = tr.dataset.ym; setMode('month'); });
+  const hit = document.getElementById('r-hit'), tip = document.getElementById('r-tip'), cross = document.getElementById('r-cross'), rbox = document.getElementById('r-box');
+  const show = ev => {
+    const svgR = hit.ownerSVGElement.getBoundingClientRect(), k = svgR.width / Wv, xv = (ev.clientX - svgR.left) / k;
+    const i = Math.max(0, Math.min(n - 1, Math.floor((xv - L) / cw))), m = months[i];
+    cross.setAttribute('x1', cx(i)); cross.setAttribute('x2', cx(i)); cross.setAttribute('opacity', .35);
+    tip.innerHTML = m.n ? `<b>${m.yy}년 ${m.mm}월</b>${m.n < m.total ? ` <span class="src">${m.n}일 자료</span>` : ''}<br>평균 최고 <b>${fmt(m.avgMax, '°')}</b> · 평균 최저 <b>${fmt(m.avgMin, '°')}</b><br>최고 ${fmt(m.hi, '°')} · 최저 ${fmt(m.lo, '°')}<br>강수 ${m.rain ? fmt(m.rain, 'mm') : '없음'} · 비 온 날 ${m.wet}일 · 영하 ${m.frost}일`
+                     : `<b>${m.yy}년 ${m.mm}월</b><br>자료 없음`;
+    tip.style.display = 'block';
+    const bx = rbox.getBoundingClientRect(), px = cx(i) * k + 12;
     tip.style.left = (px + tip.offsetWidth > bx.width ? px - tip.offsetWidth - 24 : px) + 'px'; tip.style.top = '6px';
   };
   hit.addEventListener('pointermove', show); hit.addEventListener('pointerdown', show);
