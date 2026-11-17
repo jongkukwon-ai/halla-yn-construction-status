@@ -37,6 +37,7 @@
   .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-bottom:16px; }
   .card h2 { font-size:15px; font-weight:700; margin-bottom:2px; }
   .card .desc { font-size:12px; color:var(--ink-faint); margin-bottom:12px; }
+  .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:2px; }
   .empty { color:var(--ink-faint); font-size:13px; padding:12px 0; }
 
   /* 지금 날씨 + 4일 요약 */
@@ -146,7 +147,7 @@
   </section>
 
   <section class="card">
-    <h2>시간대별 예보</h2>
+    <div class="card-head"><h2>시간대별 예보</h2><button class="btn xl" id="fc-xlsx" disabled title="이 지역 시간대별 예보를 엑셀 파일로 받기">⬇ 엑셀 다운로드</button></div>
     <div class="desc" id="fc-desc">기온·하늘·강수확률·강수량·습도·풍속 (차트에 마우스를 올리면 자세히)</div>
     <div id="hourly"><div class="empty">예보를 불러오는 중…</div></div>
   </section>
@@ -297,12 +298,15 @@ async function renderNow() {
 
 /* ═══ 시간대별 예보 ═════════════════════════════════════════════════════ */
 const COLW = 56, CH = 150, PADT = 26, PADB = 14;
+let fcExport = null;                     // 엑셀로 받을 시간대별 예보(지금 보고 있는 지역)
 async function renderHourly() {
   const o = office, fc = await fcOf(R());
   if (o !== office) return;
   const box = document.getElementById('hourly');
   const nowKey = (() => { const n = new Date(); return `${n.getFullYear()}${pad(n.getMonth() + 1)}${pad(n.getDate())}${pad(n.getHours())}`; })();
   const rows = ((fc && fc.h) || []).filter(r => r[0] >= nowKey);
+  fcExport = rows.length ? { base: fc.b, rows, days: fc.d || [] } : null;
+  document.getElementById('fc-xlsx').disabled = !fcExport;
   if (!rows.length) { box.innerHTML = '<div class="empty">시간대별 예보가 아직 없습니다. 자동 갱신이 돌면 채워집니다.</div>'; return; }
   document.getElementById('fc-desc').textContent = `기상청 단기예보 ${baseText(fc.b)} · ${shortName()}(격자 ${R().g}) · 차트에 마우스를 올리거나 눌러 자세히 보기`;
   const temps = rows.map(r => r[1]).filter(v => v != null);
@@ -725,6 +729,23 @@ document.getElementById('q-xlsx').onclick = async () => {
   } finally {
     btn.textContent = label; btn.disabled = !lastExport;
   }
+};
+
+document.getElementById('fc-xlsx').onclick = () => {   // 시간대별 예보 → 엑셀
+  if (!fcExport) return;
+  const r = R(), place = r.si ? `${r.sido} ${r.si}${r.gu ? ' ' + r.gu : ''}` : `${r.sido} 대표 지점`, b = fcExport.base;
+  const baseFull = b ? `${b.slice(0, 4)}-${b.slice(4, 6)}-${b.slice(6, 8)} ${b.slice(8, 10)}:${b.slice(10, 12)}` : '';
+  const hourly = [['날짜', '요일', '시각', '날씨', '기온(°C)', '강수확률(%)', '강수량', '습도(%)', '풍속(m/s)', '적설'],
+    ...fcExport.rows.map(x => { const d = `${x[0].slice(0, 4)}-${x[0].slice(4, 6)}-${x[0].slice(6, 8)}`, h = +x[0].slice(8, 10);
+      return [d, DOW[new Date(d).getDay()], `${pad(h)}시`, skyIcon(x[2], x[3], h)[1] || '', x[1], x[4], x[5] || '강수없음', x[6], x[7], x[8] || '']; })];
+  const daily = [['날짜', '요일', '최저기온(°C)', '최고기온(°C)', '최고 강수확률(%)', '날씨'],
+    ...fcExport.days.map(([d, tmin, tmax, pop, wx]) => [d, DOW[new Date(d).getDay()], tmin, tmax, pop, wx])];
+  const info = [['지역', place], ['예보', `기상청 단기예보 ${baseFull} 발표`], ['예보 격자', `${r.g} (기상청 5km 격자)`],
+    ['참고', '오늘 최저·최고기온은 이미 지난 시간이 빠져 있을 수 있음. 강수량 「1mm 미만」 등은 기상청 표기 그대로'], ['받은 시각', new Date().toLocaleString('ko-KR')]];
+  const sheets = [{ name: '정보', rows: info }, { name: '시간대별 예보', rows: hourly }, ...(daily.length > 1 ? [{ name: '일별 요약', rows: daily }] : [])];
+  const a = document.createElement('a'); a.href = URL.createObjectURL(XLSXW(sheets));
+  a.download = `시간대별예보_${shortName().replace(/\s+/g, '')}_${b ? b.slice(0, 8) + '_' + b.slice(8, 12) : ymd(new Date())}.xlsx`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 };
 
 /* ═══ 시작 ═══════════════════════════════════════════════════════════════ */
