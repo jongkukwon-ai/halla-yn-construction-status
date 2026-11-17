@@ -3,15 +3,12 @@
 기상청 단기예보(공공데이터포털 「기상청_단기예보 ((구)_동네예보) 조회서비스」 getVilageFcst)에서
 영업소별 대표 도시의 오늘~글피(최대 4일) 최저·최고기온, 하늘상태, 비·눈(강수형태), 강수확률을 하루 단위로 요약한다.
 
-날씨 화면(weather/index.html)용 자료도 함께 만든다(weather/data/):
-  forecast.json        시간대별 예보(같은 getVilageFcst 응답 — 추가 호출 없음)
-  obs-YYYY-MM.json     매시간 관측(초단기실황 getUltraSrtNcst, 같은 서비스) — 3시간마다 지난 24시간 빈 칸을 채워 쌓음
-  daily-YYYY.json      지난 날씨 일자료(「기상청_지상(종관, ASOS) 일자료 조회서비스」, 2021-01-01부터 어제까지)
-                       → 공공데이터포털에서 이 서비스를 따로 「활용신청」해야 함. 안 했으면 경고만 남기고 건너뜀.
-                       (2026-11-17 사용자 활용신청 완료)
-
-필요한 GitHub Secret: DATA_GO_KR_KEY (공공데이터포털 일반 인증키 — Decoding/Encoding 어느 쪽이든 됨)
-공공데이터포털에서 위 서비스를 「활용신청」해 두어야 한다(자동 승인). 키가 없으면 아무것도 바꾸지 않고 끝낸다.
+전국 날씨 화면(weather/index.html)용 자료도 함께 만든다(weather/data/, 지역 목록 regions.json 기준 — 격자 약 230곳):
+  fc/{시도코드}.json             시간대별 예보(단기예보 새 발표가 나올 때만, 하루 8번 × 격자 수)
+  obs/{YYYY-MM}/{시도코드}.json  매시간 관측(초단기실황 getUltraSrtNcst) — 3시간마다 지난 22시간 빈 칸 채움(하루 약 24 × 격자 수)
+  daily/{지점번호}.json          지난 날씨 일자료(「기상청_지상(종관, ASOS) 일자료 조회서비스」, 2021-01-01부터 어제까지,
+                                 2026-11-17 사용자 활용신청 완료). 실패해도 경고만 남기고 화면 예보 갱신은 계속.
+  공공데이터포털 하루 호출 한도(기능별 1만 건) 안: 예보 약 1,840 · 관측 약 5,520 · ASOS 약 90건/일.
 
   python .github/scripts/update_weather.py
 """
@@ -34,7 +31,6 @@ NCST_API = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSr
 ASOS_API = 'https://apis.data.go.kr/1360000/AsosDalyInfoService/getWthrDataList'
 DATA_DIR = ROOT / 'weather' / 'data'
 # 영업소 → 대표 도시의 기상청 종관기상관측(ASOS) 지점 번호
-ASOS_STN = {'부산': 159, '울산': 152, '경남동부': 155, '경남서부': 192, '경북동부': 138, '경북서부': 143}
 ASOS_START = '2021-01-01'
 OBS_EVERY_HOURS = 3     # 관측(실황)은 이 시간마다 한 번에 받음(지난 24시간까지 받을 수 있어 빠짐 없음, 커밋 수 줄이기)
 # 영업소 → 대표 도시와 기상청 격자(nx, ny) — 시청 위치 기준(기상청 격자 변환식)
@@ -173,8 +169,7 @@ def main():
     base_date, base_time = latest_base(now)
     first = (today.strftime('%Y%m%d'), '0200') if now.strftime('%H%M') >= '0215' else None   # 오늘 0시~ 자료·최저기온용
     prev = previous_regions(today)
-    prev_hourly = load_json(DATA_DIR / 'forecast.json').get('regions', {})
-    out, failed, streak, hourly = [], [], 0, {}
+    out, failed, streak = [], [], 0
     for name, city, nx, ny in REGIONS:
         try:
             try:
@@ -193,15 +188,12 @@ def main():
             if not days:
                 raise RuntimeError('예보 자료가 비어 있음')
             out.append({'office': name, 'city': city, 'days': days})
-            hourly[name] = hourly_rows(items, now)
             streak = 0
         except RuntimeError as e:
             print(f'::warning::{name}: {e}')       # GitHub 주석(로그인 없이 확인 가능)으로 원인 남김
             if name not in prev:
                 raise SystemExit(f'{name}: 예보를 받지 못했고 오늘 자 직전 자료도 없어 갱신하지 않음')
             out.append(prev[name])              # 이 권역만 직전 예보 유지
-            if name in prev_hourly:
-                hourly[name] = [r for r in prev_hourly[name] if r[0] >= now.strftime('%Y%m%d%H')]
             failed.append(name)
             streak += 1
             if streak >= 2 and len(failed) == len(out):
@@ -214,18 +206,20 @@ def main():
             'source': '기상청 단기예보', 'regions': out}
     OUT.write_text('// 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)\n'
                    'const WEATHER = ' + json.dumps(data, ensure_ascii=False, indent=1) + ';\n', encoding='utf-8', newline='\n')
-    write_rows(DATA_DIR / 'forecast.json',
-               {'source': '기상청 단기예보', 'base': data['base'], 'fields': HOURLY_FIELDS,
-                'cities': {n: c for n, c, _, _ in REGIONS}},
-               {n: {r[0]: r[1:] for r in rows} for n, rows in hourly.items()}, as_list=True)
     print(f'날씨 갱신: {data["base"]} 발표, {len(out)}개 권역 × {len(out[0]["days"])}일'
           + (f' (직전 예보 유지: {", ".join(failed)})' if failed else ''))
 
 
-# ── 날씨 화면(weather/index.html)용 자료 ─────────────────────────────────────────
+# ── 전국 날씨 화면(weather/index.html)용 자료 ───────────────────────────────────────
+# 지역 목록 weather/data/regions.json(weather/tools/build_regions.py가 기상청 격자표로 만듦) — 시·도/시·군·구/구마다 예보 격자·가까운 ASOS 지점
+#   fc/{시도코드}.json            시간대별 예보(격자별) — 단기예보 새 발표가 나올 때만 받음(하루 8번)
+#   obs/{YYYY-MM}/{시도코드}.json 매시간 관측(초단기실황, 격자별) — 3시간마다 지난 22시간 빈 칸을 채움
+#   daily/{지점번호}.json         지난 날씨 일자료(ASOS) — 2021-01-01부터 어제까지
 HOURLY_FIELDS = ['시각', '기온', '하늘', '강수형태', '강수확률', '강수량', '습도', '풍속', '적설']
+DAY_FIELDS = ['날짜', '최저기온', '최고기온', '강수확률', '날씨', '아이콘']
 OBS_FIELDS = ['기온', '1시간강수량', '습도', '풍속', '강수형태', '풍향']
 DAILY_FIELDS = ['평균기온', '최저기온', '최고기온', '강수량', '평균습도', '평균풍속', '최심적설']
+WORKERS = 6             # 기상청 동시 요청 수(너무 많으면 끊김)
 
 
 def num(v):
@@ -242,21 +236,47 @@ def load_json(path):
         return {}
 
 
-def write_rows(path, meta, regions, as_list=False):
-    """{권역: {열쇠: 값 목록}} → 한 줄에 한 시각(하루)씩 쓴 JSON (git에서 바뀐 줄만 보이게)"""
+def dump(v):
+    return json.dumps(v, ensure_ascii=False, separators=(',', ':'))
+
+
+def write_json(path, meta, key, body):
+    """meta + {key: {이름: 값}} — 한 줄에 한 항목(바뀐 줄만 git에 보이게). 값이 dict면 그 안도 한 줄에 하나."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    dump = lambda v: json.dumps(v, ensure_ascii=False, separators=(',', ':'))
     parts = []
-    for name in sorted(regions, key=lambda n: [r[0] for r in REGIONS].index(n) if n in [r[0] for r in REGIONS] else 99):
-        rows = regions[name]
-        if as_list:
-            body = ',\n'.join(f'   {dump([k, *rows[k]])}' for k in sorted(rows))
-            parts.append(f'  {dump(name)}: [\n{body}\n  ]')
+    for k in sorted(body):
+        v = body[k]
+        if isinstance(v, dict):
+            inner = ',\n'.join(f'   {dump(kk)}: {dump(v[kk])}' for kk in sorted(v))
+            parts.append(f'  {dump(k)}: {{\n{inner}\n  }}')
         else:
-            body = ',\n'.join(f'   {dump(k)}: {dump(rows[k])}' for k in sorted(rows))
-            parts.append(f'  {dump(name)}: {{\n{body}\n  }}')
-    head = ',\n'.join(f' {dump(k)}: {dump(v)}' for k, v in meta.items())
-    path.write_text('{\n' + head + ',\n "regions": {\n' + ',\n'.join(parts) + '\n }\n}\n', encoding='utf-8', newline='\n')
+            parts.append(f'  {dump(k)}: {dump(v)}')
+    head = ''.join(f' {dump(k)}: {dump(v)},\n' for k, v in meta.items())
+    path.write_text('{\n' + head + f' {dump(key)}: {{\n' + ',\n'.join(parts) + '\n }\n}\n', encoding='utf-8', newline='\n')
+
+
+def nation():
+    """regions.json → (격자 목록 {'nx,ny': (nx, ny)}, 시도코드별 격자 집합, ASOS 지점 {번호: 이름})"""
+    d = load_json(DATA_DIR / 'regions.json')
+    grids, by_sido = {}, defaultdict(set)
+    for code, sido, si, gu, nx, ny, *_ in d.get('regions', []):
+        g = f'{nx},{ny}'
+        grids[g] = (nx, ny)
+        by_sido[code[:2]].add(g)
+    stns = {r[8] for r in d.get('regions', [])}
+    return grids, by_sido, {s: d.get('stations', {}).get(str(s), str(s)) for s in stns}
+
+
+def parallel(fn, jobs):
+    """jobs를 WORKERS개씩 동시에 → [(job, 결과 또는 예외)]"""
+    from concurrent.futures import ThreadPoolExecutor
+    def run(j):
+        try:
+            return j, fn(j)
+        except Exception as e:          # noqa: BLE001 — 한 건 실패는 그 건만 건너뜀
+            return j, e
+    with ThreadPoolExecutor(WORKERS) as ex:
+        return list(ex.map(run, jobs))
 
 
 def hourly_rows(items, now):
@@ -276,98 +296,222 @@ def hourly_rows(items, now):
     return rows
 
 
+def update_forecast(key, now):
+    """전국 시간대별 예보(새 발표가 나왔을 때만)"""
+    grids, by_sido, _ = nation()
+    if not grids:
+        print('지역 목록(regions.json)이 없어 전국 예보를 건너뜀')
+        return
+    base = latest_base(now)
+    files = {sd: load_json(DATA_DIR / 'fc' / f'{sd}.json').get('grids', {}) for sd in by_sido}
+    old = {g: v for f in files.values() for g, v in f.items()}
+    tag = lambda b: f'{b[0]}{b[1]}'
+    todo = [g for g in grids if old.get(g, {}).get('b') != tag(base)]
+    if not todo:
+        print(f'전국 예보: {base[0]} {base[1]} 발표 이미 받음')
+        return
+    today = now.date()
+
+    def job(g):
+        nx, ny = grids[g]
+        b = base
+        try:
+            items = fetch(key, nx, ny, *b, tries=3)
+        except NoData:
+            b = prev_base(*b)
+            if old.get(g, {}).get('b') == tag(b):
+                return None                 # 최신 발표가 아직 없고 바로 앞 발표는 이미 있음
+            items = fetch(key, nx, ny, *b, tries=3)
+        days = [[d['date'], d['tmin'], d['tmax'], d['pop'], d['wx'], d['icon']] for d in summarize(items, today)]
+        return {'b': tag(b), 'h': hourly_rows(items, now), 'd': days}
+
+    res, fails = {}, 0
+    for g, r in parallel(job, todo):
+        if isinstance(r, Exception):
+            fails += 1
+        elif r:
+            res[g] = r
+    cut = now.strftime('%Y%m%d%H')
+    for sd, gs in by_sido.items():
+        body = {}
+        for g in gs:
+            v = res.get(g) or old.get(g)
+            if not v:
+                continue
+            body[g] = {'b': v['b'], 'd': [x for x in v['d'] if x[0] >= today.isoformat()], 'h': [x for x in v['h'] if x[0] >= cut]}
+        if body:
+            write_json(DATA_DIR / 'fc' / f'{sd}.json',
+                       {'source': '기상청 단기예보', 'fields': HOURLY_FIELDS, 'day_fields': DAY_FIELDS}, 'grids',
+                       {g: v for g, v in body.items()})
+    msg = f'전국 예보: {len(res)}/{len(todo)}개 격자 갱신({base[0]} {base[1]} 발표)'
+    print(msg + (f' — {fails}곳 실패(직전 예보 유지, 다음 회차 재시도)' if fails else ''))
+    if fails > len(todo) // 3:
+        print(f'::warning::전국 예보 {fails}/{len(todo)}곳을 받지 못함')
+
+
+def migrate_old(by_sido):
+    """2026-11-17 첫 판(영업소 6곳) 자료 → 전국 형식으로 옮기고 지움"""
+    office_grid = {name: f'{nx},{ny}' for name, _, nx, ny in REGIONS}
+    stn_of = {'부산': 159, '울산': 152, '경남동부': 155, '경남서부': 192, '경북동부': 138, '경북서부': 143}
+    for p in sorted(DATA_DIR.glob('obs-????-??.json')):
+        ym = p.stem[4:]
+        old = load_json(p).get('regions', {})
+        for sd, gs in by_sido.items():
+            path = DATA_DIR / 'obs' / ym / f'{sd}.json'
+            cur = load_json(path).get('grids', {})
+            moved = False
+            for office, rows in old.items():
+                g = office_grid.get(office)
+                if g in gs:
+                    cur.setdefault(g, {}).update({k: v for k, v in rows.items() if k not in cur.get(g, {})})
+                    moved = True
+            if moved:
+                write_json(path, {'source': '기상청 초단기실황(매시 정시, 격자)', 'fields': OBS_FIELDS}, 'grids', cur)
+        p.unlink()
+        print(f'옛 관측 파일 옮김: {p.name}')
+    old_daily = sorted(DATA_DIR.glob('daily-????.json'))
+    if old_daily:
+        days = defaultdict(dict)
+        for p in old_daily:
+            for office, rows in load_json(p).get('regions', {}).items():
+                if office in stn_of:
+                    days[stn_of[office]].update(rows)
+        for stn, rows in days.items():
+            path = DATA_DIR / 'daily' / f'{stn}.json'
+            cur = load_json(path)
+            merged = {**rows, **cur.get('days', {})}
+            write_json(path, {'stn': stn, 'source': '기상청 종관기상관측(ASOS) 일자료', 'fields': DAILY_FIELDS}, 'days', merged)
+        for p in old_daily:
+            p.unlink()
+        print(f'옛 일자료 파일 옮김: {len(old_daily)}개')
+    old_fc = DATA_DIR / 'forecast.json'
+    if old_fc.exists():
+        old_fc.unlink()
+
+
 def update_obs(key, now):
-    """매시간 관측(초단기실황) 쌓기"""
+    """전국 매시간 관측(초단기실황) 쌓기"""
+    grids, by_sido, _ = nation()
+    if not grids:
+        return
+    migrate_old(by_sido)
     latest = (now - timedelta(minutes=45)).replace(minute=0, second=0, microsecond=0)   # 정시 관측은 약 40분 뒤 제공
-    window = [latest - timedelta(hours=h) for h in range(21, -1, -1)]                   # 기상청은 지금부터 24시간 안 자료만 줌(여유 두고 22시간)
-    files = {}
-    for h in window:
-        ym = h.strftime('%Y-%m')
-        if ym not in files:
-            files[ym] = {n: dict(v) for n, v in load_json(DATA_DIR / f'obs-{ym}.json').get('regions', {}).items()}
-    have = lambda name, h: h.strftime('%Y%m%d%H') in files[h.strftime('%Y-%m')].get(name, {})
-    recent = [latest - timedelta(hours=h) for h in range(OBS_EVERY_HOURS)]
-    if all(any(have(n, h) for h in recent) for n, *_ in REGIONS):
+    window = [latest - timedelta(hours=h) for h in range(21, -1, -1)]                   # 기상청은 지금부터 24시간 안 자료만 줌
+    months = sorted({h.strftime('%Y-%m') for h in window})
+    files = {(ym, sd): load_json(DATA_DIR / 'obs' / ym / f'{sd}.json').get('grids', {}) for ym in months for sd in by_sido}
+    have = defaultdict(set)
+    for (ym, sd), gs in files.items():
+        for g, rows in gs.items():
+            have[g].update(rows)
+    recent = {(latest - timedelta(hours=h)).strftime('%Y%m%d%H') for h in range(OBS_EVERY_HOURS)}
+    if all(have[g] & recent for g in grids):
         print(f'관측: 최근 {OBS_EVERY_HOURS}시간 안 자료가 이미 있어 이번엔 건너뜀')
         return
-    added, misses = 0, 0
-    for name, city, nx, ny in REGIONS:
-        for h in window:
-            if have(name, h):
-                continue
-            try:
-                items = fetch(key, nx, ny, h.strftime('%Y%m%d'), h.strftime('%H00'), api=NCST_API, rows=20, tries=2)
-            except NoData:
-                continue
-            except RuntimeError as e:
-                misses += 1
-                if misses >= 6:
-                    print(f'::warning::관측 자료 받기가 계속 실패해 중단: {e}')
-                    break
-                continue
-            v = {i['category']: i.get('obsrValue') for i in items}
-            if 'T1H' not in v:
-                continue
-            pty = num(v.get('PTY'))
-            files[h.strftime('%Y-%m')].setdefault(name, {})[h.strftime('%Y%m%d%H')] = [
-                num(v.get('T1H')), num(v.get('RN1')), num(v.get('REH')), num(v.get('WSD')),
-                0 if pty is None else int(pty), num(v.get('VEC'))]
-            added += 1
-            time.sleep(0.15)
-        else:
-            continue
-        break
-    if added:
-        for ym, regions in files.items():
-            if regions:
-                write_rows(DATA_DIR / f'obs-{ym}.json',
-                           {'source': '기상청 초단기실황(매시 정시, 영업소 대표 도시 격자)', 'fields': OBS_FIELDS}, regions)
-    print(f'관측: {added}개 시각 추가')
+    keys = [h.strftime('%Y%m%d%H') for h in window]
+    todo = []
+    for g in grids:
+        known = have[g] & set(keys)
+        # 처음 쌓는 격자는 최근 몇 시간만(첫날 호출 수가 하루 한도를 넘지 않게), 이미 쌓던 격자는 지난 22시간 빈 칸 모두
+        want = keys if known else keys[-OBS_EVERY_HOURS:]
+        todo += [(g, k) for k in want if k not in have[g]]
+
+    def job(t):
+        g, k = t
+        nx, ny = grids[g]
+        try:
+            items = fetch(key, nx, ny, k[:8], k[8:] + '00', api=NCST_API, rows=20, tries=2)
+        except NoData:
+            return None
+        v = {i['category']: i.get('obsrValue') for i in items}
+        if 'T1H' not in v:
+            return None
+        pty = num(v.get('PTY'))
+        return [num(v.get('T1H')), num(v.get('RN1')), num(v.get('REH')), num(v.get('WSD')), 0 if pty is None else int(pty), num(v.get('VEC'))]
+
+    got, fails = {}, 0
+    for t, r in parallel(job, todo):
+        if isinstance(r, Exception):
+            fails += 1
+        elif r:
+            got[t] = r
+    if got:
+        for (g, k), row in got.items():
+            ym = f'{k[:4]}-{k[4:6]}'
+            for sd, gs in by_sido.items():
+                if g in gs:
+                    files[(ym, sd)].setdefault(g, {})[k] = row
+        for (ym, sd), gs in files.items():
+            if gs and any(k[:6] == ym.replace('-', '') for (g, k) in got if g in by_sido[sd]):
+                write_json(DATA_DIR / 'obs' / ym / f'{sd}.json', {'source': '기상청 초단기실황(매시 정시, 격자)', 'fields': OBS_FIELDS}, 'grids', gs)
+    print(f'관측: {len(got)}/{len(todo)}건 추가' + (f' ({fails}건 실패 — 다음 회차 재시도)' if fails else ''))
+    if fails > max(30, len(todo) // 3):
+        print(f'::warning::관측 {fails}/{len(todo)}건을 받지 못함')
 
 
 def update_daily(key, now):
-    """지난 날씨 일자료(ASOS) 채우기"""
+    """전국 지난 날씨 일자료(ASOS) 채우기"""
+    _, _, stns = nation()
+    if not stns:
+        return
     yday = (now - timedelta(days=1 if now.hour >= 12 else 2)).date()   # 어제 자료는 낮에 올라옴 — 오전엔 그제까지만 요청
-    years = range(int(ASOS_START[:4]), yday.year + 1)
-    files = {y: {n: dict(v) for n, v in load_json(DATA_DIR / f'daily-{y}.json').get('regions', {}).items()} for y in years}
-    added = 0
-    for name, stn in ASOS_STN.items():
-        last = max((d for y in years for d in files[y].get(name, {})), default=None)
-        start = (datetime.strptime(last, '%Y-%m-%d').date() + timedelta(days=1)) if last else datetime.strptime(ASOS_START, '%Y-%m-%d').date()
-        if start > yday:
-            continue
-        page = 1
+    start0 = datetime.strptime(ASOS_START, '%Y-%m-%d').date()
+    todo = []
+    for stn in sorted(stns):
+        cur = load_json(DATA_DIR / 'daily' / f'{stn}.json').get('days', {})
+        last = max(cur, default=None)
+        start = (datetime.strptime(last, '%Y-%m-%d').date() + timedelta(days=1)) if last else start0
+        if start <= yday:
+            todo.append((stn, start))
+    if not todo:
+        print('지난 날씨(ASOS): 모두 최신')
+        return
+    # 활용신청 여부를 한 곳으로 먼저 확인
+    try:
+        call(ASOS_API, {'serviceKey': key, 'pageNo': 1, 'numOfRows': 1, 'dataType': 'JSON', 'dataCd': 'ASOS', 'dateCd': 'DAY',
+                        'startDt': yday.strftime('%Y%m%d'), 'endDt': yday.strftime('%Y%m%d'), 'stnIds': todo[0][0]}, tries=2)
+    except NoData:
+        pass
+    except RuntimeError as e:
+        if any(s in str(e) for s in ('JSON', 'HTTP 403', 'HTTP 401')):
+            print(f'::warning::지난 날씨(ASOS 일자료): {e} — 「기상청_지상(종관, ASOS) 일자료 조회서비스」 활용신청 확인 필요')
+            return
+
+    def job(t):
+        stn, start = t
+        rows, page, name = {}, 1, None
         while True:
             try:
-                items = call(ASOS_API, {'serviceKey': key, 'pageNo': page, 'numOfRows': 999, 'dataType': 'JSON',
-                                        'dataCd': 'ASOS', 'dateCd': 'DAY', 'startDt': start.strftime('%Y%m%d'),
-                                        'endDt': yday.strftime('%Y%m%d'), 'stnIds': stn}, tries=2)
+                items = call(ASOS_API, {'serviceKey': key, 'pageNo': page, 'numOfRows': 999, 'dataType': 'JSON', 'dataCd': 'ASOS',
+                                        'dateCd': 'DAY', 'startDt': start.strftime('%Y%m%d'), 'endDt': yday.strftime('%Y%m%d'),
+                                        'stnIds': stn}, tries=3)
             except NoData:
-                break
-            except RuntimeError as e:
-                print(f'::warning::지난 날씨(ASOS 일자료) {name}: {e} — 공공데이터포털에서 「기상청_지상(종관, ASOS) 일자료 조회서비스」 활용신청이 필요할 수 있음')
-                if 'JSON' in str(e) or 'HTTP 403' in str(e) or 'HTTP 401' in str(e):
-                    print('지난 날씨(ASOS): 활용신청 전으로 보여 이번엔 건너뜀')
-                    return                      # 활용신청 전 — 다른 권역도 같은 결과라 바로 끝냄
                 break
             for it in items:
                 d = it.get('tm', '')[:10]
-                if len(d) != 10:
-                    continue
-                files[int(d[:4])].setdefault(name, {})[d] = [num(it.get(k)) for k in
-                                                              ('avgTa', 'minTa', 'maxTa', 'sumRn', 'avgRhm', 'avgWs', 'ddMes')]
-                added += 1
+                if len(d) == 10:
+                    rows[d] = [num(it.get(k)) for k in ('avgTa', 'minTa', 'maxTa', 'sumRn', 'avgRhm', 'avgWs', 'ddMes')]
+                    name = name or it.get('stnNm')
             if len(items) < 999:
                 break
             page += 1
-            time.sleep(0.3)
-    if added:
-        for y, regions in files.items():
-            if regions:
-                write_rows(DATA_DIR / f'daily-{y}.json',
-                           {'source': '기상청 종관기상관측(ASOS) 일자료', 'fields': DAILY_FIELDS,
-                            'stations': {n: s for n, s in ASOS_STN.items()}}, regions)
-    print(f'지난 날씨(ASOS): {added}일 추가')
+        return rows, name
+
+    added, fails = 0, []
+    for (stn, _), r in parallel(job, todo):
+        if isinstance(r, Exception):
+            fails.append(stn)
+            continue
+        rows, api_name = r
+        if not rows:
+            continue
+        path = DATA_DIR / 'daily' / f'{stn}.json'
+        cur = load_json(path).get('days', {})
+        cur.update(rows)
+        write_json(path, {'stn': stn, 'name': stns[stn], 'source': '기상청 종관기상관측(ASOS) 일자료', 'fields': DAILY_FIELDS}, 'days', cur)
+        added += len(rows)
+        if api_name and api_name.replace('시', '').replace('군', '') != stns[stn].replace('시', '').replace('군', ''):
+            print(f'::warning::ASOS {stn}: 지점 이름이 다름(목록 {stns[stn]}, 기상청 {api_name}) — build_regions.py 확인')
+    print(f'지난 날씨(ASOS): {len(todo)}개 지점 중 {added}일 추가' + (f', 실패 {fails}' if fails else ''))
 
 
 def data_age_hours(now):
@@ -402,7 +546,7 @@ if __name__ == '__main__':
         if e.code not in (None, 0):
             err = str(e.code)
     if service_key():                           # 예보가 실패해도 관측·지난 날씨는 따로 채움(실패해도 경고만)
-        for job in (update_obs, update_daily):
+        for job in (update_forecast, update_obs, update_daily):
             try:
                 job(service_key(), datetime.now(KST))
             except Exception as e:              # noqa: BLE001 — 화면 예보 갱신을 막지 않게

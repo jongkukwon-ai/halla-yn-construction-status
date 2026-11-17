@@ -22,7 +22,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25              # 전국 격자 약 230곳(예보·관측·지난 날씨) — 보통 2~5분
     steps:
       - uses: actions/checkout@v4
 

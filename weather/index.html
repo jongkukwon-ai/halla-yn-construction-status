@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>권역 날씨 · 영남지사</title>
+<title>날씨 조회 · 영남지사</title>
 <style>
   :root {
     --ink:#0F1B2D; --ink-muted:#4A5568; --ink-faint:#8898AA;
@@ -26,12 +26,13 @@
           border-radius:20px; padding:5px 12px; white-space:nowrap; }
   .main { padding:20px 24px 48px; max-width:1320px; margin:0 auto; }
 
-  .tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
-  .tab { border:1px solid var(--border-strong); background:var(--card); color:var(--ink-muted); border-radius:20px;
-         padding:7px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
-  .tab small { color:var(--ink-faint); margin-left:4px; }
-  .tab[aria-selected="true"] { background:var(--navy); border-color:var(--navy); color:#fff; }
-  .tab[aria-selected="true"] small { color:#B9C7E6; }
+  .picker { display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-end; background:var(--card); border:1px solid var(--border);
+            border-radius:10px; padding:12px 16px; margin-bottom:16px; }
+  .picker label { display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--ink-faint); }
+  .picker select { border:1px solid var(--border-strong); border-radius:8px; padding:7px 10px; font-size:14px; font-family:inherit;
+                   color:var(--ink); background:#fff; min-width:150px; }
+  .picker .pick-note { font-size:12px; color:var(--ink-muted); padding-bottom:8px; }
+  .picker .pick-note b { color:var(--ink); }
 
   .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-bottom:16px; }
   .card h2 { font-size:15px; font-weight:700; margin-bottom:2px; }
@@ -115,14 +116,19 @@
 <body>
 <header class="site-header">
   <div>
-    <div class="site-title">권역 날씨</div>
-    <div class="site-sub">영업소 대표 도시 · 시간대별 예보 · 지난 날씨</div>
+    <div class="site-title">날씨 조회</div>
+    <div class="site-sub">전국 시·군·구 · 시간대별 예보 · 지난 날씨</div>
   </div>
   <a class="back" href="../">← 영남지사</a>
 </header>
 
 <main class="main">
-  <div class="tabs" id="tabs" role="tablist" aria-label="영업소 권역"></div>
+  <div class="picker" id="picker">
+    <label>시·도<select id="s-sido" aria-label="시·도"></select></label>
+    <label>시·군·구<select id="s-si" aria-label="시·군·구"></select></label>
+    <label id="l-gu" hidden>구<select id="s-gu" aria-label="구"></select></label>
+    <span class="pick-note" id="pick-note"></span>
+  </div>
 
   <section class="card">
     <h2 id="now-title">지금 날씨</h2>
@@ -160,12 +166,11 @@
 
 <script>
 /* ═══ 자료 ═══════════════════════════════════════════════════════════════
-   ../weather-data.js         오늘~글피 하루 요약(첫 화면과 같은 자료)
-   ./data/forecast.json       시간대별 예보(기상청 단기예보)
-   ./data/obs-YYYY-MM.json    매시간 관측(기상청 초단기실황) — 2026-11-16부터 쌓임
-   ./data/daily-YYYY.json     지난 날씨 일자료(기상청 종관기상관측 ASOS, 2021-01-01~)
+   ./data/regions.json              전국 시·도/시·군·구/구 — 행정구역코드·예보 격자·가까운 ASOS 지점(weather/tools/build_regions.py)
+   ./data/fc/{시도코드}.json         시간대별 예보·오늘~글피 요약(기상청 단기예보, 격자별)
+   ./data/obs/{YYYY-MM}/{시도코드}.json 매시간 관측(기상청 초단기실황, 격자별)
+   ./data/daily/{지점번호}.json      지난 날씨 일자료(기상청 종관기상관측 ASOS, 2021-01-01~)
    모두 .github/scripts/update_weather.py가 GitHub Actions에서 자동 갱신 */
-const OFFICES = [['부산','부산'],['울산','울산'],['경남동부','창원'],['경남서부','진주'],['경북동부','포항'],['경북서부','대구']];
 const BUCKET = Math.floor(Date.now() / 600000);       // 10분마다 새 주소(옛 파일 캐시 방지)
 const cache = {};
 function getJSON(path) {
@@ -173,13 +178,9 @@ function getJSON(path) {
     .then(r => r.ok ? r.json() : null).catch(() => null);
   return cache[path];
 }
-function loadScript(src) {
-  return new Promise(res => { const s = document.createElement('script'); s.src = `${src}?t=${BUCKET}`;
-    s.onload = s.onerror = () => res(); document.head.appendChild(s); });
-}
 
 const DOW = '일월화수목금토';
-const OBS_START = '2026-11-16';       // 시간별 관측(초단기실황)을 쌓기 시작한 날
+const OBS_START = '2026-11-17';       // 전국 시간별 관측(초단기실황)을 쌓기 시작한 날(부산·울산·창원·진주·포항·대구는 11-16부터)
 const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fmt = (v, u = '', dp = 1) => v == null ? '–' : `${Number(v).toFixed(dp).replace(/\.0$/, '')}${u}`;
@@ -196,44 +197,71 @@ function windDir(deg) {
 }
 const svgEl = (tag, attrs, text) => `<${tag} ${Object.entries(attrs).map(([k, v]) => `${k}="${v}"`).join(' ')}>${text || ''}</${tag}>`;
 
-/* ═══ 권역 선택 ═══════════════════════════════════════════════════════════ */
-let office = decodeURIComponent(location.hash.slice(1)) || (() => { try { return localStorage.getItem('wx-office'); } catch (e) { return null; } })() || '부산';
-if (!OFFICES.some(o => o[0] === office)) office = '부산';
-const tabs = document.getElementById('tabs');
-tabs.innerHTML = OFFICES.map(([o, c]) => `<button class="tab" role="tab" data-o="${o}">${o} 영업소<small>${c}</small></button>`).join('');
-tabs.addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) select(b.dataset.o); });
-window.addEventListener('hashchange', () => { const o = decodeURIComponent(location.hash.slice(1)); if (o && o !== office) select(o); });
-function select(o) {
-  if (!OFFICES.some(x => x[0] === o)) return;
-  office = o;
-  try { localStorage.setItem('wx-office', o); } catch (e) { }
-  if (decodeURIComponent(location.hash.slice(1)) !== o) history.replaceState(null, '', '#' + encodeURIComponent(o));
-  tabs.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.o === o));
+/* ═══ 지역 선택(시·도 → 시·군·구 → 구) ═════════════════════════════════════ */
+let REG = null, office = null;          // office = 고른 지역의 행정구역코드
+const sSido = document.getElementById('s-sido'), sSi = document.getElementById('s-si'), sGu = document.getElementById('s-gu'), lGu = document.getElementById('l-gu');
+const R = () => REG.byCode[office];     // {code, sido, si, gu, nx, ny, stn, km, g:'nx,ny', sd:'시도코드'}
+const city = () => { const r = R(); return r.si ? `${r.sido} ${r.si}${r.gu ? ' ' + r.gu : ''}` : `${r.sido}(대표 지점)`; };
+const shortName = () => { const r = R(); return r.gu ? `${r.si} ${r.gu}` : r.si || r.sido; };
+async function initRegions() {
+  const d = await getJSON('./data/regions.json');
+  if (!d) { document.getElementById('pick-note').textContent = '지역 목록을 불러오지 못했습니다.'; return false; }
+  const list = d.regions.map(([code, sido, si, gu, nx, ny, lon, lat, stn, km]) => ({ code, sido, si, gu, nx, ny, stn, km, g: `${nx},${ny}`, sd: code.slice(0, 2) }));
+  REG = { list, byCode: Object.fromEntries(list.map(r => [r.code, r])), sidos: d.sidos, stations: d.stations };
+  sSido.innerHTML = REG.sidos.map(sd => `<option>${esc(sd)}</option>`).join('');
+  sSido.onchange = () => pick(firstOf(sSido.value));
+  sSi.onchange = () => { const v = sSi.value; pick(v === '' ? repOf(sSido.value).code : (list.find(r => r.sido === sSido.value && r.si === v) || {}).code); };
+  sGu.onchange = () => pick(sGu.value);
+  return true;
+}
+const repOf = sido => REG.list.find(r => r.sido === sido && !r.si);
+const firstOf = sido => (repOf(sido) || REG.list.find(r => r.sido === sido)).code;
+function fillSelects() {
+  const r = R(), inSido = REG.list.filter(x => x.sido === r.sido && x.si);
+  sSido.value = r.sido;
+  const sis = [...new Set(inSido.map(x => x.si))];
+  sSi.innerHTML = (repOf(r.sido) ? `<option value="">시·도 대표 지점</option>` : '') + sis.map(si => `<option value="${esc(si)}">${esc(si)}</option>`).join('');
+  sSi.value = r.si;
+  const gus = inSido.filter(x => x.si === r.si && x.gu);
+  lGu.hidden = !gus.length;
+  sGu.innerHTML = gus.map(x => `<option value="${x.code}">${esc(x.gu)}</option>`).join('');
+  if (gus.length) sGu.value = r.code;
+  document.getElementById('pick-note').innerHTML = `<b>${esc(city())}</b> · 예보 격자 ${r.nx},${r.ny} · 지난 날씨는 ${esc(REG.stations[r.stn] || r.stn)} 관측소(${r.km ? `약 ${r.km}km` : '같은 지역'})`;
+}
+function pick(code) {
+  if (!code || !REG.byCode[code]) return;
+  office = code;
+  try { localStorage.setItem('wx-code', code); } catch (e) { }
+  if (location.hash.slice(1) !== code) history.replaceState(null, '', '#' + code);
+  fillSelects();
   renderNow(); renderHourly(); renderHist();
 }
-const city = () => OFFICES.find(o => o[0] === office)[1];
+window.addEventListener('hashchange', () => { const c = location.hash.slice(1); if (c && c !== office) pick(c); });
+function fcOf(r) { return getJSON(`./data/fc/${r.sd}.json`).then(d => d && d.grids ? d.grids[r.g] || null : null); }
+function obsMonth(r, ym) { return getJSON(`./data/obs/${ym}/${r.sd}.json`).then(d => d && d.grids ? d.grids[r.g] || {} : {}); }
+function dailyStn(r) { return getJSON(`./data/daily/${r.stn}.json`).then(d => d && d.days ? d.days : {}); }
+const baseText = b => b ? `${+b.slice(4, 6)}/${+b.slice(6, 8)} ${b.slice(8, 10)}:${b.slice(10, 12)} 발표` : '';
 
 /* ═══ 지금 날씨 + 4일 요약 ═══════════════════════════════════════════════ */
 async function latestObs() {
   const now = new Date(), months = [ymd(now).slice(0, 7)];
   const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1); months.push(ymd(prev).slice(0, 7));
   for (const ym of months) {
-    const d = await getJSON(`./data/obs-${ym}.json`);
-    const rows = d && d.regions && d.regions[office];
-    if (rows) { const k = Object.keys(rows).sort().pop(); if (k) return [k, rows[k]]; }
+    const rows = await obsMonth(R(), ym);
+    const k = Object.keys(rows).sort().pop(); if (k) return [k, rows[k]];
   }
   return null;
 }
 async function renderNow() {
   const o = office;
-  document.getElementById('now-title').textContent = `지금 날씨 · ${city()}`;
-  const [obs, fc] = await Promise.all([latestObs(), getJSON('./data/forecast.json')]);
+  document.getElementById('now-title').textContent = `지금 날씨 · ${shortName()}`;
+  const [obs, fc] = await Promise.all([latestObs(), fcOf(R())]);
   if (o !== office) return;
   const box = document.getElementById('now');
   if (obs) {
     const [k, [t, rn, reh, wsd, pty, vec]] = obs;
     const h = +k.slice(8, 10);
-    const f = fc && fc.regions && (fc.regions[office] || []).find(r => r[0] >= k && +r[0] - +k <= 3);   // 가까운 시각 예보의 하늘상태(관측엔 하늘상태가 없음)
+    const f = fc && (fc.h || []).find(r => r[0] >= k && +r[0] - +k <= 3);   // 가까운 시각 예보의 하늘상태(관측엔 하늘상태가 없음)
     const [ic, wx] = skyIcon(f ? f[2] : null, pty, h);
     box.innerHTML = `<div class="now-t"><span>${ic}</span>${fmt(t, '°')}</div>
       <div class="now-meta">${wx ? `<span>날씨 <b>${wx}</b></span>` : ''}<span>습도 <b>${fmt(reh, '%', 0)}</b></span>
@@ -243,25 +271,30 @@ async function renderNow() {
     box.innerHTML = '<div class="empty">관측 자료가 아직 없습니다. 자동 갱신이 돌면 채워집니다.</div>';
   }
   const daysBox = document.getElementById('days');
-  const r = typeof WEATHER !== 'undefined' && WEATHER && (WEATHER.regions || []).find(x => x.office === office);
-  daysBox.innerHTML = r ? r.days.map(d => `<div class="day" title="${d.date}">
-      <div class="day-l">${d.label} (${d.dow})</div><div class="day-i">${d.icon}</div><div class="day-wx">${d.wx}</div>
-      <div class="day-t"><span class="mx">${fmt(d.tmax, '°', 0)}</span> / <span class="mn">${fmt(d.tmin, '°', 0)}</span></div>
-      <div class="day-p">☂ ${d.pop == null ? '–' : d.pop + '%'}</div></div>`).join('')
-    : '<div class="empty">예보 요약을 불러오지 못했습니다.</div>';
-  document.getElementById('now-desc').textContent = r ? `오늘~글피 최고/최저기온·강수확률: ${WEATHER.source} ${WEATHER.base} 발표` : '기상청 초단기실황(정시 관측)과 단기예보';
+  // 오늘~글피 요약(예보) — 오늘 최저는 이미 지난 새벽 관측과 비교해 낮은 값
+  const todayKey = ymd(new Date()).replace(/-/g, ''), obsToday = obs ? Object.entries(await obsMonth(R(), ymd(new Date()).slice(0, 7))).filter(([k]) => k.startsWith(todayKey)).map(([, v]) => v[0]).filter(v => v != null) : [];
+  if (o !== office) return;
+  const days = (fc && fc.d || []).slice(0, 4);
+  daysBox.innerHTML = days.length ? days.map(([date, tmin, tmax, pop, wx, icon], i) => {
+      const dt = new Date(date), lab = ['오늘', '내일', '모레', '글피'][Math.round((dt - new Date(ymd(new Date()))) / 864e5)] || `${dt.getMonth() + 1}/${dt.getDate()}`;
+      if (i === 0 && obsToday.length) { tmin = tmin == null ? Math.min(...obsToday) : Math.min(tmin, ...obsToday); tmax = tmax == null ? Math.max(...obsToday) : Math.max(tmax, ...obsToday); }
+      return `<div class="day" title="${date}"><div class="day-l">${lab} (${DOW[dt.getDay()]})</div><div class="day-i">${icon}</div><div class="day-wx">${wx}</div>
+      <div class="day-t"><span class="mx">${fmt(tmax, '°', 0)}</span> / <span class="mn">${fmt(tmin, '°', 0)}</span></div>
+      <div class="day-p">☂ ${pop == null ? '–' : pop + '%'}</div></div>`; }).join('')
+    : '<div class="empty">예보 요약이 아직 없습니다. 자동 갱신이 돌면 채워집니다.</div>';
+  document.getElementById('now-desc').textContent = days.length ? `오늘~글피 최고/최저기온·강수확률: 기상청 단기예보 ${baseText(fc.b)} (오늘은 지난 관측 포함)` : '기상청 초단기실황(정시 관측)과 단기예보';
 }
 
 /* ═══ 시간대별 예보 ═════════════════════════════════════════════════════ */
 const COLW = 56, CH = 150, PADT = 26, PADB = 14;
 async function renderHourly() {
-  const o = office, fc = await getJSON('./data/forecast.json');
+  const o = office, fc = await fcOf(R());
   if (o !== office) return;
   const box = document.getElementById('hourly');
   const nowKey = (() => { const n = new Date(); return `${n.getFullYear()}${pad(n.getMonth() + 1)}${pad(n.getDate())}${pad(n.getHours())}`; })();
-  const rows = ((fc && fc.regions && fc.regions[office]) || []).filter(r => r[0] >= nowKey);
+  const rows = ((fc && fc.h) || []).filter(r => r[0] >= nowKey);
   if (!rows.length) { box.innerHTML = '<div class="empty">시간대별 예보가 아직 없습니다. 자동 갱신이 돌면 채워집니다.</div>'; return; }
-  document.getElementById('fc-desc').textContent = `${fc.source} ${fc.base} 발표 · ${city()} · 차트에 마우스를 올리거나 눌러 자세히 보기`;
+  document.getElementById('fc-desc').textContent = `기상청 단기예보 ${baseText(fc.b)} · ${shortName()}(격자 ${R().g}) · 차트에 마우스를 올리거나 눌러 자세히 보기`;
   const temps = rows.map(r => r[1]).filter(v => v != null);
   const lo = Math.floor(Math.min(...temps)) - 1, hi = Math.ceil(Math.max(...temps)) + 1;
   const W = rows.length * COLW, y = v => PADT + (hi - v) / (hi - lo || 1) * (CH - PADT - PADB), x = i => i * COLW + COLW / 2;
@@ -343,13 +376,11 @@ function step(k) {
   renderHist();
 }
 async function dailyOf(date) {          // 공식 일자료(ASOS) [평균, 최저, 최고, 강수, 습도, 풍속, 적설]
-  const d = await getJSON(`./data/daily-${date.slice(0, 4)}.json`);
-  return d && d.regions && d.regions[office] ? d.regions[office][date] || null : null;
+  return (await dailyStn(R()))[date] || null;
 }
 async function obsOf(date) {            // 그날 시간별 관측 {HH: [기온, 강수, 습도, 풍속, 강수형태, 풍향]}
-  const d = await getJSON(`./data/obs-${date.slice(0, 7)}.json`);
-  const rows = d && d.regions && d.regions[office], key = date.replace(/-/g, ''), out = {};
-  if (rows) for (const k in rows) if (k.startsWith(key)) out[k.slice(8, 10)] = rows[k];
+  const rows = await obsMonth(R(), date.slice(0, 7)), key = date.replace(/-/g, ''), out = {};
+  for (const k in rows) if (k.startsWith(key)) out[k.slice(8, 10)] = rows[k];
   return out;
 }
 function obsSummary(hours) {            // 관측으로 하루 요약(ASOS 자료가 없을 때)
@@ -366,9 +397,7 @@ function tags(s) {
 }
 
 async function rangeNote() {
-  const y = await getJSON(`./data/daily-${today.getFullYear()}.json`), first = await getJSON('./data/daily-2021.json');
-  const rows = y && y.regions && y.regions[office];
-  const last = rows ? Object.keys(rows).sort().pop() : null, start = first && first.regions && first.regions[office] ? Object.keys(first.regions[office]).sort()[0] : null;
+  const keys = Object.keys(await dailyStn(R())).sort(), last = keys[keys.length - 1] || null, start = keys[0] || null;
   return last ? `공식 일자료 ${start ? start + ' ' : ''}~ ${last} · 시간별 관측 ${OBS_START}부터`
               : `시간별 관측 ${OBS_START}부터 쌓는 중 · 2021년부터의 공식 일자료(ASOS)는 준비 중`;
 }
@@ -378,7 +407,7 @@ async function renderHist() {
   document.getElementById('range-note').textContent = await rangeNote();
   if (o !== office) return;
   document.getElementById('hist-foot').innerHTML =
-    `자료: 기상청 종관기상관측(ASOS) 일자료(${city()} 관측소 — 공식 기록) · 시간별 값과 ASOS가 없는 날은 기상청 초단기실황(${city()} 시청 부근 격자, 매시 정시) 집계 <span class="src">*</span>.
+    `자료: 기상청 종관기상관측(ASOS) 일자료 — ${esc(REG.stations[R().stn] || R().stn)} 관측소(지점 ${R().stn}, ${esc(shortName())}에서 가장 가까운 관측소${R().km ? `, 약 ${R().km}km` : ''} · 공식 기록). 시간별 값과 ASOS가 없는 날은 기상청 초단기실황(${esc(shortName())} 격자 ${R().g}, 매시 정시) 집계 <span class="src">*</span>.
      강수량 「–」는 강수 없음 또는 자료 없음. 「영하」는 최저기온 0°C 미만, 「비 5mm↑」는 하루 강수량 5mm 이상(타설·양생 일정 참고용).`;
   if (mode === 'day') return renderDay(o, box);
   return renderMonth(o, box);
@@ -411,9 +440,8 @@ async function renderDay(o, box) {
 async function renderMonth(o, box) {
   const ym = qMonth.value; if (!ym) return;
   const [yy, mm] = ym.split('-').map(Number), n = new Date(yy, mm, 0).getDate();
-  const daily = await getJSON(`./data/daily-${yy}.json`), obsM = await getJSON(`./data/obs-${ym}.json`);
+  const [dRows, oRows] = await Promise.all([dailyStn(R()), obsMonth(R(), ym)]);
   if (o !== office || ym !== qMonth.value || mode !== 'month') return;
-  const dRows = (daily && daily.regions && daily.regions[office]) || {}, oRows = (obsM && obsM.regions && obsM.regions[office]) || {};
   const days = [];
   for (let i = 1; i <= n; i++) {
     const date = `${ym}-${pad(i)}`; if (date > ymd(today)) break;
@@ -431,23 +459,23 @@ async function renderMonth(o, box) {
     <div><small>비 온 날(1mm↑)</small><b>${rn.filter(v => v >= 1).length}일</b></div>
     <div><small>영하 날</small><b>${mn.filter(v => v < 0).length}일</b></div></div>`;
   // 차트: 최고·최저 기온(한 축) + 아래에 강수량(따로)
-  const Wv = 900, H1 = 190, H2 = 70, L = 34, R = 10, T = 14, B = 22, cw = (Wv - L - R) / n, cx = i => L + (i - .5) * cw;
+  const Wv = 900, H1 = 190, H2 = 70, L = 34, RM = 10, T = 14, B = 22, cw = (Wv - L - R) / n, cx = i => L + (i - .5) * cw;
   const all = [...mx, ...mn]; const lo = Math.floor(Math.min(...all) / 5) * 5 - (Math.min(...all) % 5 === 0 ? 5 : 0), hi = Math.ceil(Math.max(...all) / 5) * 5 + (Math.max(...all) % 5 === 0 ? 5 : 0);
   const y = v => T + (hi - v) / (hi - lo || 1) * (H1 - T - B);
   let g = '';
-  for (let v = lo; v <= hi; v += 5) g += svgEl('line', { x1: L, x2: Wv - R, y1: y(v), y2: y(v), stroke: v === 0 ? '#9AA9BF' : '#EEF2F7', 'stroke-dasharray': v === 0 ? '4 3' : '' })
+  for (let v = lo; v <= hi; v += 5) g += svgEl('line', { x1: L, x2: Wv - RM, y1: y(v), y2: y(v), stroke: v === 0 ? '#9AA9BF' : '#EEF2F7', 'stroke-dasharray': v === 0 ? '4 3' : '' })
     + svgEl('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#8898AA' }, v + '°');
   days.forEach(d => { if (d.i === 1 || d.i % 5 === 0) g += svgEl('text', { x: cx(d.i), y: H1 - 6, 'text-anchor': 'middle', 'font-size': 11, fill: '#8898AA' }, d.i + '일'); });
   const line = (k, col) => { let p = '', pen = false; days.forEach(d => { const v = d.s && d.s[k]; if (v == null) { pen = false; return; } p += `${pen ? 'L' : 'M'}${cx(d.i).toFixed(1)},${y(v).toFixed(1)}`; pen = true; });
     return svgEl('path', { d: p, fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }); };
   g += line('max', 'var(--s-max)') + line('min', 'var(--s-min)');
   const lastD = [...have].reverse()[0];       // 마지막 날에 이름표(직접 표시)
-  if (lastD.s.max != null) g += svgEl('text', { x: Math.min(cx(lastD.i) + 6, Wv - R - 24), y: y(lastD.s.max) - 6, 'font-size': 11, fill: '#4A5568' }, '최고');
-  if (lastD.s.min != null) g += svgEl('text', { x: Math.min(cx(lastD.i) + 6, Wv - R - 24), y: y(lastD.s.min) + 14, 'font-size': 11, fill: '#4A5568' }, '최저');
+  if (lastD.s.max != null) g += svgEl('text', { x: Math.min(cx(lastD.i) + 6, Wv - RM - 24), y: y(lastD.s.max) - 6, 'font-size': 11, fill: '#4A5568' }, '최고');
+  if (lastD.s.min != null) g += svgEl('text', { x: Math.min(cx(lastD.i) + 6, Wv - RM - 24), y: y(lastD.s.min) + 14, 'font-size': 11, fill: '#4A5568' }, '최저');
   g += svgEl('line', { id: 'm-cross', x1: 0, x2: 0, y1: T, y2: H1 - B, stroke: '#4A5568', opacity: 0 });
   g += svgEl('rect', { id: 'm-hit', x: L, y: 0, width: Wv - L - R, height: H1, fill: 'transparent' });
   const rmax = Math.max(10, ...rn), yr = v => 6 + (1 - v / rmax) * (H2 - 22);
-  let g2 = svgEl('line', { x1: L, x2: Wv - R, y1: yr(0), y2: yr(0), stroke: '#DDE3EC' }) + svgEl('text', { x: L - 6, y: yr(rmax) + 8, 'text-anchor': 'end', 'font-size': 11, fill: '#8898AA' }, Math.round(rmax) + 'mm');
+  let g2 = svgEl('line', { x1: L, x2: Wv - RM, y1: yr(0), y2: yr(0), stroke: '#DDE3EC' }) + svgEl('text', { x: L - 6, y: yr(rmax) + 8, 'text-anchor': 'end', 'font-size': 11, fill: '#8898AA' }, Math.round(rmax) + 'mm');
   days.forEach(d => { const v = d.s && d.s.rain; if (!v) return; const bw = Math.max(3, cw - 4);
     g2 += svgEl('rect', { x: (cx(d.i) - bw / 2).toFixed(1), y: yr(v).toFixed(1), width: bw.toFixed(1), height: Math.max(1, yr(0) - yr(v)).toFixed(1), rx: Math.min(3, bw / 2), fill: 'var(--s-rain)' });
     if (v >= 5) g2 += svgEl('text', { x: cx(d.i), y: yr(v) - 3, 'text-anchor': 'middle', 'font-size': 10, fill: '#4A5568' }, Math.round(v)); });
@@ -479,7 +507,13 @@ async function renderMonth(o, box) {
 }
 
 /* ═══ 시작 ═══════════════════════════════════════════════════════════════ */
-loadScript('../weather-data.js').then(() => select(office));
+initRegions().then(ok => {
+  if (!ok) return;
+  let code = location.hash.slice(1);
+  if (!REG.byCode[code]) { try { code = localStorage.getItem('wx-code'); } catch (e) { code = null; } }
+  if (!REG.byCode[code]) code = (REG.list.find(r => r.sido.startsWith('부산') && !r.si) || REG.list[0]).code;
+  pick(code);
+});
 </script>
 </body>
 </html>
