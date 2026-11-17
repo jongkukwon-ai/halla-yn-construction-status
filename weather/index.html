@@ -479,12 +479,16 @@ async function renderDay(o, box) {
       return `<tr><td>${h}시</td><td>${fmt(t, '°')}</td><td>${rn ? fmt(rn, 'mm') : '–'}</td><td>${fmt(rh, '%', 0)}</td><td>${windDir(vec)} ${fmt(ws, 'm/s')}</td><td>${p[1] || '–'}</td></tr>`; }).join('')
   }</tbody></table></div>` : `<div class="range-note">이 날은 시간별 관측 기록이 없습니다(시간별 관측은 ${OBS_START}부터 쌓임).</div>`;
   box.innerHTML = html;
-  const src = dRow ? `ASOS ${stnLabel()}` : `초단기실황 집계(격자 ${R().g}, ${s.n}개 시각)`;
+  const src = dRow ? `기상청 종관기상관측(ASOS) 일자료 — ${stnLabel()}` : `기상청 초단기실황 집계(격자 ${R().g}, ${s.n}개 시각)`;
+  const dtTxt = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일(${DOW[d.getDay()]})`;
   setExport(`${date}`, [
-    { name: '하루 요약', rows: [['날짜', '최고기온(°C)', '최저기온(°C)', '평균기온(°C)', '강수량(mm)', '평균습도(%)', '평균풍속(m/s)', '최심적설(cm)', '자료'],
-      [date, s.max, s.min, s.avg, s.rain, s.rh, s.ws, s.snow, src]] },
-    ...(hs.length ? [{ name: '시간별 관측', rows: [['날짜', '시각', '기온(°C)', '1시간 강수량(mm)', '습도(%)', '풍속(m/s)', '풍향', '강수형태'],
-      ...hs.map(h => { const [t, rn, rh, ws, pty, vec] = hours[h]; return [date, `${h}시`, t, rn, rh, ws, windDir(vec), skyIcon(null, pty, +h)[1] || '']; })] }] : []),
+    ...(hs.length ? [{ name: '시간별 관측', title: `${placeName()} · ${dtTxt} 시간별 날씨`, note: `자료: 기상청 초단기실황(예보 격자 ${R().g}, 매시 정시 관측) · 받은 시각 ${nowText()}`,
+      header: ['시각', '기온(°C)', '1시간 강수량(mm)', '습도(%)', '풍속(m/s)', '풍향', '강수형태'],
+      rows: hs.map(h => { const [t, rn, rh, ws, pty, vec] = hours[h]; return [`${h}시`, t, rn, rh, ws, windDir(vec), skyIcon(null, pty, +h)[1] || '']; }),
+      charts: [{ type: 'line', title: '시간별 기온(°C)', cat: 0, series: [{ col: 1, name: '기온', color: 'EB6834' }] }] }] : []),
+    { name: '하루 요약', title: `${placeName()} · ${dtTxt} 날씨 요약`, note: `자료: ${src} · 받은 시각 ${nowText()}`,
+      header: ['날짜', '최고기온(°C)', '최저기온(°C)', '평균기온(°C)', '강수량(mm)', '평균습도(%)', '평균풍속(m/s)', '최심적설(cm)'],
+      rows: [[dtTxt, s.max, s.min, s.avg, s.rain, s.rh, s.ws, s.snow]] },
   ]);
 }
 
@@ -534,9 +538,12 @@ async function renderMonth(o, box) {
     if (!s) return `<tr><td>${mm}/${d.i}(${DOW[dt.getDay()]})</td><td colspan="7" style="text-align:left;color:#8898AA">자료 없음</td></tr>`;
     return `<tr class="click" data-date="${d.date}"><td>${mm}/${d.i}(${DOW[dt.getDay()]})${st}${tags(s)}</td><td>${fmt(s.max, '°')}</td><td>${fmt(s.min, '°')}</td><td>${fmt(s.avg, '°')}</td>
       <td>${s.rain ? fmt(s.rain, 'mm') : '–'}</td><td>${fmt(s.rh, '%', 0)}</td><td>${fmt(s.ws, 'm/s')}</td><td>${s.snow ? fmt(s.snow, 'cm') : '–'}</td></tr>`; }).join('');
-  setExport(ym, [{ name: '일별', rows: [['날짜', '요일', '최고기온(°C)', '최저기온(°C)', '평균기온(°C)', '강수량(mm)', '평균습도(%)', '평균풍속(m/s)', '최심적설(cm)', '자료'],
-    ...days.map(d => { const s = d.s || {}, dt = new Date(yy, mm - 1, d.i);
-      return [d.date, DOW[dt.getDay()], s.max, s.min, s.avg, s.rain, s.rh, s.ws, s.snow, d.s ? (d.est ? '초단기실황 집계' : 'ASOS') : '자료 없음']; })] }]);
+  setExport(ym, [{ name: '일별', title: `${placeName()} · ${yy}년 ${mm}월 지난 날씨`, note: `자료: 기상청 종관기상관측(ASOS) 일자료 — ${stnLabel()}${R().km ? `(약 ${R().km}km)` : ''} · ASOS가 없는 날은 초단기실황 집계 · 받은 시각 ${nowText()}`,
+    header: ['날짜', '최고기온(°C)', '최저기온(°C)', '평균기온(°C)', '강수량(mm)', '평균습도(%)', '평균풍속(m/s)', '최심적설(cm)', '자료'],
+    rows: days.map(d => { const s = d.s || {}, dt = new Date(yy, mm - 1, d.i);
+      return [`${mm}/${d.i}(${DOW[dt.getDay()]})`, s.max, s.min, s.avg, s.rain, s.rh, s.ws, s.snow, d.s ? (d.est ? '실황 집계' : 'ASOS') : '자료 없음']; }),
+    charts: [{ type: 'line', title: '일별 최고·최저기온(°C)', cat: 0, series: [{ col: 1, name: '최고기온', color: 'EB6834' }, { col: 2, name: '최저기온', color: '2A78D6' }] },
+             { type: 'bar', title: '일별 강수량(mm)', cat: 0, series: [{ col: 4, name: '강수량', color: '1BAF7A' }] }] }]);
   box.innerHTML = `${sum}
     <div class="legend"><span><i style="background:var(--s-max)"></i>최고기온</span><span><i style="background:var(--s-min)"></i>최저기온</span><span><i style="background:var(--s-rain);height:8px"></i>강수량(아래)</span></div>
     <div class="chart-box" id="m-box"><svg viewBox="0 0 ${Wv} ${H1}" width="100%" role="img" aria-label="${yy}년 ${mm}월 ${city()} 일별 최고·최저기온">${g}</svg>
@@ -620,10 +627,15 @@ async function renderRange(o, box) {   // 월 단위 기간 조회(공식 일자
        <td>${m.rain ? fmt(m.rain, 'mm') : '–'}</td><td>${m.wet}일</td><td>${m.heavy}일</td><td>${m.frost ? `<span class="tag cold" style="margin:0">${m.frost}일</span>` : '0일'}</td></tr>`).join('');
   const dayRows = Object.keys(days).filter(d => d.slice(0, 7) >= from && d.slice(0, 7) <= to).sort().map(d => { const s = fromDaily(days[d]);
     return [d, DOW[new Date(d).getDay()], s.max, s.min, s.avg, s.rain, s.rh, s.ws, s.snow]; });
+  const note = `자료: 기상청 종관기상관측(ASOS) 일자료 — ${stnLabel()}${R().km ? `(약 ${R().km}km)` : ''} · 받은 시각 ${nowText()}`;
   setExport(`${from}~${to}`, [
-    { name: '월별', rows: [['달', '평균 최고기온(°C)', '평균 최저기온(°C)', '평균기온(°C)', '최고기온(°C)', '최저기온(°C)', '강수량(mm)', '비 온 날(1mm↑)', '비 5mm↑ 날', '영하 날', '자료 일수'],
-      ...months.map(m => [m.ym, rnd(m.avgMax), rnd(m.avgMin), rnd(m.avg), m.hi, m.lo, rnd(m.rain), m.n ? m.wet : null, m.n ? m.heavy : null, m.n ? m.frost : null, m.n])] },
-    { name: '일별', rows: [['날짜', '요일', '최고기온(°C)', '최저기온(°C)', '평균기온(°C)', '강수량(mm)', '평균습도(%)', '평균풍속(m/s)', '최심적설(cm)'], ...dayRows] },
+    { name: '월별', title: `${placeName()} · ${ymText(from)} ~ ${ymText(to)} 월별 날씨`, note,
+      header: ['달', '평균 최고기온(°C)', '평균 최저기온(°C)', '평균기온(°C)', '최고기온(°C)', '최저기온(°C)', '강수량(mm)', '비 온 날(1mm↑)', '비 5mm↑ 날', '영하 날', '자료 일수'],
+      rows: months.map(m => [m.ym, m.avgMax, m.avgMin, m.avg, m.hi, m.lo, m.rain, m.n ? m.wet : null, m.n ? m.heavy : null, m.n ? m.frost : null, m.n]),
+      charts: [{ type: 'line', title: '월평균 최고·최저기온(°C)', cat: 0, series: [{ col: 1, name: '평균 최고', color: 'EB6834' }, { col: 2, name: '평균 최저', color: '2A78D6' }] },
+               { type: 'bar', title: '월 강수량(mm)', cat: 0, series: [{ col: 6, name: '강수량', color: '1BAF7A' }] }] },
+    { name: '일별', title: `${placeName()} · ${ymText(from)} ~ ${ymText(to)} 일별 날씨`, note,
+      header: ['날짜', '요일', '최고기온(°C)', '최저기온(°C)', '평균기온(°C)', '강수량(mm)', '평균습도(%)', '평균풍속(m/s)', '최심적설(cm)'], rows: dayRows },
   ]);
   box.innerHTML = `<div style="font-weight:600;margin-bottom:8px">${ymText(from)} ~ ${ymText(to)} · ${esc(shortName())} (${months.length}개월)</div>${sum}
     <div class="legend"><span><i style="background:var(--s-max)"></i>월평균 최고기온</span><span><i style="background:var(--s-min)"></i>월평균 최저기온</span><span><i style="background:var(--s-rain);height:8px"></i>월 강수량(아래)</span></div>
@@ -651,17 +663,25 @@ async function renderRange(o, box) {   // 월 단위 기간 조회(공식 일자
 let lastExport = null;
 const rnd = v => v == null ? null : Math.round(v * 10) / 10;
 const stnLabel = () => `${REG.stations[R().stn] || R().stn} 관측소(지점 ${R().stn})`;
+const placeName = () => { const r = R(); return r.si ? `${r.sido} ${r.si}${r.gu ? ' ' + r.gu : ''}` : `${r.sido} 대표 지점`; };
+const nowText = () => new Date().toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' });
 function setExport(period, sheets) {
   lastExport = period ? { period, sheets } : null;
   document.getElementById('q-xlsx').disabled = !lastExport;
 }
-/* 엑셀(.xlsx) 파일을 이 화면에서 직접 만듦(외부 프로그램·인터넷 연결 불필요) — 시트마다 첫 줄은 굵게 */
+/* 엑셀(.xlsx) 파일을 이 화면에서 직접 만듦(외부 프로그램·인터넷 연결 불필요)
+   시트 = { name, title, note, header:[...], rows:[[...]], charts:[{ type:'line'|'bar', title, cat:열번호, series:[{ col, name, color }] }] }
+   → 1행 제목, 2행 자료 설명, 그 아래 엑셀 차트(화면 그래프와 같은 모양), 그 아래 표(머리글 남색·줄무늬·테두리, 숫자는 소수점 없이) */
 const XLSXW = (() => {
   const enc = new TextEncoder();
   const CRC = new Uint32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
   const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
   const x = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
   const col = n => { let sx = ''; for (n++; n; n = Math.floor((n - 1) / 26)) sx = String.fromCharCode(65 + (n - 1) % 26) + sx; return sx; };
+  const isNum = v => typeof v === 'number' && isFinite(v);
+  const NS = 'http://schemas.openxmlformats.org/', HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const C_NS = `${NS}drawingml/2006/chart`, A_NS = `${NS}drawingml/2006/main`, R_NS = `${NS}officeDocument/2006/relationships`;
+  const CH = { line: 16, bar: 9 };          // 차트 높이(행 수)
   function zip(files) {                      // 압축하지 않는(저장) ZIP
     const parts = [], central = []; let off = 0;
     for (const [name, text] of files) {
@@ -680,47 +700,122 @@ const XLSXW = (() => {
     e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
     return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   }
-  function sheetXml(rows) {
-    const width = Math.max(...rows.map(r => r.length));
-    const cols = Array.from({ length: width }, (_, c) => Math.min(60, Math.max(8, ...rows.map(r => { const v = r[c]; return v == null ? 0 : [...String(v)].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 2 : 1.1), 0); }))));
-    const body = rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) => {
-      if (v == null || v === '') return '';
-      const ref = col(ci) + (ri + 1), st = ri === 0 ? ' s="1"' : '';
-      return typeof v === 'number' && isFinite(v) ? `<c r="${ref}"${st}><v>${v}</v></c>` : `<c r="${ref}"${st} t="inlineStr"><is><t xml:space="preserve">${x(v)}</t></is></c>`;
-    }).join('') + '</row>').join('');
-    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-      + '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
-      + `<cols>${cols.map((w, c) => `<col min="${c + 1}" max="${c + 1}" width="${Math.ceil(w + 2)}" customWidth="1"/>`).join('')}</cols><sheetData>${body}</sheetData></worksheet>`;
+  const STYLES = HEAD + `<styleSheet xmlns="${NS}spreadsheetml/2006/main">`
+    + '<fonts count="4"><font><sz val="10"/><color rgb="FF1F2937"/><name val="맑은 고딕"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="맑은 고딕"/></font>'
+    + '<font><b/><sz val="14"/><color rgb="FF1E2761"/><name val="맑은 고딕"/></font><font><sz val="9"/><color rgb="FF6B7785"/><name val="맑은 고딕"/></font></fonts>'
+    + '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
+    + '<fill><patternFill patternType="solid"><fgColor rgb="FF1E2761"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2F5FA"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
+    + '<border><left style="thin"><color rgb="FFD5DCE6"/></left><right style="thin"><color rgb="FFD5DCE6"/></right><top style="thin"><color rgb="FFD5DCE6"/></top><bottom style="thin"><color rgb="FFD5DCE6"/></bottom><diagonal/></border></borders>'
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="8">'
+    + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+    + '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+    + '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+    + '<xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>'
+    + '<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+    + '<xf numFmtId="1" fontId="0" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>'
+    + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+    + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  const rich = (t, sz, b) => `<c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${sz}" b="${b ? 1 : 0}"><a:solidFill><a:srgbClr val="1F2937"/></a:solidFill><a:latin typeface="맑은 고딕"/><a:ea typeface="맑은 고딕"/></a:defRPr></a:pPr><a:r><a:rPr lang="ko-KR" sz="${sz}" b="${b ? 1 : 0}"/><a:t>${x(t)}</a:t></a:r></a:p></c:rich>`;
+  const txPr = sz => `<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${sz}"><a:solidFill><a:srgbClr val="6B7785"/></a:solidFill><a:latin typeface="맑은 고딕"/><a:ea typeface="맑은 고딕"/></a:defRPr></a:pPr><a:endParaRPr lang="ko-KR"/></a:p></c:txPr>`;
+  function chartXml(ch, sheetName, r0, rows) {
+    const q = `'${sheetName.replace(/'/g, "''")}'`, n = rows.length, r1 = r0 + 1, r2 = r0 + n;
+    const ref = c => `${q}!$${col(c)}$${r1}:$${col(c)}$${r2}`;
+    const cat = `<c:cat><c:strRef><c:f>${ref(ch.cat)}</c:f><c:strCache><c:ptCount val="${n}"/>${rows.map((r, i) => `<c:pt idx="${i}"><c:v>${x(r[ch.cat] == null ? '' : r[ch.cat])}</c:v></c:pt>`).join('')}</c:strCache></c:strRef></c:cat>`;
+    const ser = ch.series.map((s, k) => {
+      const val = `<c:val><c:numRef><c:f>${ref(s.col)}</c:f><c:numCache><c:formatCode>0</c:formatCode><c:ptCount val="${n}"/>${rows.map((r, i) => isNum(r[s.col]) ? `<c:pt idx="${i}"><c:v>${r[s.col]}</c:v></c:pt>` : '').join('')}</c:numCache></c:numRef></c:val>`;
+      const fill = `<a:solidFill><a:srgbClr val="${s.color}"/></a:solidFill>`;
+      return ch.type === 'line'
+        ? `<c:ser><c:idx val="${k}"/><c:order val="${k}"/><c:tx><c:v>${x(s.name)}</c:v></c:tx><c:spPr><a:ln w="28575" cap="rnd">${fill}<a:round/></a:ln></c:spPr>`
+          + `<c:marker><c:symbol val="${n > 40 ? 'none' : 'circle'}"/><c:size val="5"/><c:spPr>${fill}<a:ln w="9525"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln></c:spPr></c:marker>${cat}${val}<c:smooth val="0"/></c:ser>`
+        : `<c:ser><c:idx val="${k}"/><c:order val="${k}"/><c:tx><c:v>${x(s.name)}</c:v></c:tx><c:spPr>${fill}</c:spPr><c:invertIfNegative val="0"/>${cat}${val}</c:ser>`;
+    }).join('');
+    const skip = Math.max(1, Math.ceil(n / 16));
+    const body = ch.type === 'line'
+      ? `<c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/>${ser}<c:marker val="1"/><c:axId val="5001"/><c:axId val="5002"/></c:lineChart>`
+      : `<c:barChart><c:barDir val="col"/><c:grouping val="clustered"/><c:varyColors val="0"/>${ser}<c:gapWidth val="60"/><c:axId val="5001"/><c:axId val="5002"/></c:barChart>`;
+    return HEAD + `<c:chartSpace xmlns:c="${C_NS}" xmlns:a="${A_NS}" xmlns:r="${R_NS}"><c:roundedCorners val="0"/><c:chart>`
+      + `<c:title><c:tx>${rich(ch.title, 1100, true)}</c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/><c:plotArea><c:layout/>${body}`
+      + `<c:catAx><c:axId val="5001"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:numFmt formatCode="General" sourceLinked="0"/>`
+      + `<c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="low"/><c:spPr><a:ln w="9525"><a:solidFill><a:srgbClr val="D5DCE6"/></a:solidFill></a:ln></c:spPr>${txPr(800)}`
+      + `<c:crossAx val="5002"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:tickLblSkip val="${skip}"/><c:noMultiLvlLbl val="0"/></c:catAx>`
+      + `<c:valAx><c:axId val="5002"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines><c:spPr><a:ln w="6350"><a:solidFill><a:srgbClr val="E7ECF3"/></a:solidFill></a:ln></c:spPr></c:majorGridlines>`
+      + `<c:numFmt formatCode="0" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:spPr><a:ln><a:noFill/></a:ln></c:spPr>${txPr(800)}`
+      + `<c:crossAx val="5001"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx>`
+      + `<c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr></c:plotArea>`
+      + (ch.series.length > 1 ? `<c:legend><c:legendPos val="t"/><c:overlay val="0"/>${txPr(900)}</c:legend>` : '')
+      + `<c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart><c:spPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="9525"><a:solidFill><a:srgbClr val="E1E6EE"/></a:solidFill></a:ln></c:spPr></c:chartSpace>`;
+  }
+  function anchor(id, rid, c2, rTop, rBot) {
+    return `<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${rTop}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>`
+      + `<xdr:to><xdr:col>${c2}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${rBot}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>`
+      + `<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${id + 1}" name="차트 ${id}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr>`
+      + `<xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="${C_NS}"><c:chart xmlns:c="${C_NS}" xmlns:r="${R_NS}" r:id="${rid}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`;
   }
   return function build(sheets) {
-    const names = sheets.map((sh, i) => (sh.name || `Sheet${i + 1}`).replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31));
-    const NS = 'http://schemas.openxmlformats.org/', head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    const files = [
-      ['[Content_Types].xml', head + `<Types xmlns="${NS}package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>`
+    const files = [], ct = [], wbSheets = [], wbRels = [];
+    let chartNo = 0, drawNo = 0;
+    sheets.forEach((sh, si) => {
+      const name = (sh.name || `Sheet${si + 1}`).replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31);
+      const header = sh.header || [], rows = sh.rows || [], charts = sh.charts || [];
+      const width = Math.max(header.length, ...rows.map(r => r.length), 1);
+      let r = 1; const xmlRows = [];
+      const cell = (ref, v, s) => v == null || v === '' ? `<c r="${ref}" s="${s}"/>` : isNum(v) ? `<c r="${ref}" s="${s}"><v>${v}</v></c>` : `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${x(v)}</t></is></c>`;
+      if (sh.title) xmlRows.push(`<row r="${r}" ht="24" customHeight="1">${cell('A' + r, sh.title, 6)}</row>`), r++;
+      if (sh.note) xmlRows.push(`<row r="${r}">${cell('A' + r, sh.note, 7)}</row>`), r++;
+      r++;                                   // 빈 줄
+      const anchors = [], rels = [];
+      charts.forEach(ch => {
+        const top = r - 1, h = CH[ch.type] || 14;
+        chartNo++;
+        rels.push(`<Relationship Id="rId${rels.length + 1}" Type="${R_NS}/chart" Target="../charts/chart${chartNo}.xml"/>`);
+        ch._file = `xl/charts/chart${chartNo}.xml`; ch._top = top;
+        anchors.push(anchor(anchors.length + 1, `rId${rels.length}`, Math.max(width, 8), top, top + h));
+        ct.push(`<Override PartName="/xl/charts/chart${chartNo}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>`);
+        r += h + 1;
+      });
+      const hr = r;                          // 표 머리글 행
+      xmlRows.push(`<row r="${hr}" ht="30" customHeight="1">${header.map((v, c) => cell(col(c) + hr, v, 1)).join('')}</row>`);
+      rows.forEach((row, i) => {
+        const rr = hr + 1 + i, band = i % 2 === 1;
+        xmlRows.push(`<row r="${rr}">` + Array.from({ length: width }, (_, c) => { const v = row[c]; return cell(col(c) + rr, v, isNum(v) ? (band ? 5 : 3) : (band ? 4 : 2)); }).join('') + '</row>');
+      });
+      charts.forEach(ch => files.push([ch._file, chartXml(ch, name, hr, rows)]));
+      const widths = Array.from({ length: width }, (_, c) => Math.min(40, Math.max(7, ...[header[c], ...rows.map(rw => rw[c])].map(v => v == null ? 0 : [...String(isNum(v) ? Math.round(v) : v)].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 1.9 : 1.05), 0)))));
+      let drawing = '';
+      if (charts.length) {
+        drawNo++;
+        files.push([`xl/drawings/drawing${drawNo}.xml`, HEAD + `<xdr:wsDr xmlns:xdr="${NS}drawingml/2006/spreadsheetDrawing" xmlns:a="${A_NS}">${anchors.join('')}</xdr:wsDr>`]);
+        files.push([`xl/drawings/_rels/drawing${drawNo}.xml.rels`, HEAD + `<Relationships xmlns="${NS}package/2006/relationships">${rels.join('')}</Relationships>`]);
+        files.push([`xl/worksheets/_rels/sheet${si + 1}.xml.rels`, HEAD + `<Relationships xmlns="${NS}package/2006/relationships"><Relationship Id="rId1" Type="${R_NS}/drawing" Target="../drawings/drawing${drawNo}.xml"/></Relationships>`]);
+        ct.push(`<Override PartName="/xl/drawings/drawing${drawNo}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>`);
+        drawing = '<drawing r:id="rId1"/>';
+      }
+      files.push([`xl/worksheets/sheet${si + 1}.xml`, HEAD + `<worksheet xmlns="${NS}spreadsheetml/2006/main" xmlns:r="${R_NS}"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>`
+        + `<sheetViews><sheetView workbookViewId="0"${si === 0 ? ' tabSelected="1"' : ''} showGridLines="0"/></sheetViews><sheetFormatPr defaultRowHeight="16.5"/>`
+        + `<cols>${widths.map((w, c) => `<col min="${c + 1}" max="${c + 1}" width="${Math.ceil(w + 3)}" customWidth="1"/>`).join('')}</cols>`
+        + `<sheetData>${xmlRows.join('')}</sheetData><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>${drawing}</worksheet>`]);
+      ct.push(`<Override PartName="/xl/worksheets/sheet${si + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`);
+      wbSheets.push(`<sheet name="${x(name)}" sheetId="${si + 1}" r:id="rId${si + 1}"/>`);
+      wbRels.push(`<Relationship Id="rId${si + 1}" Type="${R_NS}/worksheet" Target="worksheets/sheet${si + 1}.xml"/>`);
+    });
+    const all = [
+      ['[Content_Types].xml', HEAD + `<Types xmlns="${NS}package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>`
         + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
-        + names.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '</Types>'],
-      ['_rels/.rels', head + `<Relationships xmlns="${NS}package/2006/relationships"><Relationship Id="rId1" Type="${NS}officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
-      ['xl/workbook.xml', head + `<workbook xmlns="${NS}spreadsheetml/2006/main" xmlns:r="${NS}officeDocument/2006/relationships"><sheets>`
-        + names.map((n, i) => `<sheet name="${x(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>'],
-      ['xl/_rels/workbook.xml.rels', head + `<Relationships xmlns="${NS}package/2006/relationships">`
-        + names.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${NS}officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')
-        + `<Relationship Id="rId${names.length + 1}" Type="${NS}officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
-      ['xl/styles.xml', head + `<styleSheet xmlns="${NS}spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts>`
-        + '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
-        + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'
-        + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
-      ...sheets.map((sh, i) => [`xl/worksheets/sheet${i + 1}.xml`, sheetXml(sh.rows)]),
+        + ct.join('') + '</Types>'],
+      ['_rels/.rels', HEAD + `<Relationships xmlns="${NS}package/2006/relationships"><Relationship Id="rId1" Type="${R_NS}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+      ['xl/workbook.xml', HEAD + `<workbook xmlns="${NS}spreadsheetml/2006/main" xmlns:r="${R_NS}"><bookViews><workbookView activeTab="0"/></bookViews><sheets>${wbSheets.join('')}</sheets></workbook>`],
+      ['xl/_rels/workbook.xml.rels', HEAD + `<Relationships xmlns="${NS}package/2006/relationships">${wbRels.join('')}<Relationship Id="rId${sheets.length + 1}" Type="${R_NS}/styles" Target="styles.xml"/></Relationships>`],
+      ['xl/styles.xml', STYLES],
+      ...files,
     ];
-    return zip(files);
+    return zip(all);
   };
 })();
 document.getElementById('q-xlsx').onclick = async () => {
   if (!lastExport) return;
   const btn = document.getElementById('q-xlsx'), label = btn.textContent;
-  const r = R(), place = r.si ? `${r.sido} ${r.si}${r.gu ? ' ' + r.gu : ''}` : `${r.sido} 대표 지점`;
-  const info = [['지역', place], ['기간', lastExport.period], ['지난 날씨 자료', `기상청 종관기상관측(ASOS) 일자료 — ${stnLabel()}, 이 지역에서 가장 가까운 관측소${r.km ? ` 약 ${r.km}km` : ''}`],
-    ['시간별 자료', `기상청 초단기실황(예보 격자 ${r.g}, 매시 정시) — ASOS가 없는 날은 이 값으로 집계`], ['빈 칸', '강수량 빈 칸은 강수 없음 또는 자료 없음'], ['받은 시각', new Date().toLocaleString('ko-KR')]];
-  const sheets = [{ name: '정보', rows: info }, ...lastExport.sheets];
+  const sheets = lastExport.sheets;
   const file = `지난날씨_${shortName().replace(/\s+/g, '')}_${lastExport.period.replace('~', '-')}.xlsx`;
   btn.disabled = true; btn.textContent = '만드는 중…';
   try {
@@ -733,16 +828,19 @@ document.getElementById('q-xlsx').onclick = async () => {
 
 document.getElementById('fc-xlsx').onclick = () => {   // 시간대별 예보 → 엑셀
   if (!fcExport) return;
-  const r = R(), place = r.si ? `${r.sido} ${r.si}${r.gu ? ' ' + r.gu : ''}` : `${r.sido} 대표 지점`, b = fcExport.base;
+  const r = R(), b = fcExport.base;
   const baseFull = b ? `${b.slice(0, 4)}-${b.slice(4, 6)}-${b.slice(6, 8)} ${b.slice(8, 10)}:${b.slice(10, 12)}` : '';
-  const hourly = [['날짜', '요일', '시각', '날씨', '기온(°C)', '강수확률(%)', '강수량', '습도(%)', '풍속(m/s)', '적설'],
-    ...fcExport.rows.map(x => { const d = `${x[0].slice(0, 4)}-${x[0].slice(4, 6)}-${x[0].slice(6, 8)}`, h = +x[0].slice(8, 10);
-      return [d, DOW[new Date(d).getDay()], `${pad(h)}시`, skyIcon(x[2], x[3], h)[1] || '', x[1], x[4], x[5] || '강수없음', x[6], x[7], x[8] || '']; })];
-  const daily = [['날짜', '요일', '최저기온(°C)', '최고기온(°C)', '최고 강수확률(%)', '날씨'],
-    ...fcExport.days.map(([d, tmin, tmax, pop, wx]) => [d, DOW[new Date(d).getDay()], tmin, tmax, pop, wx])];
-  const info = [['지역', place], ['예보', `기상청 단기예보 ${baseFull} 발표`], ['예보 격자', `${r.g} (기상청 5km 격자)`],
-    ['참고', '오늘 최저·최고기온은 이미 지난 시간이 빠져 있을 수 있음. 강수량 「1mm 미만」 등은 기상청 표기 그대로'], ['받은 시각', new Date().toLocaleString('ko-KR')]];
-  const sheets = [{ name: '정보', rows: info }, { name: '시간대별 예보', rows: hourly }, ...(daily.length > 1 ? [{ name: '일별 요약', rows: daily }] : [])];
+  const note = `자료: 기상청 단기예보 ${baseFull} 발표 · 예보 격자 ${r.g} · 강수량 「1mm 미만」 등은 기상청 표기 그대로 · 받은 시각 ${nowText()}`;
+  const hourly = fcExport.rows.map(x => { const d = new Date(+x[0].slice(0, 4), +x[0].slice(4, 6) - 1, +x[0].slice(6, 8)), h = +x[0].slice(8, 10);
+    return [`${d.getMonth() + 1}/${d.getDate()}(${DOW[d.getDay()]}) ${pad(h)}시`, skyIcon(x[2], x[3], h)[1] || '', x[1], x[4], x[5] || '강수없음', x[6], x[7], x[8] || '']; });
+  const daily = fcExport.days.map(([d, tmin, tmax, pop, wx]) => { const dt = new Date(d); return [`${dt.getMonth() + 1}/${dt.getDate()}(${DOW[dt.getDay()]})`, wx, tmin, tmax, pop]; });
+  const sheets = [
+    { name: '시간대별 예보', title: `${placeName()} · 시간대별 예보`, note,
+      header: ['일시', '날씨', '기온(°C)', '강수확률(%)', '강수량', '습도(%)', '풍속(m/s)', '적설'], rows: hourly,
+      charts: [{ type: 'line', title: '시간대별 기온(°C)', cat: 0, series: [{ col: 2, name: '기온', color: 'EB6834' }] }] },
+    ...(daily.length ? [{ name: '일별 요약', title: `${placeName()} · 오늘~글피 예보 요약`, note,
+      header: ['날짜', '날씨', '최저기온(°C)', '최고기온(°C)', '최고 강수확률(%)'], rows: daily }] : []),
+  ];
   const a = document.createElement('a'); a.href = URL.createObjectURL(XLSXW(sheets));
   a.download = `시간대별예보_${shortName().replace(/\s+/g, '')}_${b ? b.slice(0, 8) + '_' + b.slice(8, 12) : ymd(new Date())}.xlsx`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
