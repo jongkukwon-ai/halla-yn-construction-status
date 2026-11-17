@@ -1,0 +1,47 @@
+name: 아파트 착공 월 자동 갱신(건축HUB → 세움터 → 수동)
+
+on:
+  schedule:
+    - cron: '40 1 * * *'     # 매일 10:40 KST — 건축HUB 기본개요(매월 20일 무렵)·세움터 새 달이 나왔을 때만 실행
+  workflow_dispatch:
+    inputs:
+      force:
+        description: '새 자료가 없어도 다시 실행'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: construction-start-dates
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 착공 월 갱신(건축HUB 약 450MB를 새 달일 때만 받음 — 저장소에는 넣지 않음)
+        run: python construction/tools/start_dates.py --auto ${{ inputs.force && '--force' || '' }}
+
+      - name: 변경 시 커밋·푸시
+        run: |
+          if git diff --quiet -- construction/index.html construction/tools/start_keys.json; then
+            echo "변경 없음"; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add construction/index.html construction/tools/start_keys.json
+          git commit -m "아파트 착공 월 자동 갱신(건축HUB·세움터) $(TZ=Asia/Seoul date '+%F')"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
