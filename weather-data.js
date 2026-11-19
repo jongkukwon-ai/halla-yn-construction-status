@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-11-20 02:16",
- "base": "11/20 02:00",
+ "updated": "2026-11-20 05:20",
+ "base": "11/20 05:00",
  "source": "기상청 단기예보",
  "regions": [
   {
@@ -43,7 +43,7 @@ const WEATHER = {
      "label": "글피",
      "dow": "월",
      "tmin": 1,
-     "tmax": 15,
+     "tmax": 14,
      "pop": 10,
      "wx": "맑음",
      "icon": "☀️"
@@ -68,9 +68,9 @@ const WEATHER = {
      "date": "2026-11-21",
      "label": "내일",
      "dow": "토",
-     "tmin": -2,
-     "tmax": 7,
-     "pop": 20,
+     "tmin": -1,
+     "tmax": 8,
+     "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
     },
@@ -79,7 +79,7 @@ const WEATHER = {
      "label": "모레",
      "dow": "일",
      "tmin": -2,
-     "tmax": 9,
+     "tmax": 8,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -89,7 +89,7 @@ const WEATHER = {
      "label": "글피",
      "dow": "월",
      "tmin": -1,
-     "tmax": 15,
+     "tmax": 14,
      "pop": 20,
      "wx": "맑음",
      "icon": "☀️"
@@ -125,7 +125,7 @@ const WEATHER = {
      "label": "모레",
      "dow": "일",
      "tmin": -3,
-     "tmax": 9,
+     "tmax": 8,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -134,8 +134,8 @@ const WEATHER = {
      "date": "2026-11-23",
      "label": "글피",
      "dow": "월",
-     "tmin": 0,
-     "tmax": 14,
+     "tmin": -1,
+     "tmax": 13,
      "pop": 20,
      "wx": "맑음",
      "icon": "☀️"
@@ -180,11 +180,11 @@ const WEATHER = {
      "date": "2026-11-23",
      "label": "글피",
      "dow": "월",
-     "tmin": -1,
-     "tmax": 14,
-     "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "tmin": -2,
+     "tmax": 12,
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     }
    ]
   },
@@ -207,7 +207,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "토",
      "tmin": -2,
-     "tmax": 6,
+     "tmax": 7,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -227,7 +227,7 @@ const WEATHER = {
      "label": "글피",
      "dow": "월",
      "tmin": -2,
-     "tmax": 15,
+     "tmax": 14,
      "pop": 20,
      "wx": "맑음",
      "icon": "☀️"
@@ -273,10 +273,10 @@ const WEATHER = {
      "label": "글피",
      "dow": "월",
      "tmin": -2,
-     "tmax": 12,
-     "pop": 30,
-     "wx": "맑음",
-     "icon": "☀️"
+     "tmax": 11,
+     "pop": 60,
+     "wx": "비",
+     "icon": "🌧️"
     }
    ]
   }
