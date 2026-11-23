@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>날씨 조회 · 영남지사</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
     --ink:#0F1B2D; --ink-muted:#4A5568; --ink-faint:#8898AA;
     --surface:#F7F9FC; --card:#FFFFFF; --border:#DDE3EC; --border-strong:#B8C4D6;
-    --navy:#1E2761; --navy-light:#2D3F87; --teal:#0B7285;
+    --navy:#24282C; --navy-light:#3A4046; --teal:#00875A;
     --grid:#E7ECF3;
     --s-max:#eb6834;   /* 기온(최고) — 차트 1번 색 */
     --s-min:#2a78d6;   /* 최저 */
@@ -16,13 +17,13 @@
     --warn:#B42318; --warn-bg:#FEF3F2; --cold:#175CD3; --cold-bg:#EFF8FF;
   }
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif; background:var(--surface);
+  body { font-family:'Pretendard Variable','Pretendard','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif; background:var(--surface);
          color:var(--ink); font-size:14px; line-height:1.5; min-height:100vh; }
   .site-header { background:var(--navy); padding:0 24px; display:flex; align-items:center; justify-content:space-between;
                  gap:12px; height:56px; position:sticky; top:0; z-index:100; border-bottom:2px solid var(--teal); }
   .site-title { color:#fff; font-size:16px; font-weight:700; letter-spacing:-0.3px; }
-  .site-sub { color:#8BA4D4; font-size:12px; margin-top:1px; }
-  .back { flex-shrink:0; color:#8BA4D4; font-size:12px; text-decoration:none; border:1px solid rgba(139,164,212,.4);
+  .site-sub { color:#B9C0C7; font-size:12px; margin-top:1px; }
+  .back { flex-shrink:0; color:#B9C0C7; font-size:12px; text-decoration:none; border:1px solid rgba(185,192,199,.45);
           border-radius:20px; padding:5px 12px; white-space:nowrap; }
   .main { padding:20px 24px 48px; max-width:1320px; margin:0 auto; }
 
@@ -148,13 +149,13 @@
 
   <section class="card">
     <div class="card-head"><h2>시간대별 예보</h2><button class="btn xl" id="fc-xlsx" disabled title="이 지역 시간대별 예보를 엑셀 파일로 받기">⬇ 엑셀 다운로드</button></div>
-    <div class="desc" id="fc-desc">기온·하늘·강수확률·강수량·습도·풍속 (차트에 마우스를 올리면 자세히)</div>
+    <div class="desc" id="fc-desc">기온·하늘·강수확률·강수량·습도·풍속(차트 선택 시 상세)</div>
     <div id="hourly"><div class="empty">예보를 불러오는 중…</div></div>
   </section>
 
   <section class="card">
     <h2>지난 날씨 조회</h2>
-    <div class="desc" id="hist-desc">날짜나 달을 골라 지난 날씨를 봅니다.</div>
+    <div class="desc" id="hist-desc">일·월·기간 단위 과거 기상 기록</div>
     <div class="controls">
       <div class="seg" role="group" aria-label="조회 방식">
         <button id="m-day" aria-pressed="false">하루 보기</button>
@@ -279,7 +280,7 @@ async function renderNow() {
       <span>바람 <b>${windDir(vec)} ${fmt(wsd, 'm/s')}</b></span><span>1시간 강수 <b>${rn ? fmt(rn, 'mm') : '없음'}</b></span></div>
       <div class="now-time">${+k.slice(4, 6)}/${+k.slice(6, 8)} ${pad(h)}시 관측 · 기상청 초단기실황${f && f[2] && !pty ? ' · 하늘상태는 단기예보' : ''}</div>`;
   } else {
-    box.innerHTML = '<div class="empty">관측 자료가 아직 없습니다. 자동 갱신이 돌면 채워집니다.</div>';
+    box.innerHTML = '<div class="empty">관측 자료 없음(자동 갱신 후 표시)</div>';
   }
   const daysBox = document.getElementById('days');
   // 오늘~글피 요약(예보) — 오늘 최저는 이미 지난 새벽 관측과 비교해 낮은 값
@@ -292,7 +293,7 @@ async function renderNow() {
       return `<div class="day" title="${date}"><div class="day-l">${lab} (${DOW[dt.getDay()]})</div><div class="day-i">${icon}</div><div class="day-wx">${wx}</div>
       <div class="day-t"><span class="mx">${fmt(tmax, '°', 0)}</span> / <span class="mn">${fmt(tmin, '°', 0)}</span></div>
       <div class="day-p">☂ ${pop == null ? '–' : pop + '%'}</div></div>`; }).join('')
-    : '<div class="empty">예보 요약이 아직 없습니다. 자동 갱신이 돌면 채워집니다.</div>';
+    : '<div class="empty">예보 요약 없음(자동 갱신 후 표시)</div>';
   document.getElementById('now-desc').textContent = days.length ? `오늘~글피 최고/최저기온·강수확률: 기상청 단기예보 ${baseText(fc.b)} (오늘은 지난 관측 포함)` : '기상청 초단기실황(정시 관측)과 단기예보';
 }
 
@@ -307,8 +308,8 @@ async function renderHourly() {
   const rows = ((fc && fc.h) || []).filter(r => r[0] >= nowKey);
   fcExport = rows.length ? { base: fc.b, rows, days: fc.d || [] } : null;
   document.getElementById('fc-xlsx').disabled = !fcExport;
-  if (!rows.length) { box.innerHTML = '<div class="empty">시간대별 예보가 아직 없습니다. 자동 갱신이 돌면 채워집니다.</div>'; return; }
-  document.getElementById('fc-desc').textContent = `기상청 단기예보 ${baseText(fc.b)} · ${shortName()}(격자 ${R().g}) · 차트에 마우스를 올리거나 눌러 자세히 보기`;
+  if (!rows.length) { box.innerHTML = '<div class="empty">시간대별 예보 없음(자동 갱신 후 표시)</div>'; return; }
+  document.getElementById('fc-desc').textContent = `기상청 단기예보 ${baseText(fc.b)} · ${shortName()}(격자 ${R().g}) · 차트 선택 시 상세`;
   const temps = rows.map(r => r[1]).filter(v => v != null);
   const lo = Math.floor(Math.min(...temps)) - 1, hi = Math.ceil(Math.max(...temps)) + 1;
   const W = rows.length * COLW, y = v => PADT + (hi - v) / (hi - lo || 1) * (CH - PADT - PADB), x = i => i * COLW + COLW / 2;
@@ -347,7 +348,7 @@ async function renderHourly() {
       <div><svg class="hchart" width="${W}" height="${CH}" viewBox="0 0 ${W} ${CH}" role="img" aria-label="${city()} 시간대별 기온 예보">${svg}</svg>
         <div class="hgrid" style="margin-top:-${CH}px;padding-top:${CH}px;pointer-events:none">${cols}</div></div>
     </div><div class="tip" id="h-tip"></div></div>
-    <div class="foot">기온선의 숫자는 날짜별 최고·최저 예보, 점선은 0°C. 강수량 「1mm 미만」 등은 기상청 표기 그대로입니다. 적설이 있으면 ❄로 표시합니다.</div>`;
+    <div class="foot">숫자: 일별 최고·최저 예보 · 점선: 0°C · 강수량: 기상청 표기(예: 1mm 미만) · ❄: 적설</div>`;
   const hit = document.getElementById('h-hit'), tip = document.getElementById('h-tip'), scroll = document.getElementById('h-scroll');
   const cross = document.getElementById('h-cross'), dot = document.getElementById('h-dot');
   const show = ev => {
@@ -451,7 +452,7 @@ async function renderHist() {
   if (o !== office) return;
   document.getElementById('hist-foot').innerHTML =
     `자료: 기상청 종관기상관측(ASOS) 일자료 — ${esc(REG.stations[R().stn] || R().stn)} 관측소(지점 ${R().stn}, ${esc(shortName())}에서 가장 가까운 관측소${R().km ? `, 약 ${R().km}km` : ''} · 공식 기록). 시간별 값과 ASOS가 없는 날은 기상청 초단기실황(${esc(shortName())} 격자 ${R().g}, 매시 정시) 집계 <span class="src">*</span>.
-     강수량 「–」는 강수 없음 또는 자료 없음. 「영하」는 최저기온 0°C 미만, 「비 5mm↑」는 하루 강수량 5mm 이상(타설·양생 일정 참고용).`;
+     강수량 「–」: 강수 없음 또는 자료 없음 · 「영하」: 최저기온 0°C 미만 · 「비 5mm↑」: 일 강수량 5mm 이상(타설·양생 일정 참고)`;
   if (mode === 'day') return renderDay(o, box);
   if (mode === 'range') return renderRange(o, box);
   return renderMonth(o, box);
@@ -477,7 +478,7 @@ async function renderDay(o, box) {
   html += hs.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>시각</th><th>기온</th><th>1시간 강수</th><th>습도</th><th>바람</th><th>강수형태</th></tr></thead><tbody>${
     hs.map(h => { const [t, rn, rh, ws, pty, vec] = hours[h]; const p = skyIcon(null, pty, +h);
       return `<tr><td>${h}시</td><td>${fmt(t, '°')}</td><td>${rn ? fmt(rn, 'mm') : '–'}</td><td>${fmt(rh, '%', 0)}</td><td>${windDir(vec)} ${fmt(ws, 'm/s')}</td><td>${p[1] || '–'}</td></tr>`; }).join('')
-  }</tbody></table></div>` : `<div class="range-note">이 날은 시간별 관측 기록이 없습니다(시간별 관측은 ${OBS_START}부터 쌓임).</div>`;
+  }</tbody></table></div>` : `<div class="range-note">시간별 관측 기록 없음(${OBS_START}부터 수집)</div>`;
   box.innerHTML = html;
   const src = dRow ? `기상청 종관기상관측(ASOS) 일자료 — ${stnLabel()}` : `기상청 초단기실황 집계(격자 ${R().g}, ${s.n}개 시각)`;
   const dtTxt = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일(${DOW[d.getDay()]})`;
@@ -549,7 +550,7 @@ async function renderMonth(o, box) {
     <div class="chart-box" id="m-box"><svg viewBox="0 0 ${Wv} ${H1}" width="100%" role="img" aria-label="${yy}년 ${mm}월 ${city()} 일별 최고·최저기온">${g}</svg>
       <svg viewBox="0 0 ${Wv} ${H2}" width="100%" role="img" aria-label="${yy}년 ${mm}월 ${city()} 일별 강수량">${g2}</svg><div class="tip" id="m-tip"></div></div>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>최고</th><th>최저</th><th>평균</th><th>강수량</th><th>습도</th><th>풍속</th><th>적설</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
-    <div class="range-note" style="margin-top:6px">줄을 누르면 그날 자세히 보기(시간별 관측은 ${OBS_START}부터).</div>`;
+    <div class="range-note" style="margin-top:6px">행 선택 시 해당일 상세(시간별 관측: ${OBS_START}부터)</div>`;
   box.querySelector('tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-date]'); if (!tr) return; qDay.value = tr.dataset.date; setMode('day'); });
   const hit = document.getElementById('m-hit'), tip = document.getElementById('m-tip'), cross = document.getElementById('m-cross'), mbox = document.getElementById('m-box');
   const show = ev => {
@@ -642,7 +643,7 @@ async function renderRange(o, box) {   // 월 단위 기간 조회(공식 일자
     <div class="chart-box" id="r-box"><svg viewBox="0 0 ${Wv} ${H1}" width="100%" role="img" aria-label="${from}~${to} ${esc(shortName())} 월평균 최고·최저기온">${g}</svg>
       <svg viewBox="0 0 ${Wv} ${H2}" width="100%" role="img" aria-label="${from}~${to} ${esc(shortName())} 월 강수량">${g2}</svg><div class="tip" id="r-tip"></div></div>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>달</th><th>평균 최고</th><th>평균 최저</th><th>평균</th><th>최고</th><th>최저</th><th>강수량</th><th>비 온 날<br><small>1mm↑</small></th><th>비 5mm↑</th><th>영하 날</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
-    <div class="range-note" style="margin-top:6px">달 줄을 누르면 그달의 날짜별 날씨(한 달 보기)로 이동합니다. 평균 최고·최저는 그달 매일 최고·최저기온의 평균, 최고·최저는 그달 가장 높은·낮은 기온입니다.</div>`;
+    <div class="range-note" style="margin-top:6px">행 선택 시 해당 월 일별 보기 · 평균 최고·최저: 일 최고·최저기온의 월평균 · 최고·최저: 월 극값</div>`;
   box.querySelector('tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-ym]'); if (!tr) return; qMonth.value = tr.dataset.ym; setMode('month'); });
   const hit = document.getElementById('r-hit'), tip = document.getElementById('r-tip'), cross = document.getElementById('r-cross'), rbox = document.getElementById('r-box');
   const show = ev => {
@@ -702,9 +703,9 @@ const XLSXW = (() => {
   }
   const STYLES = HEAD + `<styleSheet xmlns="${NS}spreadsheetml/2006/main">`
     + '<fonts count="4"><font><sz val="10"/><color rgb="FF1F2937"/><name val="맑은 고딕"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="맑은 고딕"/></font>'
-    + '<font><b/><sz val="14"/><color rgb="FF1E2761"/><name val="맑은 고딕"/></font><font><sz val="9"/><color rgb="FF6B7785"/><name val="맑은 고딕"/></font></fonts>'
+    + '<font><b/><sz val="14"/><color rgb="FF24282C"/><name val="맑은 고딕"/></font><font><sz val="9"/><color rgb="FF6B7785"/><name val="맑은 고딕"/></font></fonts>'
     + '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
-    + '<fill><patternFill patternType="solid"><fgColor rgb="FF1E2761"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2F5FA"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    + '<fill><patternFill patternType="solid"><fgColor rgb="FF24282C"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2F5FA"/><bgColor indexed="64"/></patternFill></fill></fills>'
     + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
     + '<border><left style="thin"><color rgb="FFD5DCE6"/></left><right style="thin"><color rgb="FFD5DCE6"/></right><top style="thin"><color rgb="FFD5DCE6"/></top><bottom style="thin"><color rgb="FFD5DCE6"/></bottom><diagonal/></border></borders>'
     + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="8">'
