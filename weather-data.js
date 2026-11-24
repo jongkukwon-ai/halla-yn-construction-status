@@ -1,7 +1,7 @@
 // 영업소 권역 날씨 — .github/scripts/update_weather.py가 매시간 자동 갱신 (기상청 단기예보)
 const WEATHER = {
- "updated": "2026-11-24 14:20",
- "base": "11/24 14:00",
+ "updated": "2026-11-24 17:20",
+ "base": "11/24 17:00",
  "source": "기상청 단기예보",
  "regions": [
   {
@@ -88,8 +88,8 @@ const WEATHER = {
      "date": "2026-11-27",
      "label": "글피",
      "dow": "금",
-     "tmin": 8,
-     "tmax": 20,
+     "tmin": 7,
+     "tmax": 21,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -124,8 +124,8 @@ const WEATHER = {
      "date": "2026-11-26",
      "label": "모레",
      "dow": "목",
-     "tmin": 2,
-     "tmax": 16,
+     "tmin": 3,
+     "tmax": 17,
      "pop": 20,
      "wx": "구름많음",
      "icon": "⛅"
@@ -160,7 +160,7 @@ const WEATHER = {
      "date": "2026-11-25",
      "label": "내일",
      "dow": "수",
-     "tmin": -3,
+     "tmin": -4,
      "tmax": 11,
      "pop": 0,
      "wx": "맑음",
@@ -170,7 +170,7 @@ const WEATHER = {
      "date": "2026-11-26",
      "label": "모레",
      "dow": "목",
-     "tmin": 0,
+     "tmin": 1,
      "tmax": 16,
      "pop": 20,
      "wx": "맑음",
@@ -180,7 +180,7 @@ const WEATHER = {
      "date": "2026-11-27",
      "label": "글피",
      "dow": "금",
-     "tmin": 4,
+     "tmin": 3,
      "tmax": 19,
      "pop": 20,
      "wx": "맑음",
@@ -216,8 +216,8 @@ const WEATHER = {
      "date": "2026-11-26",
      "label": "모레",
      "dow": "목",
-     "tmin": 2,
-     "tmax": 16,
+     "tmin": 1,
+     "tmax": 17,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -227,7 +227,7 @@ const WEATHER = {
      "label": "글피",
      "dow": "금",
      "tmin": 4,
-     "tmax": 21,
+     "tmax": 20,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -253,7 +253,7 @@ const WEATHER = {
      "label": "내일",
      "dow": "수",
      "tmin": -3,
-     "tmax": 8,
+     "tmax": 9,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
@@ -263,7 +263,7 @@ const WEATHER = {
      "label": "모레",
      "dow": "목",
      "tmin": 0,
-     "tmax": 14,
+     "tmax": 15,
      "pop": 0,
      "wx": "맑음",
      "icon": "☀️"
