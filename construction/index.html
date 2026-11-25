@@ -142,6 +142,29 @@
     background: #fff;
   }
   .filter-group input { min-width: 200px; }
+  /* 시·군·구 복수 선택(체크박스 드롭다운) */
+  .dd { position: relative; }
+  .ddBtn {
+    height: 34px; min-width: 150px; max-width: 240px; text-align: left; padding: 0 28px 0 10px;
+    border: 1px solid var(--border-strong); border-radius: 6px; cursor: pointer; font: inherit; font-size: 13px; color: var(--ink);
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238898AA'/%3E%3C/svg%3E") no-repeat right 9px center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ddBtn:disabled { color: var(--ink-faint); cursor: not-allowed; }
+  .ddBtn[aria-expanded="true"], .ddBtn.has { border-color: var(--navy); }
+  .ddBtn.has { font-weight: 600; }
+  .ddBtn:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .ddPanel {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 210px; max-height: 340px; overflow-y: auto;
+    background: var(--card); border: 1px solid var(--border-strong); border-radius: 8px; box-shadow: 0 10px 28px rgba(15,27,45,.14); padding: 8px;
+  }
+  .ddPanel.open { display: block; }
+  .ddItem { display: flex; align-items: center; gap: 7px; padding: 5px 6px; border-radius: 5px; font-size: 13px; cursor: pointer; color: var(--ink); }
+  .ddItem:hover { background: var(--surface); }
+  .ddItem input { margin: 0; accent-color: var(--teal); cursor: pointer; min-width: 0; height: auto; }
+  .ddActions { display: flex; gap: 6px; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 7px; }
+  .ddActions button { flex: 1; font: inherit; font-size: 12px; padding: 5px; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--card); color: var(--ink-muted); cursor: pointer; }
+  .ddActions button:hover { background: var(--surface); color: var(--ink); }
   .btn-group { display: flex; gap: 8px; align-items: flex-end; }
   .btn {
     height: 34px;
@@ -502,10 +525,6 @@
   <!-- 필터 패널 -->
   <div class="filter-panel">
     <div class="filter-group">
-      <span class="filter-label">시·군·구</span>
-      <select id="f-sgg" aria-label="시·군·구"><option value="">전체</option></select>
-    </div>
-    <div class="filter-group">
       <span class="filter-label">광역시도</span>
       <select id="f-region">
         <option value="">전체</option>
@@ -515,6 +534,10 @@
         <option value="경북">경북</option>
         <option value="대구">대구</option>
       </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">시·군·구 (복수 선택)</span>
+      <div class="dd" id="f-sgg"></div>
     </div>
     <div class="filter-group">
       <span class="filter-label">착공 상태</span>
@@ -1099,23 +1122,49 @@ function render(data) {
 }
 
 // ── 필터 적용 ──
-// ── 시·군·구 목록: 광역시도를 고르면 그 관할만, 전체면 광역시도별로 묶어 모두 표시(값은 '광역|시군구' — 부산·대구·울산의 같은 구 이름 구분) ──
+// ── 시·군·구 복수 선택: 광역시도에서 고른 지역의 관할만 표시(광역시도 전체면 먼저 선택 안내) ──
 const SIDO_ORDER = ['부산','울산','경남','경북','대구'];
-function populateSggFilter() {
-  const sel = document.getElementById('f-sgg'), region = document.getElementById('f-region').value, keep = sel.value;
-  const by = {};
-  RAW.forEach(r => { (by[r[2]] = by[r[2]] || new Set()).add(r[3]); });
-  const opts = sd => [...(by[sd] || [])].sort((a, b) => a.localeCompare(b, 'ko'))
-    .map(g => `<option value="${sd}|${g}">${g}</option>`).join('');
-  sel.innerHTML = '<option value="">전체</option>' + (region
-    ? opts(region)
-    : SIDO_ORDER.filter(sd => by[sd]).map(sd => `<optgroup label="${sd}">${opts(sd)}</optgroup>`).join(''));
-  sel.value = [...sel.options].some(o => o.value === keep) ? keep : '';
+const sggSel = new Set();
+const sggRoot = document.getElementById('f-sgg');
+sggRoot.innerHTML = '<button type="button" class="ddBtn" aria-haspopup="listbox" aria-expanded="false"></button><div class="ddPanel" role="listbox" aria-multiselectable="true" aria-label="시·군·구"></div>';
+const sggBtn = sggRoot.querySelector('.ddBtn'), sggPanel = sggRoot.querySelector('.ddPanel');
+function sggList(region) {
+  return [...new Set(RAW.filter(r => r[2] === region).map(r => r[3]))].sort((a, b) => a.localeCompare(b, 'ko'));
 }
+function sggLabel() {
+  const region = document.getElementById('f-region').value, n = sggSel.size;
+  sggBtn.disabled = !region;
+  sggBtn.classList.toggle('has', n > 0);
+  const total = region ? sggList(region).length : 0;
+  sggBtn.textContent = !region ? '광역시도 먼저 선택' : !n ? '전체' : n === total ? `전체 선택(${n}곳)` : n <= 2 ? [...sggSel].join(', ') : `${[...sggSel][0]} 외 ${n - 1}곳`;
+}
+function renderSgg() {
+  const region = document.getElementById('f-region').value;
+  sggPanel.innerHTML = !region ? '' : sggList(region).map(g =>
+      `<label class="ddItem"><input type="checkbox" value="${g}"${sggSel.has(g) ? ' checked' : ''}>${g}</label>`).join('')
+    + '<div class="ddActions"><button type="button" data-act="all">전체 선택</button><button type="button" data-act="none">선택 해제</button></div>';
+  sggLabel();
+}
+function closeSgg() { sggPanel.classList.remove('open'); sggBtn.setAttribute('aria-expanded', 'false'); }
+sggBtn.addEventListener('click', () => {
+  const open = !sggPanel.classList.contains('open');
+  sggPanel.classList.toggle('open', open); sggBtn.setAttribute('aria-expanded', String(open));
+});
+sggPanel.addEventListener('change', e => {
+  if (e.target.type !== 'checkbox') return;
+  if (e.target.checked) sggSel.add(e.target.value); else sggSel.delete(e.target.value);
+  sggLabel(); applyFilter();
+});
+sggPanel.addEventListener('click', e => {
+  const act = e.target.dataset && e.target.dataset.act; if (!act) return;
+  sggPanel.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = act === 'all'; if (cb.checked) sggSel.add(cb.value); else sggSel.delete(cb.value); });
+  sggLabel(); applyFilter();
+});
+document.addEventListener('click', e => { if (!e.target.closest('#f-sgg')) closeSgg(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSgg(); });
 
 function applyFilter() {
   const region  = document.getElementById('f-region').value;
-  const sgg     = document.getElementById('f-sgg').value;
   const status  = document.getElementById('f-status').value;
   const builder = document.getElementById('f-builder').value;
   const type    = document.getElementById('f-type').value;
@@ -1125,7 +1174,7 @@ function applyFilter() {
 
   currentData = RAW.filter(r => {
     if (region  && r[2] !== region)  return false;
-    if (sgg     && `${r[2]}|${r[3]}` !== sgg) return false;
+    if (sggSel.size && !sggSel.has(r[3])) return false;     // 광역시도를 바꾸면 선택이 비워지므로 같은 광역 안에서만 비교
     if (status  && r[10]!== status)  return false;
     if (builder && r[4] !== builder) return false;
     if (type    && r[9] !== type)    return false;
@@ -1140,10 +1189,10 @@ function applyFilter() {
 
 // ── 초기화 ──
 function resetFilter() {
-  ['f-region','f-sgg','f-status','f-builder','f-type','f-sale','f-units'].forEach(id=>{
+  ['f-region','f-status','f-builder','f-type','f-sale','f-units'].forEach(id=>{
     document.getElementById(id).value='';
   });
-  populateSggFilter();
+  sggSel.clear(); closeSgg(); renderSgg();
   document.getElementById('f-search').value='';
   currentData = [...RAW];
   sortCol=0; sortDir='asc';
@@ -1339,16 +1388,11 @@ document.getElementById('f-search').addEventListener('input', ()=>{ applyFilter(
 ['f-status','f-builder','f-type','f-sale','f-units'].forEach(id=>{
   document.getElementById(id).addEventListener('change', applyFilter);
 });
-document.getElementById('f-region').addEventListener('change', () => { populateSggFilter(); applyFilter(); });
-document.getElementById('f-sgg').addEventListener('change', () => {
-  const v = document.getElementById('f-sgg').value, region = document.getElementById('f-region');
-  if (v && !region.value) { region.value = v.split('|')[0]; populateSggFilter(); document.getElementById('f-sgg').value = v; }   // 시·군·구를 먼저 고르면 광역시도도 맞춤
-  applyFilter();
-});
+document.getElementById('f-region').addEventListener('change', () => { sggSel.clear(); closeSgg(); renderSgg(); applyFilter(); });
 
 // ── 초기화 ──
 populateBuilderFilter();
-populateSggFilter();
+renderSgg();
 currentData = [...RAW];
 render(currentData);
 
