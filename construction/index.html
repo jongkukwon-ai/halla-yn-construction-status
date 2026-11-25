@@ -159,6 +159,8 @@
     background: var(--card); border: 1px solid var(--border-strong); border-radius: 8px; box-shadow: 0 10px 28px rgba(15,27,45,.14); padding: 8px;
   }
   .ddPanel.open { display: block; }
+  .ddGroup { font-size: 11px; font-weight: 700; color: var(--ink-faint); margin: 8px 4px 3px; }
+  .ddGroup:first-child { margin-top: 2px; }
   .ddItem { display: flex; align-items: center; gap: 7px; padding: 5px 6px; border-radius: 5px; font-size: 13px; cursor: pointer; color: var(--ink); }
   .ddItem:hover { background: var(--surface); }
   .ddItem input { margin: 0; accent-color: var(--teal); cursor: pointer; min-width: 0; height: auto; }
@@ -525,15 +527,8 @@
   <!-- 필터 패널 -->
   <div class="filter-panel">
     <div class="filter-group">
-      <span class="filter-label">광역시도</span>
-      <select id="f-region">
-        <option value="">전체</option>
-        <option value="부산">부산</option>
-        <option value="울산">울산</option>
-        <option value="경남">경남</option>
-        <option value="경북">경북</option>
-        <option value="대구">대구</option>
-      </select>
+      <span class="filter-label">광역시도 (복수 선택)</span>
+      <div class="dd" id="f-region"></div>
     </div>
     <div class="filter-group">
       <span class="filter-label">시·군·구 (복수 선택)</span>
@@ -1122,49 +1117,66 @@ function render(data) {
 }
 
 // ── 필터 적용 ──
-// ── 시·군·구 복수 선택: 광역시도에서 고른 지역의 관할만 표시(광역시도 전체면 먼저 선택 안내) ──
+// ── 복수 선택 드롭다운(체크박스) — 광역시도·시·군·구 공통 ──
 const SIDO_ORDER = ['부산','울산','경남','경북','대구'];
-const sggSel = new Set();
-const sggRoot = document.getElementById('f-sgg');
-sggRoot.innerHTML = '<button type="button" class="ddBtn" aria-haspopup="listbox" aria-expanded="false"></button><div class="ddPanel" role="listbox" aria-multiselectable="true" aria-label="시·군·구"></div>';
-const sggBtn = sggRoot.querySelector('.ddBtn'), sggPanel = sggRoot.querySelector('.ddPanel');
-function sggList(region) {
-  return [...new Set(RAW.filter(r => r[2] === region).map(r => r[3]))].sort((a, b) => a.localeCompare(b, 'ko'));
+function makeMulti(root, { aria, placeholder, unit, groups, disabledText, onChange }) {
+  const sel = new Set();
+  root.innerHTML = `<button type="button" class="ddBtn" aria-haspopup="listbox" aria-expanded="false"></button><div class="ddPanel" role="listbox" aria-multiselectable="true" aria-label="${aria}"></div>`;
+  const btn = root.querySelector('.ddBtn'), panel = root.querySelector('.ddPanel');
+  const items = () => groups().flatMap(g => g.items);
+  function label() {
+    const all = items(), picked = all.filter(it => sel.has(it.value)), n = picked.length;
+    btn.disabled = !all.length && !!disabledText;
+    btn.classList.toggle('has', n > 0);
+    btn.textContent = !all.length ? (disabledText || placeholder) : !n ? placeholder
+      : n === all.length && n > 1 ? `전체 선택(${n}${unit})` : n <= 2 ? picked.map(it => it.short || it.label).join(', ') : `${picked[0].short || picked[0].label} 외 ${n - 1}${unit}`;
+  }
+  function render() {
+    const gs = groups(), valid = new Set(gs.flatMap(g => g.items.map(it => it.value)));
+    [...sel].forEach(v => { if (!valid.has(v)) sel.delete(v); });            // 목록에서 빠진 항목은 선택도 해제
+    panel.innerHTML = !valid.size ? '' : gs.map(g => (g.label ? `<div class="ddGroup">${g.label}</div>` : '')
+        + g.items.map(it => `<label class="ddItem"><input type="checkbox" value="${it.value}"${sel.has(it.value) ? ' checked' : ''}>${it.label}</label>`).join('')).join('')
+      + '<div class="ddActions"><button type="button" data-act="all">전체 선택</button><button type="button" data-act="none">선택 해제</button></div>';
+    label();
+  }
+  const close = () => { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', () => {
+    const open = !panel.classList.contains('open');
+    document.querySelectorAll('.ddPanel.open').forEach(p => { p.classList.remove('open'); p.previousElementSibling.setAttribute('aria-expanded', 'false'); });
+    panel.classList.toggle('open', open); btn.setAttribute('aria-expanded', String(open));
+  });
+  panel.addEventListener('change', e => {
+    if (e.target.type !== 'checkbox') return;
+    if (e.target.checked) sel.add(e.target.value); else sel.delete(e.target.value);
+    label(); onChange();
+  });
+  panel.addEventListener('click', e => {
+    const act = e.target.dataset && e.target.dataset.act; if (!act) return;
+    panel.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = act === 'all'; if (cb.checked) sel.add(cb.value); else sel.delete(cb.value); });
+    label(); onChange();
+  });
+  document.addEventListener('click', e => { if (!root.contains(e.target)) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  return { sel, render, close, clear() { sel.clear(); close(); render(); } };
 }
-function sggLabel() {
-  const region = document.getElementById('f-region').value, n = sggSel.size;
-  sggBtn.disabled = !region;
-  sggBtn.classList.toggle('has', n > 0);
-  const total = region ? sggList(region).length : 0;
-  sggBtn.textContent = !region ? '광역시도 먼저 선택' : !n ? '전체' : n === total ? `전체 선택(${n}곳)` : n <= 2 ? [...sggSel].join(', ') : `${[...sggSel][0]} 외 ${n - 1}곳`;
-}
-function renderSgg() {
-  const region = document.getElementById('f-region').value;
-  sggPanel.innerHTML = !region ? '' : sggList(region).map(g =>
-      `<label class="ddItem"><input type="checkbox" value="${g}"${sggSel.has(g) ? ' checked' : ''}>${g}</label>`).join('')
-    + '<div class="ddActions"><button type="button" data-act="all">전체 선택</button><button type="button" data-act="none">선택 해제</button></div>';
-  sggLabel();
-}
-function closeSgg() { sggPanel.classList.remove('open'); sggBtn.setAttribute('aria-expanded', 'false'); }
-sggBtn.addEventListener('click', () => {
-  const open = !sggPanel.classList.contains('open');
-  sggPanel.classList.toggle('open', open); sggBtn.setAttribute('aria-expanded', String(open));
+const sggOf = sd => [...new Set(RAW.filter(r => r[2] === sd).map(r => r[3]))].sort((a, b) => a.localeCompare(b, 'ko'));
+const regionDD = makeMulti(document.getElementById('f-region'), {
+  aria: '광역시도', placeholder: '전체', unit: '개',
+  groups: () => [{ label: '', items: SIDO_ORDER.filter(sd => RAW.some(r => r[2] === sd)).map(sd => ({ value: sd, label: sd })) }],
+  onChange: () => { sggDD.render(); applyFilter(); },
 });
-sggPanel.addEventListener('change', e => {
-  if (e.target.type !== 'checkbox') return;
-  if (e.target.checked) sggSel.add(e.target.value); else sggSel.delete(e.target.value);
-  sggLabel(); applyFilter();
+// 시·군·구: 고른 광역시도의 관할만(여러 광역이면 광역별로 묶음). 값은 '광역|시군구' — 부산·대구·울산의 같은 구 이름 구분
+const sggDD = makeMulti(document.getElementById('f-sgg'), {
+  aria: '시·군·구', placeholder: '전체', unit: '곳', disabledText: '광역시도 먼저 선택',
+  groups: () => {
+    const sds = SIDO_ORDER.filter(sd => regionDD.sel.has(sd));
+    return sds.map(sd => ({ label: sds.length > 1 ? sd : '', items: sggOf(sd).map(g => ({ value: `${sd}|${g}`, label: g, short: sds.length > 1 ? `${sd} ${g}` : g })) }));
+  },
+  onChange: () => applyFilter(),
 });
-sggPanel.addEventListener('click', e => {
-  const act = e.target.dataset && e.target.dataset.act; if (!act) return;
-  sggPanel.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = act === 'all'; if (cb.checked) sggSel.add(cb.value); else sggSel.delete(cb.value); });
-  sggLabel(); applyFilter();
-});
-document.addEventListener('click', e => { if (!e.target.closest('#f-sgg')) closeSgg(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSgg(); });
 
 function applyFilter() {
-  const region  = document.getElementById('f-region').value;
+  const regions = regionDD.sel, sggs = sggDD.sel;
   const status  = document.getElementById('f-status').value;
   const builder = document.getElementById('f-builder').value;
   const type    = document.getElementById('f-type').value;
@@ -1173,8 +1185,8 @@ function applyFilter() {
   const kw      = document.getElementById('f-search').value.trim().toLowerCase();
 
   currentData = RAW.filter(r => {
-    if (region  && r[2] !== region)  return false;
-    if (sggSel.size && !sggSel.has(r[3])) return false;     // 광역시도를 바꾸면 선택이 비워지므로 같은 광역 안에서만 비교
+    if (regions.size && !regions.has(r[2])) return false;
+    if (sggs.size && !sggs.has(`${r[2]}|${r[3]}`)) return false;
     if (status  && r[10]!== status)  return false;
     if (builder && r[4] !== builder) return false;
     if (type    && r[9] !== type)    return false;
@@ -1189,10 +1201,10 @@ function applyFilter() {
 
 // ── 초기화 ──
 function resetFilter() {
-  ['f-region','f-status','f-builder','f-type','f-sale','f-units'].forEach(id=>{
+  ['f-status','f-builder','f-type','f-sale','f-units'].forEach(id=>{
     document.getElementById(id).value='';
   });
-  sggSel.clear(); closeSgg(); renderSgg();
+  regionDD.clear(); sggDD.clear();
   document.getElementById('f-search').value='';
   currentData = [...RAW];
   sortCol=0; sortDir='asc';
@@ -1388,11 +1400,10 @@ document.getElementById('f-search').addEventListener('input', ()=>{ applyFilter(
 ['f-status','f-builder','f-type','f-sale','f-units'].forEach(id=>{
   document.getElementById(id).addEventListener('change', applyFilter);
 });
-document.getElementById('f-region').addEventListener('change', () => { sggSel.clear(); closeSgg(); renderSgg(); applyFilter(); });
 
 // ── 초기화 ──
 populateBuilderFilter();
-renderSgg();
+regionDD.render(); sggDD.render();
 currentData = [...RAW];
 render(currentData);
 
